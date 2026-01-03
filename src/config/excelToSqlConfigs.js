@@ -359,6 +359,32 @@ export const excelToSqlConfigs = {
     color: 'cyan'
   },
   
+  // Agua 2026 - Lecturas
+  agua_2026: {
+    tipo: 'agua',
+    año: 2026,
+    nombreTabla: 'Lecturas_Semana_Agua_2026',
+    campos: camposAgua,
+    titulo: 'Excel a SQL - Lecturas Semanales de Agua 2026',
+    descripcion: 'Convierte datos de lecturas semanales de agua (formato vertical) a sentencias SQL INSERT',
+    nombreArchivoSql: 'inserts_lecturas_agua_2026.sql',
+    icono: '💧',
+    color: 'blue'
+  },
+  
+  // Agua 2026 - Consumo
+  agua_consumo_2026: {
+    tipo: 'agua_consumo',
+    año: 2026,
+    nombreTabla: 'Lecturas_Semana_Agua_consumo_2026',
+    campos: camposAgua,
+    titulo: 'Excel a SQL - Consumo Semanal de Agua 2026',
+    descripcion: 'Convierte datos de consumo semanal de agua (formato vertical) a sentencias SQL INSERT',
+    nombreArchivoSql: 'inserts_consumo_agua_2026.sql',
+    icono: '💧',
+    color: 'cyan'
+  },
+  
   // Gas 2023
   gas_2023: {
     tipo: 'gas',
@@ -394,6 +420,19 @@ export const excelToSqlConfigs = {
     titulo: 'Excel a SQL - Lecturas Semanales de Gas 2025',
     descripcion: 'Convierte datos de lecturas semanales de gas (formato vertical) a sentencias SQL INSERT',
     nombreArchivoSql: 'inserts_lecturas_gas_2025.sql',
+    icono: '🔥',
+    color: 'orange'
+  },
+
+  // Gas 2026
+  gas_2026: {
+    tipo: 'gas',
+    año: 2026,
+    nombreTabla: 'lecturas_semanales_gas_2026',
+    campos: camposGas,
+    titulo: 'Excel a SQL - Lecturas Semanales de Gas 2026',
+    descripcion: 'Convierte datos de lecturas semanales de gas (formato vertical) a sentencias SQL INSERT',
+    nombreArchivoSql: 'inserts_lecturas_gas_2026.sql',
     icono: '🔥',
     color: 'orange'
   },

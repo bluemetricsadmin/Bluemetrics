@@ -36,12 +36,12 @@ import { getGasTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/t
 
 export default function GasConsumptionPage() {
   const [timeFrame, setTimeFrame] = useState('monthly')
-  const [selectedYear, setSelectedYear] = useState('2025')
+  const [selectedYear, setSelectedYear] = useState('2026')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [chartType, setChartType] = useState('bar')
   const [viewMode, setViewMode] = useState('Consumo Total') // 'servicios', 'riego', 'conjunto'
   const [periodView, setPeriodView] = useState('monthly') // 'monthly', 'yearly'
-  const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2024', '2025']) // Años para comparar
+  const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2025', '2026']) // Años para comparar
   const [selectedYearForReadings, setSelectedYearForReadings] = useState(DEFAULT_YEAR) // Año para lecturas semanales
   
   // Estados para el nuevo sistema de tablas detalladas
@@ -61,11 +61,12 @@ export default function GasConsumptionPage() {
   const [weeklyReadings2023, setWeeklyReadings2023] = useState([])
   const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
   const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
+  const [weeklyReadings2026, setWeeklyReadings2026] = useState([])
 
   // Estados para filtros de gráficas de comparación
   const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
-  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2024', '2025']) // Array de años para comparar
-  const [availableYearsForComparison] = useState(['2023', '2024', '2025']) // Años disponibles para comparación
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2025', '2026']) // Array de años para comparar
+  const [availableYearsForComparison] = useState(['2023', '2024', '2025', '2026']) // Años disponibles para comparación
 
   // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
   useEffect(() => {
@@ -254,7 +255,8 @@ export default function GasConsumptionPage() {
     await Promise.all([
       fetchYearData('2023', 'lecturas_semanales_gas_consumo_2023', setWeeklyReadings2023),
       fetchYearData('2024', 'lecturas_semanales_gas_consumo_2024', setWeeklyReadings2024),
-      fetchYearData('2025', 'lecturas_semanales_gas_consumo_2025', setWeeklyReadings2025)
+      fetchYearData('2025', 'lecturas_semanales_gas_consumo_2025', setWeeklyReadings2025),
+      fetchYearData('2026', 'lecturas_semanales_gas_consumo_2026', setWeeklyReadings2026)
     ])
   }
 
@@ -344,7 +346,7 @@ export default function GasConsumptionPage() {
   }
 
   // Obtener datos de consumo por categoría y período
-  const getConsumptionDataByCategory = (category, period = 'monthly', year = '2025') => {
+  const getConsumptionDataByCategory = (category, period = 'monthly', year = '2026') => {
     // Datos base por año (consumo total mensual en m³)
     const consumoBase = {
       '2022': {
@@ -366,12 +368,17 @@ export default function GasConsumptionPage() {
         'enero': 9400, 'febrero': 9100, 'marzo': 9700, 'abril': 9900,
         'mayo': 10400, 'junio': 10900, 'julio': 11400, 'agosto': 11700,
         'septiembre': 11100, 'octubre': 10700, 'noviembre': 10100, 'diciembre': 9700
+      },
+      '2026': {
+        'enero': 9700, 'febrero': 9400, 'marzo': 10000, 'abril': 10200,
+        'mayo': 10700, 'junio': 11200, 'julio': 11700, 'agosto': 12000,
+        'septiembre': 11400, 'octubre': 11000, 'noviembre': 10400, 'diciembre': 10000
       }
     }
 
     if (period === 'yearly') {
       // Datos anuales por categoría
-      const years = ['2022', '2023', '2024', '2025']
+      const years = ['2022', '2023', '2024', '2025', '2026']
       return years.map(yearStr => {
         const yearData = consumoBase[yearStr]
         const totalAnual = Object.values(yearData).reduce((sum, val) => sum + val, 0)
@@ -610,7 +617,7 @@ export default function GasConsumptionPage() {
   const currentViewData = getConsumptionDataByCategory(viewMode, periodView, selectedYear)
   
   // Años disponibles para comparación
-  const availableYears = ['2022', '2023', '2024', '2025']
+  const availableYears = ['2022', '2023', '2024', '2025', '2026']
   
   // Manejar selección de años para comparación
   const handleYearComparisonToggle = (year) => {
@@ -690,7 +697,8 @@ export default function GasConsumptionPage() {
     const yearDataMap = {
       '2023': weeklyReadings2023,
       '2024': weeklyReadings2024,
-      '2025': weeklyReadings2025
+      '2025': weeklyReadings2025,
+      '2026': weeklyReadings2026
     }
 
     const sortedSelectedYears = [...comparisonYearsToShow].sort()
@@ -1113,14 +1121,50 @@ export default function GasConsumptionPage() {
 
             <div className="mt-8"></div>
 
+            {/* Controles para la tabla de comparación */}
+            <div className="mb-4 flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-semibold">Comparar años en tabla:</span>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={comparisonYearsToShow[0] || '2025'}
+                    onChange={(e) => {
+                      const newYear1 = e.target.value
+                      setComparisonYearsToShow(prev => [newYear1, prev[1] || '2026'])
+                    }}
+                    className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    {availableYearsForComparison.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                  <span className="text-sm font-medium">vs</span>
+                  <select
+                    value={comparisonYearsToShow[1] || '2026'}
+                    onChange={(e) => {
+                      const newYear2 = e.target.value
+                      setComparisonYearsToShow(prev => [prev[0] || '2025', newYear2])
+                    }}
+                    className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    {availableYearsForComparison.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Tabla tipo Excel de comparación */}
             <div className="mb-6">
               <WeeklyComparisonTable
                 title={`Tabla Comparativa Semanal ${comparisonYearsToShow.join(' vs ')} - Consumo de Gas`}
-                data2024={multiYearData.find(d => d.year === '2024')?.data || []}
-                data2025={multiYearData.find(d => d.year === '2025')?.data || []}
+                data2024={multiYearData.find(d => d.year === comparisonYearsToShow[0])?.data || []}
+                data2025={multiYearData.find(d => d.year === comparisonYearsToShow[1])?.data || []}
                 pointName={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
                 unit="m³"
+                year1={comparisonYearsToShow[0] || '2025'}
+                year2={comparisonYearsToShow[1] || '2026'}
               />
             </div>
           </div>

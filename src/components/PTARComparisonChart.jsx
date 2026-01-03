@@ -19,7 +19,7 @@ export default function PTARComparisonChart({
   dataType = 'residual' // 'residual' o 'tratada'
 }) {
 
-  const [selectedYears, setSelectedYears] = useState(['2023', '2024', '2025'])
+  const [selectedYears, setSelectedYears] = useState(['2023', '2024', '2025', '2026'])
   
   // Filtrar datos por años seleccionados
   const filteredMultiYearData = multiYearData !== null && Array.isArray(multiYearData)

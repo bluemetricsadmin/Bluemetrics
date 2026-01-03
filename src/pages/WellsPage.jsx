@@ -46,12 +46,13 @@ export default function WellsPage() {
   const [kpiData, setKpiData] = useState({
     totalGeneral: 0,
     promedioAnual: 0,
+    total2026: 0,
     total2025: 0,
     total2024: 0,
     total2023: 0,
     cambioAnual: 0,
     vsSemanaAnterior: 0,
-    maxYear: { year: '2025', total: 0 },
+    maxYear: { year: '2026', total: 0 },
     minYear: { year: '2023', total: 0 }
   })
   const [weeklyData, setWeeklyData] = useState({
@@ -229,7 +230,7 @@ export default function WellsPage() {
       setLoading(true)
       setError(null)
 
-      const year = 2025
+      const year = 2026
       const readingsTable = `lecturas_semana_agua_${year}`
       const consumptionTable = `lecturas_semana_agua_consumo_${year}`
 
@@ -278,16 +279,16 @@ export default function WellsPage() {
         // Calcular m³ disponibles (ahora se llama "m3 para consumir")
         const m3ParaConsumir = (staticInfo.m3PorAnexo || 0) - (staticInfo.m3CededByAnnex || 0)
 
-        // Calcular consumo total del año 2025
-        const totalConsumption2025 = consumptionData?.reduce((sum, row) => {
+        // Calcular consumo total del año 2026
+        const totalConsumption2026 = consumptionData?.reduce((sum, row) => {
           return sum + (parseFloat(row[well.column]) || 0)
         }, 0) || 0
 
         // Calcular % de consumo
-        const consumptionPercent = m3ParaConsumir > 0 ? (totalConsumption2025 / m3ParaConsumir) * 100 : 0
+        const consumptionPercent = m3ParaConsumir > 0 ? (totalConsumption2026 / m3ParaConsumir) * 100 : 0
 
         // Calcular agua disponible última semana
-        const aguaDisponibleUltimaSemana = m3ParaConsumir - totalConsumption2025
+        const aguaDisponibleUltimaSemana = m3ParaConsumir - totalConsumption2026
 
         // Calcular vs semana anterior
         const vsLastWeek = lastWeekConsumption - previousWeekConsumption
@@ -303,7 +304,7 @@ export default function WellsPage() {
           lastWeekReading: parseFloat(lastWeekReading) || 0,
           lastWeekConsumption: parseFloat(lastWeekConsumption) || 0,
           m3ParaConsumir: m3ParaConsumir,
-          totalConsumption2025: totalConsumption2025,
+          totalConsumption2026: totalConsumption2026,
           consumptionPercent: parseFloat(consumptionPercent.toFixed(2)) || 0,
           aguaDisponibleUltimaSemana: aguaDisponibleUltimaSemana,
           vsLastWeek: parseFloat(vsLastWeek) || 0,
@@ -327,7 +328,7 @@ export default function WellsPage() {
 
   const fetchKPIsAndChartData = async () => {
     try {
-      const years = [2023, 2024, 2025]
+      const years = [2023, 2024, 2025, 2026]
       const allPozos = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14', 'l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego']
       const pozosRiego = ['l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego']
       const pozosServicios = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14']
@@ -422,21 +423,22 @@ export default function WellsPage() {
       const years2023 = yearTotals[2023] || 0
       const years2024 = yearTotals[2024] || 0
       const years2025 = yearTotals[2025] || 0
-      const totalGeneral = years2023 + years2024 + years2025
-      const promedioAnual = totalGeneral / 3
+      const years2026 = yearTotals[2026] || 0
+      const totalGeneral = years2023 + years2024 + years2025 + years2026
+      const promedioAnual = totalGeneral / 4
 
       const yearEntries = Object.entries(yearTotals).map(([year, total]) => ({ year, total }))
-      const maxYear = yearEntries.reduce((max, item) => item.total > max.total ? item : max, { year: '2025', total: 0 })
+      const maxYear = yearEntries.reduce((max, item) => item.total > max.total ? item : max, { year: '2026', total: 0 })
       const minYear = yearEntries.reduce((min, item) => item.total < min.total ? item : min, { year: '2023', total: 0 })
 
-      const cambioAnual = years2024 > 0 ? ((years2025 - years2024) / years2024 * 100) : 0
+      const cambioAnual = years2025 > 0 ? ((years2026 - years2025) / years2025 * 100) : 0
 
       let vsSemanaAnterior = 0
       if (allWeeklyData.length > 0) {
-        const data2025 = allWeeklyData.find(y => y.year === '2025')
-        if (data2025 && data2025.data.length >= 2) {
-          const lastWeek = data2025.data[data2025.data.length - 1]
-          const prevWeek = data2025.data[data2025.data.length - 2]
+        const data2026 = allWeeklyData.find(y => y.year === '2026')
+        if (data2026 && data2026.data.length >= 2) {
+          const lastWeek = data2026.data[data2026.data.length - 1]
+          const prevWeek = data2026.data[data2026.data.length - 2]
           vsSemanaAnterior = prevWeek.consumption > 0
             ? ((lastWeek.consumption - prevWeek.consumption) / prevWeek.consumption * 100)
             : 0
@@ -446,6 +448,7 @@ export default function WellsPage() {
       setKpiData({
         totalGeneral,
         promedioAnual,
+        total2026: years2026,
         total2025: years2025,
         total2024: years2024,
         total2023: years2023,
@@ -459,8 +462,8 @@ export default function WellsPage() {
         multiYearData: allWeeklyData,
         multiYearDataRiego: riegoWeeklyData,
         multiYearDataServicios: serviciosWeeklyData,
-        currentYearData: allWeeklyData.find(y => y.year === '2025')?.data || [],
-        previousYearData: allWeeklyData.find(y => y.year === '2024')?.data || []
+        currentYearData: allWeeklyData.find(y => y.year === '2026')?.data || [],
+        previousYearData: allWeeklyData.find(y => y.year === '2025')?.data || []
       })
 
       console.log('✅ KPIs y datos de gráficas cargados:', { yearTotals, allWeeklyData, riegoWeeklyData, serviciosWeeklyData })
@@ -594,7 +597,7 @@ export default function WellsPage() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center">
                                 <div className="text-sm font-medium text-gray-900">
-                                  {well.totalConsumption2025.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                                  {well.totalConsumption2026.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   (sem {well.weekNumber})
@@ -709,8 +712,8 @@ export default function WellsPage() {
                 multiYearDataServicios={weeklyData.multiYearDataServicios}
                 currentYearData={weeklyData.currentYearData}
                 previousYearData={weeklyData.previousYearData}
-                currentYear="2025"
-                previousYear="2024"
+                currentYear="2026"
+                previousYear="2025"
                 unit="m³"
                 total2023={kpiData.total2023}
                 showControls={true}

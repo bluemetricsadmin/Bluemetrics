@@ -72,15 +72,43 @@ export default function AddWeeklyGasReadingsPage() {
 
   // Obtener lecturas de la semana anterior
   const fetchPreviousWeekReadings = async () => {
-    if (!weekNumber || weekNumber === 1) {
+    if (!weekNumber) {
       setPreviousWeekReadings(null)
-      console.log('ℹ️ No hay semana anterior (es la semana 1)')
       return null
     }
 
     try {
-      const tableName = getGasTableNameByYear(selectedYear)
-      const previousWeekNum = weekNumber - 1
+      let tableName = getGasTableNameByYear(selectedYear)
+      let previousWeekNum = weekNumber - 1
+
+      // Si es la semana 1, buscar la última semana del año anterior
+      if (weekNumber === 1) {
+        const previousYear = parseInt(selectedYear) - 1
+        tableName = getGasTableNameByYear(previousYear.toString())
+        
+        console.log(`ℹ️ Es semana 1 de ${selectedYear}, buscando última semana de ${previousYear}`)
+        
+        // Buscar la última semana del año anterior
+        const { data: lastWeekData, error: lastWeekError } = await supabase
+          .from(tableName)
+          .select('*')
+          .order('numero_semana', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (lastWeekError) {
+          if (lastWeekError.code === 'PGRST116') {
+            console.log(`ℹ️ No existe ninguna semana en ${previousYear}`)
+            setPreviousWeekReadings(null)
+            return null
+          }
+          throw lastWeekError
+        }
+
+        setPreviousWeekReadings(lastWeekData)
+        console.log(`✅ Lecturas de última semana de ${previousYear} cargadas:`, lastWeekData.numero_semana)
+        return lastWeekData
+      }
       
       const { data, error: fetchError } = await supabase
         .from(tableName)

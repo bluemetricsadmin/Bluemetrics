@@ -15,10 +15,12 @@ import {
   Loader2Icon,
   FileSpreadsheetIcon,
   EyeIcon,
-  DownloadIcon
+  DownloadIcon,
+  ListOrderedIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
+import PointsOrderModal, { applyOrderToCategories } from '../components/PointsOrderModal'
 
 export default function AddWeeklyReadingsPage() {
   // Estados principales
@@ -44,6 +46,10 @@ export default function AddWeeklyReadingsPage() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [activeCategory, setActiveCategory] = useState('pozos_servicios')
+  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [orderedCategoriesData, setOrderedCategoriesData] = useState(() => 
+    applyOrderToCategories(consumptionPointsData.categories)
+  )
 
   // Calcular siguiente número de semana al cargar
   useEffect(() => {
@@ -72,15 +78,40 @@ export default function AddWeeklyReadingsPage() {
 
   // Obtener lecturas de la semana anterior
   const fetchPreviousWeekReadings = async () => {
-    if (!weekNumber || weekNumber === 1) {
+    if (!weekNumber) {
       setPreviousWeekReadings(null)
-      console.log('ℹ️ No hay semana anterior (es la semana 1)')
       return null
     }
 
     try {
-      const tableName = getTableNameByYear(selectedYear)
-      const previousWeekNum = weekNumber - 1
+      let tableName = getTableNameByYear(selectedYear)
+      let previousWeekNum = weekNumber - 1
+      
+      // Si es la semana 1, buscar la última semana del año anterior
+      if (weekNumber === 1) {
+        const previousYear = String(parseInt(selectedYear) - 1)
+        tableName = getTableNameByYear(previousYear)
+        
+        // Obtener la última semana del año anterior
+        const { data: lastWeekData, error: lastWeekError } = await supabase
+          .from(tableName)
+          .select('l_numero_semana')
+          .order('l_numero_semana', { ascending: false })
+          .limit(1)
+          .single()
+        
+        if (lastWeekError) {
+          if (lastWeekError.code === 'PGRST116') {
+            console.log('ℹ️ No hay datos del año anterior:', previousYear)
+            setPreviousWeekReadings(null)
+            return null
+          }
+          throw lastWeekError
+        }
+        
+        previousWeekNum = lastWeekData.l_numero_semana
+        console.log(`📅 Semana 1 del ${selectedYear}: usando última semana del ${previousYear} (semana ${previousWeekNum})`)
+      }
       
       const { data, error: fetchError } = await supabase
         .from(tableName)
@@ -98,7 +129,7 @@ export default function AddWeeklyReadingsPage() {
       }
 
       setPreviousWeekReadings(data)
-      console.log('✅ Lecturas de semana anterior cargadas:', previousWeekNum)
+      console.log('✅ Lecturas de semana anterior cargadas:', previousWeekNum, 'de la tabla', tableName)
       return data
     } catch (err) {
       console.error('❌ Error al obtener semana anterior:', err)
@@ -315,9 +346,9 @@ export default function AddWeeklyReadingsPage() {
         l_fecha_fin: endDate
       }
 
-      // Agregar todas las lecturas al objeto
+      // Agregar todas las lecturas al objeto (solo puntos habilitados)
       let readingsCount = 0
-      consumptionPointsData.categories.forEach(category => {
+      orderedCategoriesData.forEach(category => {
         category.points.forEach(point => {
           if (!point.noRead) {
             const key = `${point.id}_${weekNumber}`
@@ -390,9 +421,9 @@ export default function AddWeeklyReadingsPage() {
         l_fecha_fin: endDate
       }
 
-      // Agregar consumo calculado
+      // Agregar consumo calculado (solo puntos habilitados)
       let consumoCount = 0
-      consumptionPointsData.categories.forEach(category => {
+      orderedCategoriesData.forEach(category => {
         category.points.forEach(point => {
           if (!point.noRead) {
             const key = `${point.id}_${weekNumber}`
@@ -478,12 +509,17 @@ export default function AddWeeklyReadingsPage() {
     fetchNextWeekNumber()
   }
 
+  // Manejar cuando se guarda el orden
+  const handleOrderSaved = (newOrderedCategories) => {
+    setOrderedCategoriesData(newOrderedCategories)
+  }
+
   // Descargar plantilla de Excel
   const downloadTemplate = () => {
-    // Crear datos de plantilla con TODOS los 147 puntos - solo 3 columnas
+    // Crear datos de plantilla con TODOS los puntos - usando orden personalizado
     const templateData = []
     
-    consumptionPointsData.categories.forEach(category => {
+    orderedCategoriesData.forEach(category => {
       category.points.forEach(point => {
         templateData.push({
           'Punto de Consumo': point.name,
@@ -566,6 +602,14 @@ export default function AddWeeklyReadingsPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowOrderModal(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <ListOrderedIcon className="h-4 w-4" />
+                    Ordenar Puntos
+                  </Button>
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium">Año:</label>
                     <select
@@ -835,7 +879,7 @@ export default function AddWeeklyReadingsPage() {
                 {/* Tabs de Categorías */}
                 <div className="mb-6 overflow-x-auto">
                   <div className="flex gap-2 border-b border-muted pb-2">
-                    {consumptionPointsData.categories.map(category => {
+                    {orderedCategoriesData.map(category => {
                       const categoryPoints = category.points.filter(p => !p.noRead)
                       const categoryCompleted = categoryPoints.filter(p => {
                         const key = `${p.id}_${weekNumber}`
@@ -863,7 +907,7 @@ export default function AddWeeklyReadingsPage() {
                 </div>
 
                 {/* Lista de lecturas por categoría */}
-                {consumptionPointsData.categories.map(category => {
+                {orderedCategoriesData.map(category => {
                   if (category.id !== activeCategory) return null
 
                   const filteredPoints = category.points.filter(p => !p.noRead)
@@ -1010,7 +1054,7 @@ export default function AddWeeklyReadingsPage() {
                       <div className="mb-8 text-left">
                         <h3 className="text-lg font-semibold mb-4 text-center">Resumen por Categoría</h3>
                         <div className="space-y-3">
-                          {consumptionPointsData.categories.map(category => {
+                          {orderedCategoriesData.map(category => {
                             const categoryPoints = category.points.filter(p => !p.noRead)
                             const categoryCompleted = categoryPoints.filter(p => {
                               const key = `${p.id}_${weekNumber}`
@@ -1060,6 +1104,14 @@ export default function AddWeeklyReadingsPage() {
           </main>
         </div>
       </div>
+
+      {/* Modal de Ordenamiento */}
+      <PointsOrderModal
+        open={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        categories={consumptionPointsData.categories}
+        onOrderSaved={handleOrderSaved}
+      />
     </RedirectIfNotAuth>
   )
 }

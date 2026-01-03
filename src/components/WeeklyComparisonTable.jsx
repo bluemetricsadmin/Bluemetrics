@@ -20,7 +20,9 @@ export default function WeeklyComparisonTable({
   data2024 = [],
   data2025 = [],
   pointName = "Punto de Medición",
-  unit = "m³"
+  unit = "m³",
+  year1 = "2024",
+  year2 = "2025"
 }) {
 
   const [showPercentages, setShowPercentages] = useState(true)
@@ -92,7 +94,7 @@ export default function WeeklyComparisonTable({
 
   // Exportar a CSV
   const exportToCSV = () => {
-    const headers = ['Semana', '2024 (m³)', '2025 (m³)', 'Cambio (%)', 'Diferencia (m³)']
+    const headers = ['Semana', `${year1} (m³)`, `${year2} (m³)`, 'Cambio (%)', 'Diferencia (m³)']
     const rows = weekRows.map(row => [
       row.week,
       row.consumption2024.toFixed(2),
@@ -155,12 +157,12 @@ export default function WeeklyComparisonTable({
         {/* Resumen de totales */}
         <div className="grid grid-cols-3 gap-4 mt-4 p-4 bg-muted/30 rounded-lg">
           <div>
-            <p className="text-xs text-muted-foreground">Consumo Total 2024</p>
+            <p className="text-xs text-muted-foreground">Consumo Total {year1}</p>
             <p className="text-xl font-bold text-foreground">{totals.total2024.toLocaleString()} {unit}</p>
             <p className="text-xs text-muted-foreground mt-1">Suma de todas las semanas</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Consumo Total 2025</p>
+            <p className="text-xs text-muted-foreground">Consumo Total {year2}</p>
             <p className="text-xl font-bold text-foreground">{totals.total2025.toLocaleString()} {unit}</p>
             <p className="text-xs text-muted-foreground mt-1">Suma de todas las semanas</p>
           </div>
@@ -182,7 +184,7 @@ export default function WeeklyComparisonTable({
                 {totals.avgChange > 0 ? '+' : ''}{totals.avgChange.toFixed(1)}%
               </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">2025 vs 2024</p>
+            <p className="text-xs text-muted-foreground mt-1">{year2} vs {year1}</p>
           </div>
         </div>
       </CardHeader>
@@ -194,16 +196,16 @@ export default function WeeklyComparisonTable({
               <tr>
                 <th className="p-3 text-left font-semibold text-sm border-r bg-muted/50">Semana</th>
                 <th className="p-3 text-right font-semibold text-sm border-r bg-blue-50 dark:bg-blue-900/20">
-                  <div>Consumo 2024</div>
+                  <div>Consumo {year1}</div>
                   <div className="text-xs font-normal text-muted-foreground">({unit})</div>
                 </th>
                 <th className="p-3 text-right font-semibold text-sm border-r bg-green-50 dark:bg-green-900/20">
-                  <div>Consumo 2025</div>
+                  <div>Consumo {year2}</div>
                   <div className="text-xs font-normal text-muted-foreground">({unit})</div>
                 </th>
                 <th className="p-3 text-center font-semibold text-sm bg-amber-50 dark:bg-amber-900/20">
                   <div>Variación</div>
-                  <div className="text-xs font-normal text-muted-foreground">(2025 vs 2024)</div>
+                  <div className="text-xs font-normal text-muted-foreground">({year2} vs {year1})</div>
                 </th>
               </tr>
             </thead>

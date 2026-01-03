@@ -49,11 +49,12 @@ export default function ConsumptionPage() {
   const [weeklyReadings2023, setWeeklyReadings2023] = useState([])
   const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
   const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
+  const [weeklyReadings2026, setWeeklyReadings2026] = useState([])
 
   // Estados para filtros de gráficas de comparación
   const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
-  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2024', '2025']) // Array de años para comparar
-  const [availableYears] = useState(['2023', '2024', '2025']) // Años disponibles para comparación
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2025', '2026']) // Array de años para comparar
+  const [availableYears] = useState(['2023', '2024', '2025', '2026']) // Años disponibles para comparación
 
   // Cargar semanas disponibles desde Supabase cuando cambia el año de consumo
   useEffect(() => {
@@ -311,7 +312,8 @@ export default function ConsumptionPage() {
     await Promise.all([
       fetchYearData('2023', 'lecturas_semana_agua_consumo_2023', setWeeklyReadings2023),
       fetchYearData('2024', 'lecturas_semana_agua_consumo_2024', setWeeklyReadings2024),
-      fetchYearData('2025', 'lecturas_semana_agua_consumo_2025', setWeeklyReadings2025)
+      fetchYearData('2025', 'lecturas_semana_agua_consumo_2025', setWeeklyReadings2025),
+      fetchYearData('2026', 'lecturas_semana_agua_consumo_2026', setWeeklyReadings2026)
     ])
   }
 
@@ -540,7 +542,8 @@ export default function ConsumptionPage() {
     const yearDataMap = {
       '2023': weeklyReadings2023,
       '2024': weeklyReadings2024,
-      '2025': weeklyReadings2025
+      '2025': weeklyReadings2025,
+      '2026': weeklyReadings2026
     }
 
     const sortedSelectedYears = [...comparisonYearsToShow].sort()
@@ -940,14 +943,50 @@ export default function ConsumptionPage() {
 
             <div className="mt-8"></div>
 
+            {/* Controles para la tabla de comparación */}
+            <div className="mb-4 flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-semibold">Comparar años en tabla:</span>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={comparisonYearsToShow[0] || '2025'}
+                    onChange={(e) => {
+                      const newYear1 = e.target.value
+                      setComparisonYearsToShow(prev => [newYear1, prev[1] || '2026'])
+                    }}
+                    className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    {availableYears.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                  <span className="text-sm font-medium">vs</span>
+                  <select
+                    value={comparisonYearsToShow[1] || '2026'}
+                    onChange={(e) => {
+                      const newYear2 = e.target.value
+                      setComparisonYearsToShow(prev => [prev[0] || '2025', newYear2])
+                    }}
+                    className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    {availableYears.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Tabla tipo Excel de comparación */}
             <div className="mb-6">
               <WeeklyComparisonTable
                 title={`Tabla Comparativa Semanal ${comparisonYearsToShow.join(' vs ')} - Consumo Semanal`}
-                data2024={multiYearData.length > 1 ? multiYearData[multiYearData.length - 2].data : []}
-                data2025={multiYearData.length > 0 ? multiYearData[multiYearData.length - 1].data : []}
+                data2024={multiYearData.find(data => data.year === comparisonYearsToShow[0])?.data || []}
+                data2025={multiYearData.find(data => data.year === comparisonYearsToShow[1])?.data || []}
                 pointName={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
                 unit="m³"
+                year1={comparisonYearsToShow[0] || '2025'}
+                year2={comparisonYearsToShow[1] || '2026'}
               />
             </div>
           </div>

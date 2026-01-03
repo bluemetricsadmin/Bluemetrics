@@ -37,6 +37,7 @@ export default function WellDetailPage() {
   // Estados para datos de Supabase
   const [currentReading, setCurrentReading] = useState(0)
   const [currentConsumption, setCurrentConsumption] = useState(0)
+  const [totalConsumption2026, setTotalConsumption2026] = useState(0)
   const [totalConsumption2025, setTotalConsumption2025] = useState(0)
   const [totalConsumption2024, setTotalConsumption2024] = useState(0)
   const [totalConsumption2023, setTotalConsumption2023] = useState(0)
@@ -57,14 +58,15 @@ export default function WellDetailPage() {
   const [visualizationType, setVisualizationType] = useState('general') // 'general', 'consumo-pozo'
   
   // Estados para comparación multi-año
-  const [selectedYears, setSelectedYears] = useState(['2025']) // Años seleccionados para comparación
-  const [availableYears] = useState(['2023', '2024', '2025']) // Años disponibles
+  const [selectedYears, setSelectedYears] = useState(['2026']) // Años seleccionados para comparación
+  const [availableYears] = useState(['2023', '2024', '2025', '2026']) // Años disponibles
   const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
   
   // Estados para datos de múltiples años
   const [weeklyReadings2023, setWeeklyReadings2023] = useState([])
   const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
   const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
+  const [weeklyReadings2026, setWeeklyReadings2026] = useState([])
   
   // Cargar datos de Supabase al montar el componente
   useEffect(() => {
@@ -93,8 +95,8 @@ export default function WellDetailPage() {
       setLoading(true)
       setError(null)
 
-      const year = 2025
-      const lastYear = 2024
+      const year = 2026
+      const lastYear = 2025
       const readingsTable = `lecturas_semana_agua_${year}`
       const consumptionTable = `lecturas_semana_agua_consumo_${year}`
       const lastYearConsumptionTable = `lecturas_semana_agua_consumo_${lastYear}`
@@ -174,11 +176,11 @@ export default function WellDetailPage() {
       })
 
       // Cargar datos para el gráfico desde Supabase (año actual)
-      const chartData = await fetchChartDataFromSupabase(2025)
+      const chartData = await fetchChartDataFromSupabase(2026)
       setChartDataFromSupabase(chartData)
-      setWeeklyReadings2025(chartData)
+      setWeeklyReadings2026(chartData)
 
-      // Calcular consumo total del año 2025
+      // Calcular consumo total del año 2026
       const { data: allConsumptionData, error: allConsumptionError } = await supabase
         .from(consumptionTable)
         .select('*')
@@ -188,13 +190,27 @@ export default function WellDetailPage() {
         const total = allConsumptionData.reduce((sum, row) => {
           return sum + (parseFloat(row[columnName]) || 0)
         }, 0)
-        setTotalConsumption2025(total)
-        console.log('📊 Consumo total 2025:', total)
+        setTotalConsumption2026(total)
+        console.log('📊 Consumo total 2026:', total)
+      }
+
+      // Calcular consumo total del año 2025
+      const { data: allConsumptionData2025, error: allConsumptionError2025 } = await supabase
+        .from('lecturas_semana_agua_consumo_2025')
+        .select('*')
+        .order('l_numero_semana', { ascending: true })
+
+      if (!allConsumptionError2025 && allConsumptionData2025) {
+        const total2025 = allConsumptionData2025.reduce((sum, row) => {
+          return sum + (parseFloat(row[columnName]) || 0)
+        }, 0)
+        setTotalConsumption2025(total2025)
+        console.log('📊 Consumo total 2025:', total2025)
       }
 
       // Calcular consumo total del año 2024
       const { data: allConsumptionData2024, error: allConsumptionError2024 } = await supabase
-        .from('consumos_2024')
+        .from('lecturas_semana_agua_consumo_2024')
         .select('*')
         .order('l_numero_semana', { ascending: true })
 
@@ -208,7 +224,7 @@ export default function WellDetailPage() {
 
       // Calcular consumo total del año 2023
       const { data: allConsumptionData2023, error: allConsumptionError2023 } = await supabase
-        .from('consumos_2023')
+        .from('lecturas_semana_agua_consumo_2023')
         .select('*')
         .order('l_numero_semana', { ascending: true })
 
@@ -321,6 +337,7 @@ export default function WellDetailPage() {
         if (year === '2023') setWeeklyReadings2023(data)
         if (year === '2024') setWeeklyReadings2024(data)
         if (year === '2025') setWeeklyReadings2025(data)
+        if (year === '2026') setWeeklyReadings2026(data)
       })
     } catch (err) {
       console.error('❌ Error cargando datos multi-año:', err)
@@ -332,7 +349,8 @@ export default function WellDetailPage() {
     const yearDataMap = {
       '2023': weeklyReadings2023,
       '2024': weeklyReadings2024,
-      '2025': weeklyReadings2025
+      '2025': weeklyReadings2025,
+      '2026': weeklyReadings2026
     }
 
     const sortedSelectedYears = [...selectedYears].sort()
@@ -816,7 +834,7 @@ export default function WellDetailPage() {
                         <p className="text-sm text-gray-900 font-mono">{wellData.titleCode}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">m³ cedidos por Anexo (2025)</label>
+                        <label className="text-sm font-medium text-gray-500">m³ cedidos por Anexo (2026)</label>
                         <p className="text-sm text-gray-900">{wellData.m3CededByAnnex.toLocaleString()}</p>
                       </div>
                       <div>

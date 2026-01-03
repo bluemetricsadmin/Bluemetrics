@@ -67,7 +67,7 @@ export default function WellsGeneralCharts() {
       setLoading(true)
       setError(null)
 
-      const years = [2023, 2024, 2025]
+      const years = [2023, 2024, 2025, 2026]
       const allData = {
         riego: [],
         servicios: [],
@@ -364,11 +364,11 @@ export default function WellsGeneralCharts() {
   const getChartDescription = () => {
     switch (selectedChart) {
       case 'riego':
-        return 'Sumatoria de consumo de los 3 pozos de riego (Pozo 4, 8 y 15) en los años 2023, 2024 y 2025'
+        return 'Sumatoria de consumo de los 3 pozos de riego (Pozo 4, 8 y 15) en los años 2023, 2024, 2025 y 2026'
       case 'servicios':
-        return 'Sumatoria de consumo de los 5 pozos de servicios (Pozo 3, 7, 11, 12 y 14) en los años 2023, 2024 y 2025'
+        return 'Sumatoria de consumo de los 5 pozos de servicios (Pozo 3, 7, 11, 12 y 14) en los años 2023, 2024, 2025 y 2026'
       case 'total':
-        return 'Sumatoria de consumo de todos los pozos (8 pozos: riego + servicios) en los años 2023, 2024 y 2025'
+        return 'Sumatoria de consumo de todos los pozos (8 pozos: riego + servicios) en los años 2023, 2024, 2025 y 2026'
       default:
         return ''
     }
