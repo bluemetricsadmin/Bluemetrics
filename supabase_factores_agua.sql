@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.Factores_agua (
 -- Índice para búsquedas rápidas
 CREATE INDEX IF NOT EXISTS idx_factores_agua_nombre ON Factores_agua(nombre);
 
--- Comentarios de tablaa
+-- Comentarios de tablaaaa
 COMMENT ON TABLE Factores_agua IS 'Factores de conversión para cada punto de medición de agua';
 COMMENT ON COLUMN Factores_agua.nombre IS 'Nombre del medidor (coincide con columnas de lecturas_semana2025)';
 COMMENT ON COLUMN Factores_agua.factor IS 'Factor de multiplicación/conversión para el medidor';
