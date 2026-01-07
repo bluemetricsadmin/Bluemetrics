@@ -244,7 +244,7 @@ Modal full-screen para visualizar gráficos.
 
 ## 🤝 Contribuir
 
-Para añadir nuevos gráficos o mejorar la funcionalidad:
+Para añadir nuevos gráficos a o mejorar la funcionalidad:
 
 1. Crea tu componente de gráfico
 2. Añádelo al registry
