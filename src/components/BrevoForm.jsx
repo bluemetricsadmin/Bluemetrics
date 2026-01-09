@@ -87,7 +87,7 @@ const BrevoForm = () => {
               ¡Solicita tu demo ahora!
             </h3>
             <p className="text-blue-700 text-lg leading-relaxed">
-              Descubre cómo BlueMetrics puede transformar la gestión hídrica de tu empresa
+              Descubre cómo BlueMetrics puede transformar la gestión de los recursos de tu empresa
             </p>
           </div>
           

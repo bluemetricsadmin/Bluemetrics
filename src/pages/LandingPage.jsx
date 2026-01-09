@@ -18,7 +18,8 @@ import {
   Play,
   Menu,
   X,
-  TrendingUp
+  TrendingUp,
+  Flame
 } from 'lucide-react'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
@@ -33,8 +34,8 @@ const LandingPage = () => {
   const benefits = [
     {
       icon: <Droplets className="w-12 h-12 text-cyan-400" />,
-      title: "Control de huella hídrica en tiempo real",
-      description: "Conoce en tiempo real cuánta agua consumes, dónde se desperdicia y cómo puedes optimizar cada litro. Monitoreo continuo de 100+ puntos de consumo con alertas inteligentes.",
+      title: "Control de consumo de recursos en tiempo real",
+      description: "Conoce en tiempo real cómo se utilizan tus recursos, dónde se generan ineficiencias y cómo optimizar cada unidad. Monitoreo continuo de múltiples puntos clave con alertas inteligentes.",
       iconVisual: <Droplets className="w-16 h-16 text-cyan-400" />,
       position: "left"
     },
@@ -58,7 +59,25 @@ const LandingPage = () => {
     { icon: <Droplets className="w-6 h-6" />, text: "Monitoreo en tiempo real" },
     { icon: <BarChart3 className="w-6 h-6" />, text: "Análisis predictivo con IA" },
     { icon: <Shield className="w-6 h-6" />, text: "Cumplimiento regulatorio" },
-    { icon: <Zap className="w-6 h-6" />, text: "Identificación de fugas" },
+    { icon: <Zap className="w-6 h-6" />, text: "Sistema de alertas" },
+  ];
+
+  const mainServices = [
+    {
+      icon: <Droplets className="w-12 h-12" />,
+      title: "Agua",
+      description: "Monitoreo y optimización del consumo de agua en tiempo real con análisis predictivo."
+    },
+    {
+      icon: <Zap className="w-12 h-12" />,
+      title: "Electricidad",
+      description: "Gestión inteligente de energía eléctrica para reducir costos y mejorar la eficiencia operativa."
+    },
+    {
+      icon: <Flame className="w-12 h-12" />,
+      title: "Gas",
+      description: "Control y seguimiento del consumo de gas con alertas automáticas y reportes detallados."
+    }
   ];
 
   const handleContactRedirect = () => {
@@ -177,7 +196,7 @@ const LandingPage = () => {
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-full text-blue-300 text-sm font-medium mb-8"
             >
               <Zap className="w-4 h-4" />
-              Inteligencia Hídrica Avanzada
+              Inteligencia en Gestión de Recursos
             </motion.div>
             
             {/* Main Heading */}
@@ -290,7 +309,7 @@ const LandingPage = () => {
             <h2 className="text-4xl font-bold text-white mb-4">
               Características <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Principales</span>
             </h2>
-            <p className="text-xl text-cyan-200">Descubre cómo Bluemetrics transforma la gestión hídrica y energética</p>
+            <p className="text-xl text-cyan-200">Descubre cómo Bluemetrics transforma la gestión de tus recursos</p>
           </motion.div>
 
           {benefits.map((benefit, index) => (
@@ -389,8 +408,55 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Main Services Section - Nuestros principales giros */}
+      <section className="py-20 bg-gradient-to-b from-[#1A2F5A] to-[#0F1B35] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Nuestros principales <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">giros</span>
+            </h2>
+            <p className="text-xl text-cyan-200">Soluciones integrales para la gestión de recursos</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            {mainServices.map((service, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+                className="relative"
+              >
+                <div className="bg-gradient-to-br from-[#0A1628] to-[#1A2F5A] border-4 border-cyan-500/30 rounded-2xl m-8 p-8 text-center hover:border-cyan-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/20 h-full flex flex-col">
+                  <div className="flex justify-center mb-6">
+                    <div className="w-24 h-24 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full flex items-center justify-center border-2 border-cyan-400/30">
+                      <div className="text-cyan-400">
+                        {service.icon}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-white mb-4">{service.title}</h3>
+                  
+                  <p className="text-gray-300 leading-relaxed flex-grow">
+                    {service.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* About Us Section */}
-      <section id="about" className="py-20 bg-gradient-to-b from-[#1A2F5A] to-[#0A1628] relative overflow-hidden">
+      <section id="about" className="py-20 bg-gradient-to-b from-[#0F1B35] to-[#0A1628] relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -410,20 +476,20 @@ const LandingPage = () => {
             className="space-y-6 text-lg text-gray-300 leading-relaxed"
           >
             <p>
-              En BlueMetrics creemos que el agua es el recurso más valioso de nuestro planeta. 
+              En BlueMetrics creemos que los recursos son el activo más valioso de cualquier operación. 
               Por eso desarrollamos una plataforma digital que ayuda a empresas, instituciones y 
-              comunidades a medir, analizar y optimizar el uso del agua de manera inteligente.
+              comunidades a medir, analizar y optimizar el uso de agua, electricidad y gas de manera inteligente.
             </p>
             
             <p>
-              Nuestra misión es asegurar la sostenibilidad hídrica a través de la innovación 
+              Nuestra misión es asegurar la sostenibilidad operativa a través de la innovación 
               tecnológica. Integramos datos en tiempo real, modelos predictivos y herramientas 
               de fácil uso que impulsan la toma de decisiones responsables y eficientes.
             </p>
             
             <p>
               Somos un equipo comprometido en generar impacto positivo: económico, social y 
-              ambiental. Con BlueMetrics, transformamos la gestión hídrica en una ventaja 
+              ambiental. Con BlueMetrics, transformamos la gestión de recursos en una ventaja 
               competitiva y un paso firme hacia el futuro.
             </p>
           </motion.div>
@@ -431,7 +497,7 @@ const LandingPage = () => {
           {/* Team Values */}
           <div className="grid md:grid-cols-3 gap-8 mt-16">
             {[
-              { icon: Users, title: "Equipo Experto", description: "Profesionales especializados en tecnología hídrica", color: "blue" },
+              { icon: Users, title: "Equipo Experto", description: "Profesionales especializados en gestión de recursos", color: "blue" },
               { icon: Globe, title: "Impacto Global", description: "Soluciones que trascienden fronteras", color: "blue" },
               { icon: Star, title: "Innovación", description: "Tecnología de vanguardia para el futuro", color: "blue" }
             ].map((value, index) => (
@@ -481,7 +547,7 @@ const LandingPage = () => {
               <span className="bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">Resultados</span> que hablan por sí solos
             </h2>
             <p className="text-cyan-200 text-lg">
-              Instituciones confían en BlueMetrics para transformar su gestión hídrica
+              Instituciones confían en BlueMetrics para transformar su gestión de recursos
             </p>
           </motion.div>
           
@@ -518,7 +584,7 @@ const LandingPage = () => {
             transition={{ duration: 0.6 }}
             className="text-4xl font-bold text-white mb-6"
           >
-            ¿Listo para transformar tu <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">gestión hídrica</span>?
+            ¿Listo para transformar tu <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">gestión de los recursos?</span>
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -528,7 +594,7 @@ const LandingPage = () => {
             className="text-xl text-gray-300 mb-10"
           >
             Únete a las instituciones que ya confían en BlueMetrics para optimizar 
-            sus recursos hídricos y energéticos, construyendo un futuro sostenible.
+            sus recursos, construyendo un futuro sostenible.
           </motion.p>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -611,7 +677,7 @@ const LandingPage = () => {
             >
               ¿Tienes preguntas? Nos encantaría ayudarte a encontrar la solución perfecta para tu institución.
               <span className="block mt-2 text-lg text-cyan-400">
-                Transforma tu gestión hídrica y energética con tecnología inteligente.
+                Transforma tu gestión de recursos con tecnología inteligente.
               </span>
             </motion.p>
           </div>
@@ -630,7 +696,7 @@ const LandingPage = () => {
               {[
                 { icon: "M13 10V3L4 14h7v7l9-11h-7z", title: "Respuesta Rápida", description: "Te contactamos en menos de 24 horas" },
                 { icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", title: "Sin Compromiso", description: "Demo gratuita sin obligaciones" },
-                { icon: "M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z", title: "Soporte Especializado", description: "Equipo experto en gestión hídrica" }
+                { icon: "M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z", title: "Soporte Especializado", description: "Equipo experto en gestión energética" }
               ].map((feature, index) => (
                 <motion.div
                   key={index}
@@ -663,7 +729,7 @@ const LandingPage = () => {
                 <AquaNetText className="w-32 h-6" />
               </div>
               <p className="text-gray-400 max-w-md mb-6">
-                Innovación y datos para un futuro con agua. Transformamos la gestión hídrica 
+                Innovación y datos para un futuro con recursos. Transformamos la gestión de tus recursos
                 a través de tecnología inteligente y soluciones sostenibles.
               </p>
                 <div className="flex space-x-4">
@@ -741,7 +807,7 @@ const LandingPage = () => {
                 © 2024 BlueMetrics. Todos los derechos reservados.
               </p>
               <p className="text-gray-500 text-sm mt-2 md:mt-0">
-                Innovación y datos para un futuro con agua.
+                Innovación y datos para un futuro con recursos.
               </p>
             </div>
           </div>
