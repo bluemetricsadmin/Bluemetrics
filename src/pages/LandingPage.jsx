@@ -35,7 +35,7 @@ const LandingPage = () => {
     {
       icon: <Droplets className="w-12 h-12 text-cyan-400" />,
       title: "Control de consumo de recursos en tiempo real",
-      description: "Conoce en tiempo real cuánta agua consumes, dónde se desperdicia y cómo puedes optimizar cada litro. Monitoreo continuo de 100+ puntos de consumo con alertas inteligentes.",
+      description: "Conoce en tiempo real cómo se utilizan tus recursos, dónde se generan ineficiencias y cómo optimizar cada unidad. Monitoreo continuo de múltiples puntos clave con alertas inteligentes.",
       iconVisual: <Droplets className="w-16 h-16 text-cyan-400" />,
       position: "left"
     },
@@ -59,7 +59,7 @@ const LandingPage = () => {
     { icon: <Droplets className="w-6 h-6" />, text: "Monitoreo en tiempo real" },
     { icon: <BarChart3 className="w-6 h-6" />, text: "Análisis predictivo con IA" },
     { icon: <Shield className="w-6 h-6" />, text: "Cumplimiento regulatorio" },
-    { icon: <Zap className="w-6 h-6" />, text: "Identificación de fugas" },
+    { icon: <Zap className="w-6 h-6" />, text: "Sistema de alertas" },
   ];
 
   const mainServices = [
@@ -584,7 +584,7 @@ const LandingPage = () => {
             transition={{ duration: 0.6 }}
             className="text-4xl font-bold text-white mb-6"
           >
-            ¿Listo para transformar tu <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">gestión de recursos</span>?
+            ¿Listo para transformar tu <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">gestión de los recursos?</span>
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
