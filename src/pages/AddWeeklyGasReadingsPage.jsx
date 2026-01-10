@@ -19,31 +19,45 @@ import {
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getGasTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
+import { usePersistedState } from '../hooks/usePersistedState'
 
 export default function AddWeeklyGasReadingsPage() {
-  // Estados principales
-  const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
-  const [step, setStep] = useState(1) // 1: crear semana, 2: subir excel, 3: verificar datos, 4: confirmación
+  // Estados principales con persistencia
+  const [selectedYear, setSelectedYear, clearSelectedYear] = usePersistedState('gas_weekly_selectedYear', DEFAULT_YEAR)
+  const [step, setStep, clearStep] = usePersistedState('gas_weekly_step', 1)
   
-  // Estados para la semana
-  const [weekNumber, setWeekNumber] = useState(null)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  // Estados para la semana con persistencia
+  const [weekNumber, setWeekNumber, clearWeekNumber] = usePersistedState('gas_weekly_weekNumber', null)
+  const [startDate, setStartDate, clearStartDate] = usePersistedState('gas_weekly_startDate', '')
+  const [endDate, setEndDate, clearEndDate] = usePersistedState('gas_weekly_endDate', '')
   
-  // Estados para Excel y datos
-  const [excelFile, setExcelFile] = useState(null)
-  const [readings, setReadings] = useState({})
-  const [excelData, setExcelData] = useState(null)
+  // Estados para Excel y datos con persistencia
+  const [readings, setReadings, clearReadings] = usePersistedState('gas_weekly_readings', {})
+  const [excelData, setExcelData, clearExcelData] = usePersistedState('gas_weekly_excelData', null)
   
-  // Estados para cálculo de consumo
+  // Estados para cálculo de consumo con persistencia
   const [previousWeekReadings, setPreviousWeekReadings] = useState(null)
-  const [consumption, setConsumption] = useState({})
+  const [consumption, setConsumption, clearConsumption] = usePersistedState('gas_weekly_consumption', {})
   
-  // Estados de UI
+  // Estados de UI (no persistidos)
+  const [excelFile, setExcelFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [activeCategory, setActiveCategory] = useState('acometidas_campus')
+  const [activeCategory, setActiveCategory, clearActiveCategory] = usePersistedState('gas_weekly_activeCategory', 'acometidas_campus')
+  
+  // Función para limpiar todos los datos persistidos
+  const clearAllPersistedData = () => {
+    clearStep()
+    clearWeekNumber()
+    clearStartDate()
+    clearEndDate()
+    clearReadings()
+    clearExcelData()
+    clearConsumption()
+    clearActiveCategory()
+    console.log('✅ Datos persistidos limpiados')
+  }
 
   // Calcular siguiente número de semana al cargar
   useEffect(() => {
@@ -501,6 +515,11 @@ export default function AddWeeklyGasReadingsPage() {
       }
       
       setStep(4)
+      
+      // Limpiar datos persistidos después de guardar exitosamente
+      setTimeout(() => {
+        clearAllPersistedData()
+      }, 3000) // Esperar 3 segundos para que el usuario vea el mensaje de éxito
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
