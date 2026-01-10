@@ -21,35 +21,49 @@ import {
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
 import PointsOrderModal, { applyOrderToCategories } from '../components/PointsOrderModal'
+import { usePersistedState } from '../hooks/usePersistedState'
 
 export default function AddWeeklyReadingsPage() {
-  // Estados principales
-  const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
-  const [step, setStep] = useState(1) // 1: crear semana, 2: subir excel, 3: verificar datos, 4: confirmación
+  // Estados principales con persistencia
+  const [selectedYear, setSelectedYear, clearSelectedYear] = usePersistedState('weekly_selectedYear', DEFAULT_YEAR)
+  const [step, setStep, clearStep] = usePersistedState('weekly_step', 1)
   
-  // Estados para la semana
-  const [weekNumber, setWeekNumber] = useState(null)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  // Estados para la semana con persistencia
+  const [weekNumber, setWeekNumber, clearWeekNumber] = usePersistedState('weekly_weekNumber', null)
+  const [startDate, setStartDate, clearStartDate] = usePersistedState('weekly_startDate', '')
+  const [endDate, setEndDate, clearEndDate] = usePersistedState('weekly_endDate', '')
   
-  // Estados para Excel y datos
-  const [excelFile, setExcelFile] = useState(null)
-  const [readings, setReadings] = useState({})
-  const [excelData, setExcelData] = useState(null)
+  // Estados para Excel y datos con persistencia
+  const [readings, setReadings, clearReadings] = usePersistedState('weekly_readings', {})
+  const [excelData, setExcelData, clearExcelData] = usePersistedState('weekly_excelData', null)
   
-  // Estados para cálculo de consumo
+  // Estados para cálculo de consumo con persistencia
   const [previousWeekReadings, setPreviousWeekReadings] = useState(null)
-  const [consumption, setConsumption] = useState({})
+  const [consumption, setConsumption, clearConsumption] = usePersistedState('weekly_consumption', {})
   
-  // Estados de UI
+  // Estados de UI (no persistidos)
+  const [excelFile, setExcelFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [activeCategory, setActiveCategory] = useState('pozos_servicios')
+  const [activeCategory, setActiveCategory, clearActiveCategory] = usePersistedState('weekly_activeCategory', 'pozos_servicios')
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [orderedCategoriesData, setOrderedCategoriesData] = useState(() => 
     applyOrderToCategories(consumptionPointsData.categories)
   )
+  
+  // Función para limpiar todos los datos persistidos
+  const clearAllPersistedData = () => {
+    clearStep()
+    clearWeekNumber()
+    clearStartDate()
+    clearEndDate()
+    clearReadings()
+    clearExcelData()
+    clearConsumption()
+    clearActiveCategory()
+    console.log('✅ Datos persistidos limpiados')
+  }
 
   // Calcular siguiente número de semana al cargar
   useEffect(() => {
@@ -461,6 +475,11 @@ export default function AddWeeklyReadingsPage() {
       }
       
       setStep(4)
+      
+      // Limpiar datos persistidos después de guardar exitosamente
+      setTimeout(() => {
+        clearAllPersistedData()
+      }, 3000)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)

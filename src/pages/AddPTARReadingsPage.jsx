@@ -18,6 +18,7 @@ import {
   Droplets
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
+import { usePersistedState } from '../hooks/usePersistedState'
 
 // Definición de puntos de medición para PTAR en orden específico
 const ptarReadingPoints = [
@@ -30,22 +31,32 @@ const ptarReadingPoints = [
 ]
 
 export default function AddPTARReadingsPage() {
-  // Estados principales
-  const [step, setStep] = useState(1) // 1: seleccionar fecha, 2: subir excel, 3: verificar datos, 4: confirmación
+  // Estados principales con persistencia
+  const [step, setStep, clearStep] = usePersistedState('ptar_step', 1)
   
-  // Estados para fecha y hora
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedTime, setSelectedTime] = useState('')
+  // Estados para fecha y hora con persistencia
+  const [selectedDate, setSelectedDate, clearSelectedDate] = usePersistedState('ptar_selectedDate', '')
+  const [selectedTime, setSelectedTime, clearSelectedTime] = usePersistedState('ptar_selectedTime', '')
   
-  // Estados para Excel y datos
+  // Estados para Excel y datos con persistencia
+  const [readings, setReadings, clearReadings] = usePersistedState('ptar_readings', {})
+  const [excelData, setExcelData, clearExcelData] = usePersistedState('ptar_excelData', null)
+  
+  // Estados de UI (no persistidos)
   const [excelFile, setExcelFile] = useState(null)
-  const [readings, setReadings] = useState({})
-  const [excelData, setExcelData] = useState(null)
-  
-  // Estados de UI
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  
+  // Función para limpiar todos los datos persistidos
+  const clearAllPersistedData = () => {
+    clearStep()
+    clearSelectedDate()
+    clearSelectedTime()
+    clearReadings()
+    clearExcelData()
+    console.log('✅ Datos persistidos limpiados')
+  }
 
   // Crear nuevo registro de fecha
   const createDateEntry = async () => {
@@ -248,6 +259,11 @@ export default function AddPTARReadingsPage() {
       console.log('✅ Lecturas PTAR guardadas exitosamente:', data)
       setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente`)
       setStep(4)
+      
+      // Limpiar datos persistidos después de guardar exitosamente
+      setTimeout(() => {
+        clearAllPersistedData()
+      }, 3000)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
