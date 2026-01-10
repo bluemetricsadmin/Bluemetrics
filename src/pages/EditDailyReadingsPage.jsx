@@ -12,7 +12,8 @@ import {
   AlertCircleIcon,
   CalendarIcon,
   Loader2Icon,
-  RefreshCwIcon
+  RefreshCwIcon,
+  Trash2Icon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 
@@ -73,6 +74,8 @@ export default function EditDailyReadingsPage() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const pageSize = 50
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Cargar fechas existentes
   useEffect(() => {
@@ -327,6 +330,44 @@ export default function EditDailyReadingsPage() {
     return points
   }
 
+  const deleteReading = async () => {
+    if (!selectedRecordId) {
+      console.warn('⚠️ No hay registro seleccionado para eliminar')
+      return
+    }
+
+    try {
+      setDeleting(true)
+      console.log('🗑️ Eliminando registro ID:', selectedRecordId)
+
+      const { error: deleteError } = await supabase
+        .from('lecturas_diarias')
+        .delete()
+        .eq('id', selectedRecordId)
+
+      if (deleteError) throw deleteError
+
+      console.log('✅ Lectura eliminada exitosamente')
+      
+      // Limpiar estados
+      setSelectedDate(null)
+      setSelectedMonth(null)
+      setSelectedRecordId(null)
+      setAvailableRecords([])
+      setReadings({})
+      setShowDeleteConfirm(false)
+      
+      // Recargar la lista de fechas
+      await fetchExistingDates(currentPage)
+
+    } catch (error) {
+      console.error('❌ Error eliminando lectura:', error)
+      setError(`Error al eliminar: ${error.message}`)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <RedirectIfNotAuth>
       <div className="min-h-screen bg-background">
@@ -559,14 +600,26 @@ export default function EditDailyReadingsPage() {
                               Fecha: {selectedDate}
                             </p>
                           </div>
-                          <Button 
-                            size="sm"
-                            onClick={saveReadings}
-                            disabled={autoSaveStatus === 'saving'}
-                          >
-                            <SaveIcon className="h-4 w-4 mr-2" />
-                            Guardar Ahora
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(true)}
+                              disabled={deleting}
+                              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2Icon className="h-4 w-4 mr-2" />
+                              Eliminar Lectura
+                            </Button>
+                            <Button 
+                              size="sm"
+                              onClick={saveReadings}
+                              disabled={autoSaveStatus === 'saving'}
+                            >
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Ahora
+                            </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -650,6 +703,66 @@ export default function EditDailyReadingsPage() {
           </main>
         </div>
       </div>
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                  <Trash2Icon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Eliminar Lectura Diaria</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Esta acción no se puede deshacer
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-foreground mb-4">
+                  ¿Estás seguro de que deseas eliminar la lectura del día <strong>{selectedDate}</strong>?
+                </p>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <p className="text-xs text-red-800 dark:text-red-200">
+                    <strong>Advertencia:</strong> Se eliminarán permanentemente todas las lecturas de esta fecha.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={deleteReading}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2Icon className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </RedirectIfNotAuth>
   )
 }

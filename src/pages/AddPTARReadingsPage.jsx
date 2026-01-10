@@ -310,6 +310,15 @@ export default function AddPTARReadingsPage() {
     setSuccess(null)
   }
 
+  // Volver a ingresar datos con Excel (mantener en paso 3)
+  const returnToExcelUpload = () => {
+    setExcelFile(null)
+    setReadings({})
+    setExcelData(null)
+    setError(null)
+    setSuccess('Por favor, selecciona un nuevo archivo Excel para cargar los datos')
+  }
+
   // Descargar plantilla de Excel
   const downloadTemplate = () => {
     const templateData = []
@@ -610,23 +619,46 @@ export default function AddPTARReadingsPage() {
                           />
                         </div>
                       </div>
-                      <Button 
-                        size="lg"
-                        onClick={saveReadings}
-                        disabled={loading || progress.completed === 0}
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
-                            Guardando...
-                          </>
-                        ) : (
-                          <>
-                            <SaveIcon className="h-4 w-4 mr-2" />
-                            Guardar Lecturas
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-3">
+                        <label className="inline-block">
+                          <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={(e) => {
+                              returnToExcelUpload()
+                              handleExcelUpload(e)
+                            }}
+                            className="hidden"
+                          />
+                          <Button 
+                            variant="outline"
+                            size="lg"
+                            asChild
+                          >
+                            <span>
+                              <UploadIcon className="h-4 w-4 mr-2" />
+                              Volver a Ingresar Datos
+                            </span>
+                          </Button>
+                        </label>
+                        <Button 
+                          size="lg"
+                          onClick={saveReadings}
+                          disabled={loading || progress.completed === 0}
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                              Guardando...
+                            </>
+                          ) : (
+                            <>
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Lecturas
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
