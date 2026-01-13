@@ -290,3 +290,133 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Slow pulse animation for CTA buttons */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Floating animation for interactive elements */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ============================================================================
+   HERO VIDEO BACKGROUND STYLES
+   ============================================================================
+   Estilos para el video de fondo del Hero Section.
+   El video se posiciona de forma absoluta para cubrir toda la sección.
+*/
+
+.hero-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Mantiene las proporciones del video y cubre todo el área */
+  z-index: 0; /* Detrás de todo el contenido */
+  pointer-events: none; /* Evita que el video capture eventos del mouse */
+}
+
+/* Fallback para navegadores que no soportan object-fit */
+@supports not (object-fit: cover) {
+  .hero-video {
+    min-width: 100%;
+    min-height: 100%;
+  }
+}
+
+/* ============================================================================
+   GSAP ANIMATION UTILITIES
+   ============================================================================
+   Clases de utilidad para elementos que serán animados con GSAP.
+   Estas clases establecen estados iniciales que GSAP puede animar.
+*/
+
+/* Estado inicial para elementos que aparecerán con fade-in */
+.gsap-fade-in {
+  opacity: 0;
+}
+
+/* Estado inicial para elementos que se deslizarán desde abajo */
+.gsap-slide-up {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* Estado inicial para elementos que se deslizarán desde la izquierda */
+.gsap-slide-left {
+  opacity: 0;
+  transform: translateX(-50px);
+}
+
+/* Estado inicial para elementos que se deslizarán desde la derecha */
+.gsap-slide-right {
+  opacity: 0;
+  transform: translateX(50px);
+}
+
+/* ============================================================================
+   MICROINTERACTION STYLES
+   ============================================================================
+   Estilos base para microinteracciones que GSAP mejorará.
+*/
+
+/* Transición suave para elementos interactivos */
+.gsap-interactive {
+  transition: box-shadow 0.3s ease;
+  will-change: transform, box-shadow;
+}
+
+/* Optimización de rendimiento para animaciones */
+.gsap-will-animate {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ============================================================================
+   REDUCED MOTION ACCESSIBILITY
+   ============================================================================
+   Respeta las preferencias del usuario para movimiento reducido.
+   GSAP detectará esto automáticamente, pero estos estilos son un fallback.
+*/
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-video {
+    display: none; /* Oculta el video para usuarios con sensibilidad al movimiento */
+  }
+  
+  .gsap-fade-in,
+  .gsap-slide-up,
+  .gsap-slide-left,
+  .gsap-slide-right {
+    opacity: 1;
+    transform: none;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
