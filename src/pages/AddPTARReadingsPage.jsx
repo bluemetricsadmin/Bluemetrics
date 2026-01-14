@@ -18,6 +18,7 @@ import {
   Droplets
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
+import { usePersistedState } from '../hooks/usePersistedState'
 
 // Definición de puntos de medición para PTAR en orden específico
 const ptarReadingPoints = [
@@ -30,22 +31,32 @@ const ptarReadingPoints = [
 ]
 
 export default function AddPTARReadingsPage() {
-  // Estados principales
-  const [step, setStep] = useState(1) // 1: seleccionar fecha, 2: subir excel, 3: verificar datos, 4: confirmación
+  // Estados principales con persistencia
+  const [step, setStep, clearStep] = usePersistedState('ptar_step', 1)
   
-  // Estados para fecha y hora
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedTime, setSelectedTime] = useState('')
+  // Estados para fecha y hora con persistencia
+  const [selectedDate, setSelectedDate, clearSelectedDate] = usePersistedState('ptar_selectedDate', '')
+  const [selectedTime, setSelectedTime, clearSelectedTime] = usePersistedState('ptar_selectedTime', '')
   
-  // Estados para Excel y datos
+  // Estados para Excel y datos con persistencia
+  const [readings, setReadings, clearReadings] = usePersistedState('ptar_readings', {})
+  const [excelData, setExcelData, clearExcelData] = usePersistedState('ptar_excelData', null)
+  
+  // Estados de UI (no persistidos)
   const [excelFile, setExcelFile] = useState(null)
-  const [readings, setReadings] = useState({})
-  const [excelData, setExcelData] = useState(null)
-  
-  // Estados de UI
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  
+  // Función para limpiar todos los datos persistidos
+  const clearAllPersistedData = () => {
+    clearStep()
+    clearSelectedDate()
+    clearSelectedTime()
+    clearReadings()
+    clearExcelData()
+    console.log('✅ Datos persistidos limpiados')
+  }
 
   // Crear nuevo registro de fecha
   const createDateEntry = async () => {
@@ -248,6 +259,11 @@ export default function AddPTARReadingsPage() {
       console.log('✅ Lecturas PTAR guardadas exitosamente:', data)
       setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente`)
       setStep(4)
+      
+      // Limpiar datos persistidos después de guardar exitosamente
+      setTimeout(() => {
+        clearAllPersistedData()
+      }, 3000)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
@@ -292,6 +308,15 @@ export default function AddPTARReadingsPage() {
     setExcelData(null)
     setError(null)
     setSuccess(null)
+  }
+
+  // Volver a ingresar datos con Excel (mantener en paso 3)
+  const returnToExcelUpload = () => {
+    setExcelFile(null)
+    setReadings({})
+    setExcelData(null)
+    setError(null)
+    setSuccess('Por favor, selecciona un nuevo archivo Excel para cargar los datos')
   }
 
   // Descargar plantilla de Excel
@@ -594,23 +619,46 @@ export default function AddPTARReadingsPage() {
                           />
                         </div>
                       </div>
-                      <Button 
-                        size="lg"
-                        onClick={saveReadings}
-                        disabled={loading || progress.completed === 0}
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
-                            Guardando...
-                          </>
-                        ) : (
-                          <>
-                            <SaveIcon className="h-4 w-4 mr-2" />
-                            Guardar Lecturas
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-3">
+                        <label className="inline-block">
+                          <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={(e) => {
+                              returnToExcelUpload()
+                              handleExcelUpload(e)
+                            }}
+                            className="hidden"
+                          />
+                          <Button 
+                            variant="outline"
+                            size="lg"
+                            asChild
+                          >
+                            <span>
+                              <UploadIcon className="h-4 w-4 mr-2" />
+                              Volver a Ingresar Datos
+                            </span>
+                          </Button>
+                        </label>
+                        <Button 
+                          size="lg"
+                          onClick={saveReadings}
+                          disabled={loading || progress.completed === 0}
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                              Guardando...
+                            </>
+                          ) : (
+                            <>
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Lecturas
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

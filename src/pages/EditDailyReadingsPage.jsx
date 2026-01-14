@@ -12,7 +12,8 @@ import {
   AlertCircleIcon,
   CalendarIcon,
   Loader2Icon,
-  RefreshCwIcon
+  RefreshCwIcon,
+  Trash2Icon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 
@@ -58,6 +59,9 @@ const dailyReadingPointsData = {
 
 export default function EditDailyReadingsPage() {
   const [selectedDate, setSelectedDate] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(null)
+  const [selectedRecordId, setSelectedRecordId] = useState(null)
+  const [availableRecords, setAvailableRecords] = useState([])
   const [readings, setReadings] = useState({})
   const [activeCategory, setActiveCategory] = useState('pozos')
   const [searchTerm, setSearchTerm] = useState('')
@@ -70,6 +74,8 @@ export default function EditDailyReadingsPage() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const pageSize = 50
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Cargar fechas existentes
   useEffect(() => {
@@ -110,29 +116,98 @@ export default function EditDailyReadingsPage() {
     }
   }
 
-  // Cargar lecturas de una fecha específica
+  // Cargar registros disponibles cuando se selecciona una fecha
   useEffect(() => {
-    if (selectedDate) {
-      loadDateReadings(selectedDate)
+    if (selectedDate && selectedMonth) {
+      loadAvailableRecords(selectedDate, selectedMonth)
     }
-  }, [selectedDate])
+  }, [selectedDate, selectedMonth])
 
-  const loadDateReadings = async (dateStr) => {
+  // Cargar lecturas cuando se selecciona un registro específico
+  useEffect(() => {
+    if (selectedRecordId) {
+      loadRecordReadings(selectedRecordId)
+    }
+  }, [selectedRecordId])
+
+  // Cargar todos los registros disponibles para una fecha
+  const loadAvailableRecords = async (dateStr, monthStr) => {
     try {
       setLoading(true)
-      const { data, error: fetchError } = await supabase
+      
+      console.log('🔍 === CARGANDO REGISTROS PARA FECHA ===')
+      console.log('📅 Fecha:', dateStr)
+      console.log('📆 Mes/Año:', monthStr)
+      
+      // Construir la query con AMBOS filtros
+      const query = supabase
         .from('lecturas_diarias')
-        .select('*')
+        .select('id, mes_anio, dia_hora, consumo, general_pozos')
         .eq('dia_hora', dateStr)
-        .single()
+        .eq('mes_anio', monthStr)
+        .order('id', { ascending: false })
+      
+      // Mostrar cómo se envía la query
+      console.log('🔧 === CONSTRUCCIÓN DE LA QUERY ===')
+      console.log('📍 URL Base:', supabase.supabaseUrl)
+      console.log('📊 Tabla:', 'lecturas_diarias')
+      console.log('🔎 Select:', 'id, mes_anio, dia_hora, consumo, general_pozos')
+      console.log('🎯 Filtros eq:', [
+        { columna: 'dia_hora', valor: dateStr },
+        { columna: 'mes_anio', valor: monthStr }
+      ])
+      console.log('📈 Order by:', { columna: 'id', ascending: false })
+      console.log('🌐 Query completa URL aproximada:')
+      console.log(`   ${supabase.supabaseUrl}/rest/v1/lecturas_diarias?select=id,mes_anio,dia_hora,consumo,general_pozos&dia_hora=eq.${encodeURIComponent(dateStr)}&mes_anio=eq.${encodeURIComponent(monthStr)}&order=id.desc`)
+      
+      const { data, error: fetchError } = await query
 
       if (fetchError) {
-        console.log('🆕 Fecha sin datos')
+        console.log('❌ Error al cargar registros:', fetchError)
+        setAvailableRecords([])
         setReadings({})
         return
       }
 
-      console.log('✅ Lecturas cargadas:', data)
+      console.log(`✅ Se encontraron ${data.length} registro(s) para esta fecha`)
+      setAvailableRecords(data || [])
+      
+      // Auto-seleccionar el primer registro (más reciente)
+      if (data && data.length > 0) {
+        setSelectedRecordId(data[0].id)
+      } else {
+        setReadings({})
+      }
+
+    } catch (err) {
+      console.error('❌ Error:', err)
+      setAvailableRecords([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Cargar lecturas de un registro específico por ID
+  const loadRecordReadings = async (recordId) => {
+    try {
+      setLoading(true)
+      
+      console.log('🔍 === CARGANDO DATOS DEL REGISTRO ===')
+      console.log('🆔 ID del registro:', recordId)
+      
+      const { data, error: fetchError } = await supabase
+        .from('lecturas_diarias')
+        .select('*')
+        .eq('id', recordId)
+        .single()
+
+      if (fetchError) {
+        console.log('❌ Error al cargar registro:', fetchError)
+        setReadings({})
+        return
+      }
+
+      console.log('✅ Registro cargado:', data)
 
       const loadedReadings = {}
       dailyReadingPointsData.categories.forEach(category => {
@@ -182,16 +257,14 @@ export default function EditDailyReadingsPage() {
   }, [readings])
 
   const saveReadings = async () => {
-    if (!selectedDate) {
-      console.warn('⚠️ No hay fecha seleccionada')
+    if (!selectedRecordId) {
+      console.warn('⚠️ No hay registro seleccionado')
       return
     }
 
     setAutoSaveStatus('saving')
     try {
-      const readingData = {
-        dia_hora: selectedDate
-      }
+      const readingData = {}
 
       dailyReadingPointsData.categories.forEach(category => {
         category.points.forEach(point => {
@@ -203,12 +276,12 @@ export default function EditDailyReadingsPage() {
         })
       })
 
-      console.log('💾 Guardando datos:', readingData)
+      console.log('💾 Guardando datos para registro ID:', selectedRecordId, readingData)
 
       const { error: updateError } = await supabase
         .from('lecturas_diarias')
         .update(readingData)
-        .eq('dia_hora', selectedDate)
+        .eq('id', selectedRecordId)
 
       if (updateError) throw updateError
       
@@ -255,6 +328,44 @@ export default function EditDailyReadingsPage() {
     }
 
     return points
+  }
+
+  const deleteReading = async () => {
+    if (!selectedRecordId) {
+      console.warn('⚠️ No hay registro seleccionado para eliminar')
+      return
+    }
+
+    try {
+      setDeleting(true)
+      console.log('🗑️ Eliminando registro ID:', selectedRecordId)
+
+      const { error: deleteError } = await supabase
+        .from('lecturas_diarias')
+        .delete()
+        .eq('id', selectedRecordId)
+
+      if (deleteError) throw deleteError
+
+      console.log('✅ Lectura eliminada exitosamente')
+      
+      // Limpiar estados
+      setSelectedDate(null)
+      setSelectedMonth(null)
+      setSelectedRecordId(null)
+      setAvailableRecords([])
+      setReadings({})
+      setShowDeleteConfirm(false)
+      
+      // Recargar la lista de fechas
+      await fetchExistingDates(currentPage)
+
+    } catch (error) {
+      console.error('❌ Error eliminando lectura:', error)
+      setError(`Error al eliminar: ${error.message}`)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -343,7 +454,17 @@ export default function EditDailyReadingsPage() {
                       {existingDates.map(date => (
                         <button
                           key={date.dia_hora}
-                          onClick={() => setSelectedDate(date.dia_hora)}
+                          onClick={() => {
+                            console.log('\n🖱️ === CLICK EN CARTA DE FECHA ===')
+                            console.log('📅 Fecha clickeada:', date.dia_hora)
+                            console.log('📆 Mes/Año clickeado:', date.mes_anio)
+                            console.log('📊 Tipo:', typeof date.dia_hora)
+                            console.log('📏 Longitud:', date.dia_hora?.length)
+                            console.log('🔤 Caracteres:', date.dia_hora?.split(''))
+                            console.log('📋 Objeto completo:', date)
+                            setSelectedDate(date.dia_hora)
+                            setSelectedMonth(date.mes_anio)
+                          }}
                           className={`p-4 rounded-lg border-2 transition-all ${
                             selectedDate === date.dia_hora
                               ? 'border-primary bg-primary/10 shadow-md'
@@ -479,14 +600,26 @@ export default function EditDailyReadingsPage() {
                               Fecha: {selectedDate}
                             </p>
                           </div>
-                          <Button 
-                            size="sm"
-                            onClick={saveReadings}
-                            disabled={autoSaveStatus === 'saving'}
-                          >
-                            <SaveIcon className="h-4 w-4 mr-2" />
-                            Guardar Ahora
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(true)}
+                              disabled={deleting}
+                              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2Icon className="h-4 w-4 mr-2" />
+                              Eliminar Lectura
+                            </Button>
+                            <Button 
+                              size="sm"
+                              onClick={saveReadings}
+                              disabled={autoSaveStatus === 'saving'}
+                            >
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Ahora
+                            </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -570,6 +703,66 @@ export default function EditDailyReadingsPage() {
           </main>
         </div>
       </div>
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                  <Trash2Icon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Eliminar Lectura Diaria</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Esta acción no se puede deshacer
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-foreground mb-4">
+                  ¿Estás seguro de que deseas eliminar la lectura del día <strong>{selectedDate}</strong>?
+                </p>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <p className="text-xs text-red-800 dark:text-red-200">
+                    <strong>Advertencia:</strong> Se eliminarán permanentemente todas las lecturas de esta fecha.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={deleteReading}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2Icon className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </RedirectIfNotAuth>
   )
 }

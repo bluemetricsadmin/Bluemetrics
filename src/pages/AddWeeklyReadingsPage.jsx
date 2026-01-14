@@ -21,35 +21,49 @@ import {
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
 import PointsOrderModal, { applyOrderToCategories } from '../components/PointsOrderModal'
+import { usePersistedState } from '../hooks/usePersistedState'
 
 export default function AddWeeklyReadingsPage() {
-  // Estados principales
-  const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
-  const [step, setStep] = useState(1) // 1: crear semana, 2: subir excel, 3: verificar datos, 4: confirmación
+  // Estados principales con persistencia
+  const [selectedYear, setSelectedYear, clearSelectedYear] = usePersistedState('weekly_selectedYear', DEFAULT_YEAR)
+  const [step, setStep, clearStep] = usePersistedState('weekly_step', 1)
   
-  // Estados para la semana
-  const [weekNumber, setWeekNumber] = useState(null)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  // Estados para la semana con persistencia
+  const [weekNumber, setWeekNumber, clearWeekNumber] = usePersistedState('weekly_weekNumber', null)
+  const [startDate, setStartDate, clearStartDate] = usePersistedState('weekly_startDate', '')
+  const [endDate, setEndDate, clearEndDate] = usePersistedState('weekly_endDate', '')
   
-  // Estados para Excel y datos
-  const [excelFile, setExcelFile] = useState(null)
-  const [readings, setReadings] = useState({})
-  const [excelData, setExcelData] = useState(null)
+  // Estados para Excel y datos con persistencia
+  const [readings, setReadings, clearReadings] = usePersistedState('weekly_readings', {})
+  const [excelData, setExcelData, clearExcelData] = usePersistedState('weekly_excelData', null)
   
-  // Estados para cálculo de consumo
+  // Estados para cálculo de consumo con persistencia
   const [previousWeekReadings, setPreviousWeekReadings] = useState(null)
-  const [consumption, setConsumption] = useState({})
+  const [consumption, setConsumption, clearConsumption] = usePersistedState('weekly_consumption', {})
   
-  // Estados de UI
+  // Estados de UI (no persistidos)
+  const [excelFile, setExcelFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [activeCategory, setActiveCategory] = useState('pozos_servicios')
+  const [activeCategory, setActiveCategory, clearActiveCategory] = usePersistedState('weekly_activeCategory', 'pozos_servicios')
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [orderedCategoriesData, setOrderedCategoriesData] = useState(() => 
     applyOrderToCategories(consumptionPointsData.categories)
   )
+  
+  // Función para limpiar todos los datos persistidos
+  const clearAllPersistedData = () => {
+    clearStep()
+    clearWeekNumber()
+    clearStartDate()
+    clearEndDate()
+    clearReadings()
+    clearExcelData()
+    clearConsumption()
+    clearActiveCategory()
+    console.log('✅ Datos persistidos limpiados')
+  }
 
   // Calcular siguiente número de semana al cargar
   useEffect(() => {
@@ -461,6 +475,11 @@ export default function AddWeeklyReadingsPage() {
       }
       
       setStep(4)
+      
+      // Limpiar datos persistidos después de guardar exitosamente
+      setTimeout(() => {
+        clearAllPersistedData()
+      }, 3000)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
@@ -507,6 +526,16 @@ export default function AddWeeklyReadingsPage() {
     setError(null)
     setSuccess(null)
     fetchNextWeekNumber()
+  }
+
+  // Volver a ingresar datos con Excel (mantener en paso 3)
+  const returnToExcelUpload = () => {
+    setExcelFile(null)
+    setReadings({})
+    setExcelData(null)
+    setConsumption({})
+    setError(null)
+    setSuccess('Por favor, selecciona un nuevo archivo Excel para cargar los datos')
   }
 
   // Manejar cuando se guarda el orden
@@ -855,23 +884,46 @@ export default function AddWeeklyReadingsPage() {
                           />
                         </div>
                       </div>
-                      <Button 
-                        size="lg"
-                        onClick={saveReadings}
-                        disabled={loading || progress.completed === 0}
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
-                            Guardando...
-                          </>
-                        ) : (
-                          <>
-                            <SaveIcon className="h-4 w-4 mr-2" />
-                            Guardar Lecturas
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-3">
+                        <label className="inline-block">
+                          <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={(e) => {
+                              returnToExcelUpload()
+                              handleExcelUpload(e)
+                            }}
+                            className="hidden"
+                          />
+                          <Button 
+                            variant="outline"
+                            size="lg"
+                            asChild
+                          >
+                            <span>
+                              <UploadIcon className="h-4 w-4 mr-2" />
+                              Volver a Ingresar Datos
+                            </span>
+                          </Button>
+                        </label>
+                        <Button 
+                          size="lg"
+                          onClick={saveReadings}
+                          disabled={loading || progress.completed === 0}
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                              Guardando...
+                            </>
+                          ) : (
+                            <>
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Lecturas
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

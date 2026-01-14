@@ -17,6 +17,7 @@ import {
   DownloadIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
+import { usePersistedState } from '../hooks/usePersistedState'
 
 // Definición de categorías y puntos de medición para lecturas diarias
 const dailyReadingPointsData = {
@@ -59,27 +60,39 @@ const dailyReadingPointsData = {
 }
 
 export default function AddDailyReadingsPage() {
-  // Estados principales
-  const [step, setStep] = useState(1) // 1: seleccionar fecha, 2: subir excel, 3: verificar datos, 4: confirmación
+  // Estados principales con persistencia
+  const [step, setStep, clearStep] = usePersistedState('daily_step', 1)
   
-  // Estados para la fecha
-  const [selectedDate, setSelectedDate] = useState('')
-  const [mesAnio, setMesAnio] = useState('')
+  // Estados para la fecha con persistencia
+  const [selectedDate, setSelectedDate, clearSelectedDate] = usePersistedState('daily_selectedDate', '')
+  const [mesAnio, setMesAnio, clearMesAnio] = usePersistedState('daily_mesAnio', '')
   
-  // Estados para Excel y datos
-  const [excelFile, setExcelFile] = useState(null)
-  const [readings, setReadings] = useState({})
-  const [excelData, setExcelData] = useState(null)
+  // Estados para Excel y datos con persistencia
+  const [readings, setReadings, clearReadings] = usePersistedState('daily_readings', {})
+  const [excelData, setExcelData, clearExcelData] = usePersistedState('daily_excelData', null)
   
-  // Estados para cálculo de consumo
+  // Estados para cálculo de consumo con persistencia
   const [previousDayReadings, setPreviousDayReadings] = useState(null)
-  const [consumption, setConsumption] = useState({})
+  const [consumption, setConsumption, clearConsumption] = usePersistedState('daily_consumption', {})
   
-  // Estados de UI
+  // Estados de UI (no persistidos)
+  const [excelFile, setExcelFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [activeCategory, setActiveCategory] = useState('pozos')
+  const [activeCategory, setActiveCategory, clearActiveCategory] = usePersistedState('daily_activeCategory', 'pozos')
+  
+  // Función para limpiar todos los datos persistidos
+  const clearAllPersistedData = () => {
+    clearStep()
+    clearSelectedDate()
+    clearMesAnio()
+    clearReadings()
+    clearExcelData()
+    clearConsumption()
+    clearActiveCategory()
+    console.log('✅ Datos persistidos limpiados')
+  }
 
   // Obtener lecturas del día anterior
   const fetchPreviousDayReadings = async () => {
@@ -438,6 +451,11 @@ export default function AddDailyReadingsPage() {
       console.log('✅ Lecturas guardadas exitosamente:', data)
       setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente`)
       setStep(4)
+      
+      // Limpiar datos persistidos después de guardar exitosamente
+      setTimeout(() => {
+        clearAllPersistedData()
+      }, 3000)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
@@ -473,6 +491,16 @@ export default function AddDailyReadingsPage() {
     setExcelData(null)
     setError(null)
     setSuccess(null)
+  }
+
+  // Volver a ingresar datos con Excel (mantener en paso 3)
+  const returnToExcelUpload = () => {
+    setExcelFile(null)
+    setReadings({})
+    setExcelData(null)
+    setConsumption({})
+    setError(null)
+    setSuccess('Por favor, selecciona un nuevo archivo Excel para cargar los datos')
   }
 
   // Descargar plantilla de Excel
@@ -796,23 +824,46 @@ export default function AddDailyReadingsPage() {
                           />
                         </div>
                       </div>
-                      <Button 
-                        size="lg"
-                        onClick={saveReadings}
-                        disabled={loading || progress.completed === 0}
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
-                            Guardando...
-                          </>
-                        ) : (
-                          <>
-                            <SaveIcon className="h-4 w-4 mr-2" />
-                            Guardar Lecturas
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-3">
+                        <label className="inline-block">
+                          <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={(e) => {
+                              returnToExcelUpload()
+                              handleExcelUpload(e)
+                            }}
+                            className="hidden"
+                          />
+                          <Button 
+                            variant="outline"
+                            size="lg"
+                            asChild
+                          >
+                            <span>
+                              <UploadIcon className="h-4 w-4 mr-2" />
+                              Volver a Ingresar Datos
+                            </span>
+                          </Button>
+                        </label>
+                        <Button 
+                          size="lg"
+                          onClick={saveReadings}
+                          disabled={loading || progress.completed === 0}
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                              Guardando...
+                            </>
+                          ) : (
+                            <>
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Lecturas
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

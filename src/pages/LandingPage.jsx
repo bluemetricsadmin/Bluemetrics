@@ -1,818 +1,1249 @@
+import { useEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import TecIcon from '../assets/tec.svg';
+import LogoBlueMetrics from '../assets/BlueMetrics.png';
 import { useNavigate } from 'react-router';
-import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
-import AquaNetLogo from "../components/svg/AquaNetLogo"
-import AquaNetText from "../components/svg/AquaNetText"
 import { 
   Droplets, 
-  BarChart3, 
-  Shield, 
   Zap, 
-  Target, 
+  Flame, 
+  ChevronDown, 
+  Play, 
+  Download, 
   ArrowRight,
-  CheckCircle,
-  Waves,
-  Users,
-  Globe,
-  Star,
-  Play,
-  Menu,
-  X,
+  Cpu,
+  Wifi,
+  Shield,
+  BarChart3,
+  Clock,
   TrendingUp,
-  Flame
-} from 'lucide-react'
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import ComplexWaterBackground from '../components/WaterBackground'
-import Braveform from '../components/BrevoForm'
+  Menu,
+  X
+} from 'lucide-react';
 
-const LandingPage = () => {
+gsap.registerPlugin(ScrollTrigger);
+
+// ============================================================================
+// DESIGN TOKENS - BlueMetrics Design System
+// ============================================================================
+const colors = {
+  primary: '#0A4C8A',
+  deepBlue: '#08375F',
+  aqua: '#1FB6C9',
+  cyan: '#2EE6FF',
+  darkNavy: '#0B1623',
+  graphite: '#3A3F45',
+  lightGray: '#E6EDF3',
+  white: '#FFFFFF',
+  success: '#00D084',
+  warning: '#FFB020',
+};
+
+// ============================================================================
+// HEADER COMPONENT - Sticky Navigation
+// ============================================================================
+const Header = () => {
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState(null);
+  const headerRef = useRef(null);
+  const menuItemsRef = useRef([]);
+  const underlineRefs = useRef([]);
 
-  const benefits = [
-    {
-      icon: <Droplets className="w-12 h-12 text-cyan-400" />,
-      title: "Control de consumo de recursos en tiempo real",
-      description: "Conoce en tiempo real cómo se utilizan tus recursos, dónde se generan ineficiencias y cómo optimizar cada unidad. Monitoreo continuo de múltiples puntos clave con alertas inteligentes.",
-      iconVisual: <Droplets className="w-16 h-16 text-cyan-400" />,
-      position: "left"
-    },
-    {
-      icon: <BarChart3 className="w-12 h-12 text-blue-400" />,
-      title: "Decisiones basadas en datos",
-      description: "Accede a reportes inteligentes y dashboards intuitivos que facilitan la planeación, cumplimiento regulatorio y la sostenibilidad empresarial. Visualizaciones interactivas y análisis predictivo.",
-      iconVisual: <BarChart3 className="w-16 h-16 text-blue-400" />,
-      position: "right"
-    },
-    {
-      icon: <Zap className="w-12 h-12 text-cyan-400" />,
-      title: "Tecnología con sensores e IA",
-      description: "Integramos sensores, analítica avanzada e inteligencia artificial para garantizar información precisa y soluciones adaptadas a tu operación. Predicciones con machine learning.",
-      iconVisual: <Zap className="w-16 h-16 text-cyan-400" />,
-      position: "left"
-    }
-  ];
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-  const features = [
-    { icon: <Droplets className="w-6 h-6" />, text: "Monitoreo en tiempo real" },
-    { icon: <BarChart3 className="w-6 h-6" />, text: "Análisis predictivo con IA" },
-    { icon: <Shield className="w-6 h-6" />, text: "Cumplimiento regulatorio" },
-    { icon: <Zap className="w-6 h-6" />, text: "Sistema de alertas" },
-  ];
+  useEffect(() => {
+    // Header fade + slide animation on load
+    gsap.fromTo(headerRef.current,
+      { opacity: 0, y: -20 },
+      { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
+    );
 
-  const mainServices = [
-    {
-      icon: <Droplets className="w-12 h-12" />,
-      title: "Agua",
-      description: "Monitoreo y optimización del consumo de agua en tiempo real con análisis predictivo."
-    },
-    {
-      icon: <Zap className="w-12 h-12" />,
-      title: "Electricidad",
-      description: "Gestión inteligente de energía eléctrica para reducir costos y mejorar la eficiencia operativa."
-    },
-    {
-      icon: <Flame className="w-12 h-12" />,
-      title: "Gas",
-      description: "Control y seguimiento del consumo de gas con alertas automáticas y reportes detallados."
-    }
-  ];
-
-  const handleContactRedirect = () => {
-    window.location.href = '/#contact';
-  };
+    // Menu items stagger animation
+    gsap.fromTo(menuItemsRef.current,
+      { opacity: 0, y: -10 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: 'power3.out', delay: 0.3 }
+    );
+  }, []);
 
   const handleLogin = () => {
     navigate('/login');
   };
 
-  const handleDashboardRedirect = () => {
-    console.log('Redirigiendo al dashboard...');
-    setIsNavigating(true);
-    
-    try {
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Error al navegar al dashboard:', error);
-      setIsNavigating(false);
-      // Fallback: redirección manual
-      window.location.href = '/dashboard';
-    }
-    
-    // Resetear el estado después de un tiempo
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 2000);
+  const toggleMobileSubmenu = (index) => {
+    setOpenSubmenu(openSubmenu === index ? null : index);
   };
 
+  const handleNavigation = (path) => {
+    setIsMobileMenuOpen(false);
+    setOpenSubmenu(null);
+    // Scroll to section or navigate
+    const element = document.getElementById(path);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const menuItems = [
+    { label: 'Soluciones', submenu: [
+      { name: 'Agua', path: 'agua-section' },
+      { name: 'Electricidad', path: 'electricidad-section' },
+      { name: 'Gas', path: 'gas-section' }
+    ]},
+    { label: 'Tecnología', submenu: [
+      { name: 'IA Predictiva', path: 'ia-section' },
+      { name: 'Hardware & IoT', path: 'hardware-section' }
+    ]},
+    { label: 'Sectores', submenu: [
+      { name: 'Industrial', path: 'industrial-section' },
+      { name: 'Salud', path: 'salud-section' },
+      { name: 'Campus', path: 'campus-section' }
+    ]},
+    { label: 'Recursos', submenu: [
+      { name: 'Calculadora de ROI', path: 'roi-section' },
+      { name: 'Casos de Éxito', path: 'casos-section' }
+    ]},
+  ];
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 w-full bg-[#0A1628]/95 backdrop-blur-md border-b border-white/10 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <AquaNetLogo className="w-8 h-8" />
-              <AquaNetText className="w-32 h-8" />
-            </div>
-            
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-300 hover:text-cyan-400 transition-colors">Características</a>
-              <a href="#about" className="text-gray-300 hover:text-cyan-400 transition-colors">Nosotros</a>
-             
-              <Button 
-                onClick={handleContactRedirect}
-                variant="outline"
-                size="sm"
-                className="border-cyan-400/50 text-white hover:text-cyan-400 hover:bg-cyan-500/10"
-              >
-                Contacto
-              </Button>
+    <header 
+      ref={headerRef}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        isScrolled 
+          ? 'bg-[#0B1623]/90 backdrop-blur-xl shadow-lg shadow-black/20' 
+          : 'bg-transparent'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <img
+            src={LogoBlueMetrics}
+            alt="BlueMetrics MX"
+            className="h-8 sm:h-10 w-auto object-contain cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          />
 
-              <Button 
-                onClick={handleLogin}
-                variant="default"
-                size="sm"
-                className="bg-blue-600 text-white hover:bg-blue-700"
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-8">
+            {menuItems.map((item, index) => (
+              <div 
+                key={item.label}
+                ref={el => menuItemsRef.current[index] = el}
+                className="relative group"
               >
-                Iniciar sesión
-              </Button>
-            </nav>
+                <button className="text-white/80 hover:text-white transition-colors py-2 flex items-center gap-1 font-medium">
+                  {item.label}
+                  <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+                </button>
+                <span 
+                  ref={el => underlineRefs.current[index] = el}
+                  className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2EE6FF] origin-left scale-x-0"
+                />
+                {/* Dropdown */}
+                <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                  <div className="bg-[#0B1623]/95 backdrop-blur-xl rounded-xl border border-[#2EE6FF]/20 p-2 min-w-[180px] shadow-xl">
+                    {item.submenu.map((sub) => (
+                      <button 
+                        key={sub.name}
+                        onClick={() => handleNavigation(sub.path)}
+                        className="block w-full text-left px-4 py-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                      >
+                        {sub.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </nav>
 
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          {/* CTA Button */}
+          <div className="hidden lg:block">
+            <button 
+              onClick={handleLogin}
+              className="relative px-6 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-[#2EE6FF]/40 text-white font-medium hover:bg-white/20 hover:border-[#2EE6FF]/60 hover:shadow-[0_0_30px_rgba(46,230,255,0.3)] transition-all duration-300"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              Iniciar Sesión
             </button>
           </div>
 
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <div className="md:hidden border-t border-white/10 py-4 bg-[#0A1628]">
-              <nav className="flex flex-col space-y-4">
-                <a href="#features" className="text-gray-300 hover:text-cyan-400 transition-colors">Características</a>
-                <a href="#about" className="text-gray-300 hover:text-cyan-400 transition-colors">Nosotros</a>
-                <a href="#contact" className="text-gray-300 hover:text-cyan-400 transition-colors">Contacto</a>
-                <Button 
-                  onClick={handleContactRedirect}
-                  variant="outline"
-                  size="sm"
-                  className="border-cyan-400/50 text-cyan-400 hover:bg-cyan-500/10 w-fit"
+          {/* Mobile Menu Button */}
+          <button 
+            className="lg:hidden text-white p-2"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        <div 
+          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen ? 'max-h-[80vh] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="mt-4 pb-4 border-t border-white/10 pt-4 bg-[#0B1623]/95 backdrop-blur-xl rounded-b-xl">
+            {menuItems.map((item, index) => (
+              <div key={item.label} className="py-1">
+                <button 
+                  onClick={() => toggleMobileSubmenu(index)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-white font-medium hover:bg-white/5 rounded-lg transition-colors"
                 >
-                  Contacto
-                </Button>
-              </nav>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 relative overflow-hidden bg-gradient-to-br from-[#0A1628] via-[#1A2F5A] to-[#0F1B35] min-h-screen flex items-center">
-        {/* Animated Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)`,
-            backgroundSize: '40px 40px'
-          }}></div>
-        </div>
-
-        {/* Gradient Orbs */}
-        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"></div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="text-center max-w-5xl mx-auto">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-full text-blue-300 text-sm font-medium mb-8"
-            >
-              <Zap className="w-4 h-4" />
-              Inteligencia en Gestión de Recursos
-            </motion.div>
-            
-            {/* Main Heading */}
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6"
-            >
-              <span className="text-white">Bluemetrics: La </span>
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                Inteligencia Hídrica y Energética
-              </span>
-              <span className="text-white"> que su Operación Necesita</span>
-            </motion.h1>
-            
-            {/* Subtitle */}
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-lg sm:text-xl text-gray-300 mb-6 max-w-4xl mx-auto leading-relaxed"
-            >
-              Monitoreo en tiempo real, predicciones con IA y optimización de 100+ puntos de consumo. Transforme sus datos en ahorros y sostenibilidad.
-            </motion.p>
-
-            {/* Target Audience */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="text-base sm:text-lg text-cyan-400 font-medium mb-10"
-            >
-              Diseñado para instalaciones de alto consumo: Campus, Hospitales e Industria
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-            >
-              <Button 
-                onClick={handleContactRedirect}
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-blue-500/50 transition-all duration-300 group flex items-center gap-2"
-              >
-                <Zap className="w-5 h-5" />
-                Agende una Demostración
-              </Button>
-              <Button 
-                onClick={() => {
-                  console.log('Botón Ver Caso de Estudio clickeado');
-                  handleDashboardRedirect();
-                }}
-                variant="outline"
-                size="lg"
-                disabled={isNavigating}
-                className="border-2 border-blue-400/50 text-white hover:text-cyan-400 hover:bg-blue-500/20 px-8 py-6 text-lg rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center gap-2"
-              >
-                {isNavigating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Cargando...
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp className="w-5 h-5" />
-                    Ver Caso de Estudio
-                  </>
-                )}
-              </Button>
-            </motion.div>
-          </div>
-
-          {/* Features Grid */}
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="mt-20 grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto"
-          >
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
-                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 transition-all duration-300"
-              >
-                <div className="text-cyan-400 mb-3 flex justify-center">{feature.icon}</div>
-                <span className="text-white text-sm font-medium">{feature.text}</span>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Benefits Section - Zigzag Layout */}
-      <section id="features" className="py-20 bg-gradient-to-b from-[#0F1B35] to-[#1A2F5A] relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Características <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Principales</span>
-            </h2>
-            <p className="text-xl text-cyan-200">Descubre cómo Bluemetrics transforma la gestión de tus recursos</p>
-          </motion.div>
-
-          {benefits.map((benefit, index) => (
-            <motion.div 
-              key={index} 
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
-              className={`mb-20 ${index === benefits.length - 1 ? 'mb-0' : ''}`}
-            >
-              <div className={`grid lg:grid-cols-2 gap-12 items-center ${benefit.position === 'right' ? 'lg:grid-flow-col-dense' : ''}`}>
-                {/* Content */}
-                <div className={`${benefit.position === 'right' ? 'lg:col-start-2' : ''}`}>
-                  <motion.div 
-                    initial={{ opacity: 0, x: benefit.position === 'right' ? 50 : -50 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="mb-6"
-                  >
-                    {benefit.icon}
-                  </motion.div>
-                  <motion.h3 
-                    initial={{ opacity: 0, x: benefit.position === 'right' ? 50 : -50 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                    className="text-3xl lg:text-4xl font-bold text-white mb-6"
-                  >
-                    {benefit.title}
-                  </motion.h3>
-                  <motion.p 
-                    initial={{ opacity: 0, x: benefit.position === 'right' ? 50 : -50 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.4 }}
-                    className="text-xl text-gray-300 leading-relaxed mb-8"
-                  >
-                    {benefit.description}
-                  </motion.p>
-                  <motion.div
-                    initial={{ opacity: 0, x: benefit.position === 'right' ? 50 : -50 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.5 }}
-                  >
-                    <Button 
-                      onClick={handleContactRedirect}
-                      variant="outline" 
-                      className="border-cyan-400 text-white hover:text-cyan-400 hover:bg-cyan-500/10 backdrop-blur-sm"
-                    >
-                      Conoce más
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </motion.div>
-                </div>
-
-                {/* Visual */}
-                <div className={`${benefit.position === 'right' ? 'lg:col-start-1' : ''}`}>
-                  <motion.div 
-                    initial={{ opacity: 0, x: benefit.position === 'right' ? -50 : 50 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="relative"
-                  >
-                    <div className="bg-gradient-to-br from-cyan-900/20 to-blue-900/20 backdrop-blur-sm border border-cyan-500/20 rounded-2xl p-8 text-center">
-                      <div className="flex justify-center mb-6">{benefit.iconVisual}</div>
-                      <div className="bg-[#0A1628]/80 backdrop-blur-md rounded-xl p-6 shadow-lg border border-white/10">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-cyan-400">
-                              {index === 0 ? '100+' : index === 1 ? '30%' : '99.9%'}
-                            </div>
-                            <div className="text-sm text-gray-400">
-                              {index === 0 ? 'Puntos' : index === 1 ? 'Ahorro' : 'Precisión'}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-400">
-                              {index === 0 ? '24/7' : index === 1 ? '5min' : 'IA'}
-                            </div>
-                            <div className="text-sm text-gray-400">
-                              {index === 0 ? 'Monitoreo' : index === 1 ? 'Reportes' : 'Predicciones'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
+                  {item.label}
+                  <ChevronDown 
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      openSubmenu === index ? 'rotate-180' : ''
+                    }`} 
+                  />
+                </button>
+                <div 
+                  className={`overflow-hidden transition-all duration-300 ${
+                    openSubmenu === index ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <div className="pl-6 pr-4 pb-2 space-y-1">
+                    {item.submenu.map((sub) => (
+                      <button 
+                        key={sub.name}
+                        onClick={() => handleNavigation(sub.path)}
+                        className="block w-full text-left px-4 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm"
+                      >
+                        {sub.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </motion.div>
+            ))}
+            <div className="px-4 pt-4">
+              <button 
+                onClick={handleLogin}
+                className="w-full px-6 py-3 rounded-xl bg-[#2EE6FF]/20 backdrop-blur-md border border-[#2EE6FF]/40 text-white font-medium hover:bg-[#2EE6FF]/30 transition-all duration-300"
+              >
+                Iniciar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+// ============================================================================
+// HERO SECTION - Main Landing Area with Video Background Placeholder
+// ============================================================================
+const HeroSection = () => {
+  const heroRef = useRef(null);
+  const headlineRef = useRef(null);
+  const subheadlineRef = useRef(null);
+  const ctaRef = useRef(null);
+  const specialTextRef = useRef(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Simple fade in for headline (preserve HTML structure)
+      gsap.fromTo(headlineRef.current,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: 0.5 }
+      );
+
+      // Subheadline fade in
+      gsap.fromTo(subheadlineRef.current,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: 1.5 }
+      );
+
+      // CTA buttons animation
+      gsap.fromTo(ctaRef.current.children,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, stagger: 0.2, ease: 'power3.out', delay: 2 }
+      );
+      
+      // Passive floating animation for headline only - smooth and fluid
+      if (headlineRef.current) {
+        gsap.to(headlineRef.current, {
+          y: -10,
+          duration: 6,
+          ease: 'power1.inOut',
+          repeat: -1,
+          yoyo: true,
+          delay: 2.5
+        });
+      }
+      
+      // Continuous subtle animation for special text (50% less bright)
+      if (specialTextRef.current) {
+        gsap.to(specialTextRef.current, {
+          textShadow: '0 0 10px rgba(46, 230, 255, 0.3), 0 0 20px rgba(31, 182, 201, 0.15)',
+          duration: 2,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true
+        });
+      }
+
+    }, heroRef);
+
+    return () => ctx.revert();
+  }, []);
+  
+  const handleSpecialTextHover = (isEntering) => {
+    if (!specialTextRef.current) return;
+    
+    const chars = specialTextRef.current.querySelectorAll('.char');
+    
+    if (isEntering) {
+      // Create living, breathing effect
+      const tl = gsap.timeline();
+      
+      // Wave distortion effect - each letter jumps with elastic bounce
+      chars.forEach((char, i) => {
+        tl.to(char, {
+          y: -20,
+          scale: 1.2,
+          rotationX: 360,
+          duration: 0.7,
+          ease: 'elastic.out(1, 0.3)',
+          delay: i * 0.05
+        }, 0);
+      });
+      
+      // Continuous floating while hovering
+      chars.forEach((char, i) => {
+        gsap.to(char, {
+          y: '+=15',
+          rotation: '+=5',
+          duration: 1.5 + (i * 0.1),
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+          delay: i * 0.1
+        });
+      });
+      
+      // Intense glow effect on the whole span
+      gsap.to(specialTextRef.current, {
+        filter: 'brightness(1.8) saturate(2) drop-shadow(0 0 30px rgba(46, 230, 255, 1)) drop-shadow(0 0 60px rgba(46, 230, 255, 0.8))',
+        duration: 0.4,
+        ease: 'power2.out'
+      });
+      
+    } else {
+      // Return to normal with smooth transition
+      gsap.killTweensOf(chars);
+      
+      chars.forEach((char, i) => {
+        gsap.to(char, {
+          y: 0,
+          scale: 1,
+          rotationX: 0,
+          rotation: 0,
+          duration: 0.8,
+          ease: 'power2.inOut',
+          delay: i * 0.03
+        });
+      });
+      
+      gsap.to(specialTextRef.current, {
+        filter: 'brightness(1) saturate(1) drop-shadow(0 0 20px rgba(46, 230, 255, 0.5))',
+        duration: 0.6,
+        ease: 'power2.inOut'
+      });
+    }
+  };
+
+  return (
+    <section 
+      ref={heroRef}
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0B1623]"
+    >
+      {/* VIDEO BACKGROUND – YouTube Embed */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+        <iframe
+          className="absolute top-1/2 left-1/2 w-[120%] h-[120%] -translate-x-1/2 -translate-y-1/2"
+          src="https://www.youtube.com/embed/c5nEP4V6gyE?autoplay=1&mute=1&loop=1&playlist=c5nEP4V6gyE&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+          title="Background Video"
+          frameBorder="0"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+        />
+      </div>
+
+      {/* Gradient Overlay - Reduced opacity to show more video */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0B1623]/40 via-[#0B1623]/30 to-[#08375F]/50" />
+      
+      {/* Animated Background Elements - Reduced opacity */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#1FB6C9]/5 rounded-full blur-3xl animate-blob" />
+        <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-[#0A4C8A]/10 rounded-full blur-3xl animate-blob animation-delay-2000" />
+        <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-[#2EE6FF]/5 rounded-full blur-3xl animate-blob animation-delay-4000" />
+      </div>
+
+      {/* Grid Pattern Overlay - Removed for better video visibility */}
+
+      {/* Content */}
+      <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
+        <h1 
+          ref={headlineRef}
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 sm:mb-8 leading-tight"
+          style={{ perspective: '1000px' }}
+        >
+          La Era de la{' '}
+          <span 
+            ref={specialTextRef}
+            className="relative inline-block cursor-pointer select-none"
+            onMouseEnter={() => handleSpecialTextHover(true)}
+            onMouseLeave={() => handleSpecialTextHover(false)}
+            style={{ 
+              color: '#2EE6FF',
+              textShadow: '0 0 10px rgba(46, 230, 255, 0.4), 0 0 20px rgba(31, 182, 201, 0.3)',
+              fontWeight: 'bold'
+            }}
+          >
+            {['E','f','i','c','i','e','n','c','i','a',' ','I','n','v','i','s','i','b','l','e'].map((char, i) => (
+              <span 
+                key={i} 
+                className="char"
+                style={{ display: 'inline-block', transformOrigin: 'center center' }}
+              >
+                {char === ' ' ? '\u00A0' : char}
+              </span>
+            ))}
+          </span>
+          .
+        </h1>
+        
+        <p 
+          ref={subheadlineRef}
+          className="text-base sm:text-lg font-bold md:text-xl lg:text-2xl text-white
+                      max-w-4xl mx-auto mb-8 sm:mb-12 leading-relaxed px-2
+                      filter-[drop-shadow(0_2px_6px_rgba(0,0,0,0.4))_drop-shadow(0_0_18px_rgba(56,189,248,0.85))]"
+        >
+          Control absoluto sobre su consumo de <span className="text-[#1FB6C9]">Agua</span>, <span className="text-[#FFB020]">Electricidad</span> y <span className="text-[#00D084]">Gas</span>.<br/>
+          BlueMetrics fusiona Inteligencia Artificial y telemetría avanzada para predecir riesgos, 
+          eliminar desperdicios y garantizar la rentabilidad de su infraestructura crítica.
+        </p>
+
+        <div ref={ctaRef} className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4">
+          {/* Primary CTA - Glassmorphism */}
+          <button className="group relative w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-[#2EE6FF]/40 text-white font-semibold text-base sm:text-lg hover:bg-white/20 hover:border-[#2EE6FF]/80 hover:shadow-[0_0_40px_rgba(46,230,255,0.4)] hover:scale-105 transition-all duration-500 animate-pulse-slow">
+            <span className="relative z-10 flex items-center gap-2">
+              Calcular mi Ahorro Potencial
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </span>
+          </button>
+
+          {/* Secondary CTA */}
+          <button className="group flex items-center gap-2 text-white/80 hover:text-white font-medium text-base sm:text-lg transition-all hover:scale-110">
+            <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center group-hover:border-[#2EE6FF] group-hover:bg-[#2EE6FF]/10 group-hover:rotate-90 transition-all duration-500">
+              <Play className="w-5 h-5 ml-0.5" />
+            </div>
+            Ver Demostración
+          </button>
+        </div>
+      </div>
+
+      {/* Scroll Indicator */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce cursor-pointer hover:scale-125 transition-transform">
+        <ChevronDown className="w-8 h-8 text-white/40 hover:text-[#2EE6FF] transition-colors" />
+      </div>
+
+      {/* Bottom Blur Merge Effect */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08375F] via-[#08375F]/35 to-transparent" />
+        <div className="absolute -inset-6 bg-[#08375F]/10 blur-2xl" />
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// TRIPLE PLAY SECTION - Ecosystem Cards
+// ============================================================================
+const TriplePlaySection = () => {
+  const sectionRef = useRef(null);
+  const titleRef = useRef(null);
+  const cardsRef = useRef([]);
+  const borderRefs = useRef([]);
+  const iconRefs = useRef([]);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Title animation
+      gsap.fromTo(titleRef.current,
+        { opacity: 0, y: 50 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: titleRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none reverse'
+          }
+        }
+      );
+
+      // Cards stagger animation with elastic effect
+      cardsRef.current.forEach((card, index) => {
+        gsap.fromTo(card,
+          { opacity: 0, y: 80, scale: 0.9, rotationY: -15 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            rotationY: 0,
+            duration: 1,
+            ease: 'back.out(1.4)',
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse'
+            },
+            delay: index * 0.2
+          }
+        );
+      });
+      
+      // Continuous floating animation for icons
+      iconRefs.current.forEach((icon, index) => {
+        if (icon) {
+          gsap.to(icon, {
+            y: -15,
+            duration: 2 + index * 0.3,
+            ease: 'sine.inOut',
+            repeat: -1,
+            yoyo: true,
+            delay: index * 0.4
+          });
+        }
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  const handleCardHover = (index, isEntering) => {
+    const tl = gsap.timeline();
+    
+    if (cardsRef.current[index]) {
+      tl.to(cardsRef.current[index], {
+        scale: isEntering ? 1.05 : 1,
+        y: isEntering ? -10 : 0,
+        rotationY: isEntering ? 5 : 0,
+        boxShadow: isEntering 
+          ? '0 25px 50px -12px rgba(46, 230, 255, 0.4)' 
+          : '0 0 0 0 transparent',
+        duration: 0.6,
+        ease: isEntering ? 'back.out(1.7)' : 'power2.inOut'
+      }, 0);
+    }
+    
+    // Animate icon with bounce
+    if (iconRefs.current[index]) {
+      tl.to(iconRefs.current[index], {
+        scale: isEntering ? 1.2 : 1,
+        rotation: isEntering ? 360 : 0,
+        duration: 0.8,
+        ease: isEntering ? 'elastic.out(1, 0.5)' : 'power2.inOut'
+      }, 0);
+    }
+    
+    // Animate border on hover
+    if (borderRefs.current[index]) {
+      const border = borderRefs.current[index];
+      if (isEntering) {
+        tl.fromTo(border,
+          { strokeDashoffset: 1000 },
+          { 
+            strokeDashoffset: 0, 
+            duration: 1.2, 
+            ease: 'power2.inOut'
+          }, 0
+        );
+      } else {
+        tl.to(border, {
+          strokeDashoffset: 1000,
+          duration: 0.6,
+          ease: 'power2.in'
+        }, 0);
+      }
+    }
+  };
+
+  const cards = [
+    {
+      icon: Droplets,
+      title: 'Inteligencia Hídrica',
+      description: 'Detección de fugas en milisegundos y balance hidrológico automatizado.',
+      color: '#1FB6C9',
+      gradient: 'from-[#1FB6C9]/20 to-[#0A4C8A]/20'
+    },
+    {
+      icon: Zap,
+      title: 'Inteligencia Eléctrica',
+      description: 'Predicción de picos de demanda y optimización del factor de potencia.',
+      color: '#FFB020',
+      gradient: 'from-[#FFB020]/20 to-[#0A4C8A]/20'
+    },
+    {
+      icon: Flame,
+      title: 'Inteligencia en Gas',
+      description: 'Monitoreo de flujo volumétrico y alertas críticas fuera de programas de producción.',
+      color: '#00D084',
+      gradient: 'from-[#00D084]/20 to-[#0A4C8A]/20'
+    }
+  ];
+
+  return (
+    <section ref={sectionRef} className="py-32 bg-gradient-to-b from-[#08375F] to-[#0B1623]">
+      <div className="max-w-7xl mx-auto px-6">
+        <div ref={titleRef} className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+            Una plataforma. Tres recursos. <span className="text-[#2EE6FF]">Control total.</span>
+          </h2>
+          <p className="text-xl text-white/60 max-w-2xl mx-auto">
+            Ecosistema integrado para la gestión inteligente de recursos críticos
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {cards.map((card, index) => (
+            <div
+              key={card.title}
+              ref={el => cardsRef.current[index] = el}
+              className={`relative p-8 rounded-3xl bg-gradient-to-br ${card.gradient} backdrop-blur-xl border border-white/10 cursor-pointer transition-all duration-500`}
+              onMouseEnter={() => handleCardHover(index, true)}
+              onMouseLeave={() => handleCardHover(index, false)}
+            >
+              {/* Icon */}
+              <div 
+                ref={el => iconRefs.current[index] = el}
+                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
+                style={{ backgroundColor: `${card.color}20` }}
+              >
+                <card.icon className="w-8 h-8" style={{ color: card.color }} />
+              </div>
+
+              {/* Content */}
+              <h3 className="text-2xl font-bold text-white mb-4">{card.title}</h3>
+              <p className="text-white/60 leading-relaxed">{card.description}</p>
+
+              {/* Hover Glow Effect */}
+              <div 
+                className="absolute inset-0 rounded-3xl opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  background: `radial-gradient(circle at center, ${card.color}10 0%, transparent 80%)`
+                }}
+              />
+              
+              {/* Animated Border */}
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                style={{ overflow: 'visible' }}
+              >
+                <rect
+                  ref={el => borderRefs.current[index] = el}
+                  x="2"
+                  y="2"
+                  width="calc(100% - 4px)"
+                  height="calc(100% - 4px)"
+                  rx="24"
+                  ry="24"
+                  fill="none"
+                  stroke={card.color}
+                  strokeWidth="3"
+                  strokeDasharray="800 200"
+                  strokeDashoffset="1000"
+                  opacity="0.8"
+                />
+              </svg>
+            </div>
           ))}
         </div>
-      </section>
+      </div>
+    </section>
+  );
+};
 
-      {/* Main Services Section - Nuestros principales giros */}
-      <section className="py-20 bg-gradient-to-b from-[#1A2F5A] to-[#0F1B35] relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Nuestros principales <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">giros</span>
+// ============================================================================
+// IA PREDICTION SECTION
+// ============================================================================
+const IAPredictionSection = () => {
+  const sectionRef = useRef(null);
+  const contentRef = useRef(null);
+  const counterRef = useRef(null);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Content reveal animation
+      gsap.fromTo(contentRef.current.children,
+        { opacity: 0, x: -50 },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.8,
+          stagger: 0.2,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: contentRef.current,
+            start: 'top 75%',
+            toggleActions: 'play none none reverse'
+          }
+        }
+      );
+
+      // Counter animation
+      ScrollTrigger.create({
+        trigger: counterRef.current,
+        start: 'top 80%',
+        onEnter: () => {
+          gsap.to({}, {
+            duration: 2,
+            ease: 'power3.out',
+            onUpdate: function() {
+              setCount(Math.round(this.progress() * 2000));
+            }
+          });
+        }
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section ref={sectionRef} className="py-32 bg-[#0B1623] relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#0A4C8A]/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#2EE6FF]/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Content */}
+          <div ref={contentRef}>
+            <span className="inline-block px-4 py-2 rounded-full bg-[#2EE6FF]/10 text-[#2EE6FF] text-sm font-medium mb-6">
+              Inteligencia Artificial
+            </span>
+            
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+              Su infraestructura ahora tiene <span className="text-[#2EE6FF]">voz.</span>
             </h2>
-            <p className="text-xl text-cyan-200">Soluciones integrales para la gestión de recursos</p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            {mainServices.map((service, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                className="relative"
-              >
-                <div className="bg-gradient-to-br from-[#0A1628] to-[#1A2F5A] border-4 border-cyan-500/30 rounded-2xl m-8 p-8 text-center hover:border-cyan-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/20 h-full flex flex-col">
-                  <div className="flex justify-center mb-6">
-                    <div className="w-24 h-24 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full flex items-center justify-center border-2 border-cyan-400/30">
-                      <div className="text-cyan-400">
-                        {service.icon}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-2xl font-bold text-white mb-4">{service.title}</h3>
-                  
-                  <p className="text-gray-300 leading-relaxed flex-grow">
-                    {service.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Us Section */}
-      <section id="about" className="py-20 bg-gradient-to-b from-[#0F1B35] to-[#0A1628] relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-4xl font-bold text-white mb-8"
-          >
-            Quiénes <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">somos</span>
-          </motion.h2>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-6 text-lg text-gray-300 leading-relaxed"
-          >
-            <p>
-              En BlueMetrics creemos que los recursos son el activo más valioso de cualquier operación. 
-              Por eso desarrollamos una plataforma digital que ayuda a empresas, instituciones y 
-              comunidades a medir, analizar y optimizar el uso de agua, electricidad y gas de manera inteligente.
-            </p>
             
-            <p>
-              Nuestra misión es asegurar la sostenibilidad operativa a través de la innovación 
-              tecnológica. Integramos datos en tiempo real, modelos predictivos y herramientas 
-              de fácil uso que impulsan la toma de decisiones responsables y eficientes.
+            <p className="text-lg text-white/60 mb-8 leading-relaxed">
+              Nuestra IA no solo mide; entiende sus procesos, aprende de sus patrones operativos 
+              y anticipa anomalías antes de que se conviertan en pérdidas. Cada sensor alimenta 
+              un cerebro digital que trabaja 24/7 para proteger su inversión.
             </p>
-            
-            <p>
-              Somos un equipo comprometido en generar impacto positivo: económico, social y 
-              ambiental. Con BlueMetrics, transformamos la gestión de recursos en una ventaja 
-              competitiva y un paso firme hacia el futuro.
-            </p>
-          </motion.div>
 
-          {/* Team Values */}
-          <div className="grid md:grid-cols-3 gap-8 mt-16">
-            {[
-              { icon: Users, title: "Equipo Experto", description: "Profesionales especializados en gestión de recursos", color: "blue" },
-              { icon: Globe, title: "Impacto Global", description: "Soluciones que trascienden fronteras", color: "blue" },
-              { icon: Star, title: "Innovación", description: "Tecnología de vanguardia para el futuro", color: "blue" }
-            ].map((value, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
-                className="text-center "
-              >
-                <div className={`w-16 h-16 bg-${value.color}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
-                  <value.icon className={`w-8 h-8 text-${value.color}-600`} />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{value.title}</h3>
-                <p className="text-white">{value.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 relative bg-gradient-to-br from-[#0A1628] via-[#1A2F5A] to-[#0F1B35] overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-fixed" 
-          style={{
-            backgroundImage: 'url(/foto1.png)',
-            backgroundAttachment: 'fixed'
-          }}
-        ></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20"></div>
-        {/* Gradient Orbs */}
-        <div className="absolute top-10 right-10 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
-        <div className="relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              <span className="bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">Resultados</span> que hablan por sí solos
-            </h2>
-            <p className="text-cyan-200 text-lg">
-              Instituciones confían en BlueMetrics para transformar su gestión de recursos
-            </p>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-4 gap-8 text-center text-white">
-            {[
-              { value: "100+", label: "Puntos de Consumo" },
-              { value: "99.9%", label: "Tiempo de Actividad" },
-              { value: "30%", label: "Ahorro en Costos" },
-              { value: "24/7", label: "Monitoreo Continuo" }
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <div className="text-4xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">{stat.value}</div>
-                <div className="text-gray-300">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-b from-[#0F1B35] to-[#1A2F5A] relative overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-4xl font-bold text-white mb-6"
-          >
-            ¿Listo para transformar tu <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">gestión de los recursos?</span>
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl text-gray-300 mb-10"
-          >
-            Únete a las instituciones que ya confían en BlueMetrics para optimizar 
-            sus recursos, construyendo un futuro sostenible.
-          </motion.p>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-          >
-            <Button 
-              onClick={handleContactRedirect}
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 text-lg"
+            {/* Highlight Box */}
+            <div 
+              ref={counterRef}
+              className="p-6 rounded-2xl bg-gradient-to-r from-[#FFB020]/10 to-transparent border-l-4 border-[#FFB020]"
             >
-              Contáctanos
-            </Button>
-            <Button 
-              onClick={handleContactRedirect}
-              variant="outline"
-              size="lg"
-              className="border-cyan-400 text-white hover:text-cyan-400 hover:bg-cyan-500/10 backdrop-blur-sm px-10 py-4 text-lg"
-            >
-              Más información
-            </Button>
-          </motion.div>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-sm text-gray-400 mt-6 flex items-center justify-center gap-4 flex-wrap"
-          >
-            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-cyan-400" /> Sin compromiso</span>
-            <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-cyan-400" /> Configuración en 24 horas</span>
-            <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-cyan-400" /> Soporte especializado</span>
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Contact Section with Form */}
-      <section id="contact" className="py-20 bg-gradient-to-b from-[#1A2F5A] to-[#0F1B35] relative overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-10 right-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-cyan-600/20 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            {/* Icon header */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.5 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-full mb-6 shadow-lg"
-            >
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </motion.div>
-            
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl lg:text-5xl font-bold text-white mb-6"
-            >
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                Contáctanos
-              </span>
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed"
-            >
-              ¿Tienes preguntas? Nos encantaría ayudarte a encontrar la solución perfecta para tu institución.
-              <span className="block mt-2 text-lg text-cyan-400">
-                Transforma tu gestión de recursos con tecnología inteligente.
-              </span>
-            </motion.p>
-          </div>
-          
-          <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              {/* Decorative gradient border */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 rounded-2xl blur opacity-50"></div>
-              <div className="relative bg-[#0A1628] border border-cyan-500/20 rounded-2xl shadow-2xl overflow-hidden">
-                <Braveform />
+              <p className="text-white/80 mb-2">Evite pérdidas invisibles que pueden promediar los</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-bold text-[#FFB020]">${count.toLocaleString()}</span>
+                <span className="text-2xl text-white/60">USD</span>
               </div>
+              <p className="text-white/60 mt-2">por evento no detectado</p>
             </div>
-            
-            {/* Features below form */}
-            <div className="mt-12 grid md:grid-cols-3 gap-6 text-center">
-              {[
-                { icon: "M13 10V3L4 14h7v7l9-11h-7z", title: "Respuesta Rápida", description: "Te contactamos en menos de 24 horas" },
-                { icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", title: "Sin Compromiso", description: "Demo gratuita sin obligaciones" },
-                { icon: "M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z", title: "Soporte Especializado", description: "Equipo experto en gestión energética" }
-              ].map((feature, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.5 + index * 0.1 }}
-                  className="bg-[#0A1628]/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-cyan-500/20">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full mb-4">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={feature.icon} />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                  <p className="text-gray-300">{feature.description}</p>
-                </motion.div>
+          </div>
+
+          {/* Visual Element - AI Brain Visualization */}
+          <div className="relative">
+            <div className="aspect-square rounded-3xl bg-gradient-to-br from-[#0A4C8A]/30 to-[#08375F]/50 border border-white/10 p-8 relative overflow-hidden">
+              {/* Animated Circles */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-64 h-64 rounded-full border border-[#2EE6FF]/20 animate-pulse" />
+                <div className="absolute w-48 h-48 rounded-full border border-[#2EE6FF]/30 animate-pulse animation-delay-2000" />
+                <div className="absolute w-32 h-32 rounded-full border border-[#2EE6FF]/40 animate-pulse animation-delay-4000" />
+                <div className="absolute w-16 h-16 rounded-full bg-[#2EE6FF]/20 flex items-center justify-center">
+                  <Cpu className="w-8 h-8 text-[#2EE6FF]" />
+                </div>
+              </div>
+
+              {/* Data Points */}
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-3 h-3 rounded-full bg-[#2EE6FF] animate-ping"
+                  style={{
+                    top: `${20 + Math.random() * 60}%`,
+                    left: `${20 + Math.random() * 60}%`,
+                    animationDelay: `${i * 0.5}s`,
+                    animationDuration: '2s'
+                  }}
+                />
               ))}
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+};
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-b from-[#0A1628] to-[#050A14] text-white py-16 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center mb-6">
-                <AquaNetLogo className="w-8 h-8 mr-3" />
-                <AquaNetText className="w-32 h-6" />
-              </div>
-              <p className="text-gray-400 max-w-md mb-6">
-                Innovación y datos para un futuro con recursos. Transformamos la gestión de tus recursos
-                a través de tecnología inteligente y soluciones sostenibles.
-              </p>
-                <div className="flex space-x-4">
-                  <Button 
-                    variant="social"
-                    size="sm"
-                    href="https://www.linkedin.com/company/bluemetrics-gestion-h%C3%ADdrica/posts/?feedView=all"
-                    target="_blank"
-                    title="Síguenos en LinkedIn"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                    </svg>
-                  </Button>
-                  
-                  <Button 
-                    variant="social"
-                    size="sm"
-                    href="https://www.facebook.com/people/BlueMetrics/61581174772648/"
-                    target="_blank"
-                    title="Síguenos en Facebook"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                  </Button>
-                  
-                  <Button 
-                    variant="social"
-                    size="sm"
-                    href="https://www.instagram.com/blue_metrics_ai/?igsh=MWg1YzVtY2Y2OGkyOQ%3D%3D#"
-                    target="_blank"
-                    title="Síguenos en Instagram"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.042-3.441.219-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.888-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24c6.624 0 11.99-5.367 11.99-12.013C24.007 5.367 18.641.001 12.017.001z"/>
-                    </svg>
-                  </Button>
-                </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold  mb-6">Plataforma</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Dashboard</button></li>
-                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Pozos</button></li>
-                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Consumo</button></li>
-                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Balance Hídrico</button></li>
-                <li><button onClick={handleContactRedirect} className="hover:text-cyan-400 transition-colors">Consulta</button></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-6">Información</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="hover:text-cyan-400 transition-colors">contacto@bluemetrics.mx</li>
-                <li className="hover:text-cyan-400 transition-colors">+52 844 544 7606</li>
-                <li className="hover:text-cyan-400 transition-colors">Soporte 24/7</li>
-                <li>
-                  <Button 
-                    onClick={handleContactRedirect}
-                    size="sm"
-                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white mt-2"
-                  >
-                    Contáctanos
-                  </Button>
-                </li>
-              </ul>
-            </div>
+// ============================================================================
+// ROI ENGINE SECTION - Interactive Calculator
+// ============================================================================
+const ROIEngineSection = () => {
+  const sectionRef = useRef(null);
+  const [industry, setIndustry] = useState(50);
+  const [monthlySpend, setMonthlySpend] = useState(50000);
+  const [squareMeters, setSquareMeters] = useState(5000);
+
+  // Simulated ROI calculations
+  const savingsPercent = 15 + (industry / 100) * 10;
+  const annualSavings = Math.round(monthlySpend * 12 * (savingsPercent / 100));
+  const paybackMonths = Math.round((monthlySpend * 2) / (annualSavings / 12));
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(sectionRef.current.querySelector('.roi-content'),
+        { opacity: 0, y: 50 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 70%',
+            toggleActions: 'play none none reverse'
+          }
+        }
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  const industries = ['Manufactura', 'Hospitalario', 'Educación', 'Comercial', 'Industrial'];
+
+  return (
+    <section ref={sectionRef} className="py-32 bg-gradient-to-b from-[#0B1623] to-[#08375F]">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="roi-content">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <span className="inline-block px-4 py-2 rounded-full bg-[#00D084]/10 text-[#00D084] text-sm font-medium mb-6">
+              ROI Engine
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              BlueMetrics <span className="text-[#2EE6FF]">ROI Engine</span>
+            </h2>
+            <p className="text-xl text-white/60 max-w-2xl mx-auto">
+              Calcule su potencial de ahorro en menos de 60 segundos
+            </p>
           </div>
-          
-          <div className="border-t border-white/10 mt-12 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">
-                © 2024 BlueMetrics. Todos los derechos reservados.
-              </p>
-              <p className="text-gray-500 text-sm mt-2 md:mt-0">
-                Innovación y datos para un futuro con recursos.
-              </p>
+
+          {/* Calculator Interface */}
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Inputs */}
+            <div className="space-y-8 p-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10">
+              {/* Industry Slider */}
+              <div>
+                <label className="block text-white font-medium mb-4">Tipo de Industria</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={industry}
+                  onChange={(e) => setIndustry(Number(e.target.value))}
+                  className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#2EE6FF] [&::-webkit-slider-thumb]:shadow-[0_0_20px_rgba(46,230,255,0.5)]"
+                />
+                <div className="flex justify-between mt-2 text-sm text-white/40">
+                  {industries.map((ind, i) => (
+                    <span key={ind} className={industry >= (i * 25) && industry < ((i + 1) * 25) ? 'text-[#2EE6FF]' : ''}>
+                      {ind}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Monthly Spend Slider */}
+              <div>
+                <label className="block text-white font-medium mb-4">
+                  Gasto Mensual en Servicios: <span className="text-[#2EE6FF]">${monthlySpend.toLocaleString()} MXN</span>
+                </label>
+                <input
+                  type="range"
+                  min="10000"
+                  max="500000"
+                  step="5000"
+                  value={monthlySpend}
+                  onChange={(e) => setMonthlySpend(Number(e.target.value))}
+                  className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#2EE6FF] [&::-webkit-slider-thumb]:shadow-[0_0_20px_rgba(46,230,255,0.5)]"
+                />
+              </div>
+
+              {/* Square Meters Slider */}
+              <div>
+                <label className="block text-white font-medium mb-4">
+                  Metros Cuadrados: <span className="text-[#2EE6FF]">{squareMeters.toLocaleString()} m²</span>
+                </label>
+                <input
+                  type="range"
+                  min="500"
+                  max="50000"
+                  step="500"
+                  value={squareMeters}
+                  onChange={(e) => setSquareMeters(Number(e.target.value))}
+                  className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#2EE6FF] [&::-webkit-slider-thumb]:shadow-[0_0_20px_rgba(46,230,255,0.5)]"
+                />
+              </div>
+            </div>
+
+            {/* Results */}
+            <div className="p-8 rounded-3xl bg-gradient-to-br from-[#0A4C8A]/30 to-[#08375F]/50 border border-[#2EE6FF]/20 relative overflow-hidden">
+              {/* Glow Effect */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#2EE6FF]/10 rounded-full blur-3xl" />
+              
+              <div className="relative z-10">
+                <h3 className="text-2xl font-bold text-white mb-8">Resultados Proyectados</h3>
+
+                {/* Savings Chart Placeholder */}
+                <div className="mb-8">
+                  <div className="flex items-end gap-2 h-32">
+                    {[...Array(12)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 bg-gradient-to-t from-[#2EE6FF] to-[#0A4C8A] rounded-t-lg transition-all duration-500"
+                        style={{ height: `${30 + (i * 5) + Math.random() * 20}%` }}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex justify-between mt-2 text-xs text-white/40">
+                    <span>Ene</span>
+                    <span>Jun</span>
+                    <span>Dic</span>
+                  </div>
+                </div>
+
+                {/* Key Metrics */}
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div className="p-4 rounded-xl bg-white/5">
+                    <div className="flex items-center gap-2 text-white/60 mb-2">
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-sm">Ahorro a 12 meses</span>
+                    </div>
+                    <p className="text-3xl font-bold text-[#00D084]">
+                      ${annualSavings.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/5">
+                    <div className="flex items-center gap-2 text-white/60 mb-2">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm">Tiempo de recuperación</span>
+                    </div>
+                    <p className="text-3xl font-bold text-[#2EE6FF]">
+                      {paybackMonths} meses
+                    </p>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <button className="w-full py-4 rounded-xl bg-gradient-to-r from-[#0A4C8A] to-[#1FB6C9] text-white font-semibold flex items-center justify-center gap-2 hover:shadow-[0_0_30px_rgba(31,182,201,0.4)] transition-all duration-300">
+                  <Download className="w-5 h-5" />
+                  Descargar reporte personalizado (PDF)
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </footer>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// TECHNOLOGY SECTION
+// ============================================================================
+const TechnologySection = () => {
+  const sectionRef = useRef(null);
+  const cardsRef = useRef([]);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      cardsRef.current.forEach((card, index) => {
+        gsap.fromTo(card,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse'
+            },
+            delay: index * 0.1
+          }
+        );
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  const techFeatures = [
+    { icon: Cpu, title: 'IA Predictiva', description: 'Algoritmos de machine learning entrenados con millones de datos operativos' },
+    { icon: Wifi, title: 'IoT Industrial', description: 'Sensores de grado industrial con conectividad redundante' },
+    { icon: Shield, title: 'Seguridad Enterprise', description: 'Encriptación end-to-end y cumplimiento SOC 2' },
+    { icon: BarChart3, title: 'Analytics Avanzado', description: 'Dashboards personalizables con exportación a SAP' },
+  ];
+
+  return (
+    <section ref={sectionRef} className="py-32 bg-[#08375F]">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Hardware inteligente. <span className="text-[#2EE6FF]">Software de clase mundial.</span>
+          </h2>
+          <p className="text-xl text-white/60 max-w-3xl mx-auto">
+            Infraestructura agnóstica que se integra con sus sistemas existentes. 
+            Sensores IoT de última generación con integración futura a SAP y otros ERPs.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {techFeatures.map((feature, index) => (
+            <div
+              key={feature.title}
+              ref={el => cardsRef.current[index] = el}
+              className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-[#2EE6FF]/30 hover:bg-white/10 transition-all duration-300 group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-[#2EE6FF]/10 flex items-center justify-center mb-4 group-hover:bg-[#2EE6FF]/20 transition-colors">
+                <feature.icon className="w-6 h-6 text-[#2EE6FF]" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+              <p className="text-white/50 text-sm">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// SOCIAL PROOF SECTION
+// ============================================================================
+const SocialProofSection = () => {
+  const sectionRef = useRef(null);
+  const logosRef = useRef([]);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      logosRef.current.forEach((logo, index) => {
+        gsap.fromTo(logo,
+          { opacity: 0, scale: 0.8 },
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 0.5,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: logo,
+              start: 'top 90%',
+              toggleActions: 'play none none reverse'
+            },
+            delay: index * 0.1
+          }
+        );
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section ref={sectionRef} className="py-32 bg-gradient-to-b from-[#08375F] to-[#0B1623]">
+      <div className="max-w-7xl mx-auto px-6 ">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Validado por <span className="text-[#2EE6FF]">líderes de la industria.</span>
+          </h2>
+        </div>
+
+        {/* Testimonial */}
+        <div className="max-w-4xl mx-auto transition-all duration-300
+                        hover:drop-shadow-[0_0_18px_rgba(56,189,248,0.85)]">
+          <div className="p-8 md:p-12 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 relative">
+            <div className="absolute -top-4 left-8 text-6xl text-[#2EE6FF]/30">"</div>
+            <blockquote className="text-xl md:text-2xl text-white/80 leading-relaxed mb-6 relative z-10">
+              BlueMetrics transformó nuestra gestión de recursos. En 6 meses redujimos un 23% 
+              nuestro consumo de agua y detectamos fugas que nos costaban más de $50,000 USD anuales.
+            </blockquote>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1FB6C9] to-[#0A4C8A] flex items-center justify-center p-2">
+                <img src={TecIcon} alt="Tec" className="w-full h-full object-contain brightness-0 invert" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Director de Operaciones</p>
+                <p className="text-white/50">Tec de Monterrey</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
+// FOOTER SECTION
+// ============================================================================
+const FooterSection = () => {
+  const footerRef = useRef(null);
+  const ctaRef = useRef(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(ctaRef.current,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: ctaRef.current,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse'
+          }
+        }
+      );
+    }, footerRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <footer ref={footerRef} className="bg-[#0B1623] border-t border-white/10">
+      {/* Final CTA */}
+      <div ref={ctaRef} className="py-24 text-center">
+        <div className="max-w-4xl mx-auto px-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Deje de gestionar recibos. <br />
+            <span className="text-[#2EE6FF]">Empiece a gestionar datos.</span>
+          </h2>
+          
+          <button className="mt-8 px-10 py-5 rounded-2xl bg-gradient-to-r from-[#0A4C8A] to-[#1FB6C9] text-white font-semibold text-lg hover:shadow-[0_0_40px_rgba(31,182,201,0.5)] transition-all duration-500 group">
+            <span className="flex items-center gap-2">
+              Comenzar mi transformación digital
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </span>
+          </button>
+
+          <p className="mt-6 text-white/40">
+            Instalación ágil. Interfaz intuitiva. Resultados garantizados.
+          </p>
+        </div>
+      </div>
+
+      {/* Footer Links */}
+      <div className="border-t border-white/10 py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src={LogoBlueMetrics}
+                  alt="BlueMetrics MX"
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
+              <p className="text-white/40 text-sm">
+                Inteligencia invisible que protege recursos críticos.
+              </p>
+            </div>
+
+            {/* Links */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Soluciones</h4>
+              <ul className="space-y-2 text-white/50 text-sm">
+                <li><a href="#" className="hover:text-white transition-colors">Agua</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Electricidad</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Gas</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-4">Empresa</h4>
+              <ul className="space-y-2 text-white/50 text-sm">
+                <li><a href="#" className="hover:text-white transition-colors">Nosotros</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Casos de Éxito</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contacto</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2 text-white/50 text-sm">
+                <li><a href="#" className="hover:text-white transition-colors">Privacidad</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Términos</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-white/30 text-sm">
+              © 2026 BlueMetrics MX. Todos los derechos reservados.
+            </p>
+            <div className="flex gap-4">
+              <a href="#" className="text-white/30 hover:text-white transition-colors text-sm">LinkedIn</a>
+              <a href="#" className="text-white/30 hover:text-white transition-colors text-sm">Twitter</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+// ============================================================================
+// MAIN LANDING PAGE COMPONENT
+// ============================================================================
+const LandingPage = () => {
+  useEffect(() => {
+    // Smooth scroll behavior
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    // Cleanup ScrollTrigger on unmount
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, []);
+
+  return (
+    <div className="bg-[#0B1623] min-h-screen font-['Inter',sans-serif]">
+      <Header />
+      <HeroSection />
+      <TriplePlaySection />
+      <IAPredictionSection />
+      <ROIEngineSection />
+      <TechnologySection />
+      <SocialProofSection />
+      <FooterSection />
     </div>
   );
 };
