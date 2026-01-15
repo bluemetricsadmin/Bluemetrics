@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS lecturas_mensuales_agua (
   
   -- Puntos de medición (mismos que lecturas_semana_agua_2026)
   l_medidor_general_pozos NUMERIC,
-  l_pozo_11 NUMERIC,
+  l_pozo_11 NUMERIC,wsaswd
   l_pozo_14 NUMERIC,
   l_pozo_12 NUMERIC,
   l_pozo_7 NUMERIC,
