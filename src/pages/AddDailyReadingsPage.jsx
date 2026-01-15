@@ -64,8 +64,13 @@ export default function AddDailyReadingsPage() {
   const [step, setStep, clearStep] = usePersistedState('daily_step', 1)
   
   // Estados para la fecha con persistencia
-  const [selectedDate, setSelectedDate, clearSelectedDate] = usePersistedState('daily_selectedDate', '')
+  const [selectedMonth, setSelectedMonth, clearSelectedMonth] = usePersistedState('daily_selectedMonth', '')
+  const [selectedYear, setSelectedYear, clearSelectedYear] = usePersistedState('daily_selectedYear', '')
+  const [selectedDay, setSelectedDay, clearSelectedDay] = usePersistedState('daily_selectedDay', '')
+  const [selectedDayName, setSelectedDayName, clearSelectedDayName] = usePersistedState('daily_selectedDayName', '')
+  const [selectedHour, setSelectedHour, clearSelectedHour] = usePersistedState('daily_selectedHour', '09:00')
   const [mesAnio, setMesAnio, clearMesAnio] = usePersistedState('daily_mesAnio', '')
+  const [diaHora, setDiaHora, clearDiaHora] = usePersistedState('daily_diaHora', '')
   
   // Estados para Excel y datos con persistencia
   const [readings, setReadings, clearReadings] = usePersistedState('daily_readings', {})
@@ -85,8 +90,13 @@ export default function AddDailyReadingsPage() {
   // Función para limpiar todos los datos persistidos
   const clearAllPersistedData = () => {
     clearStep()
-    clearSelectedDate()
+    clearSelectedMonth()
+    clearSelectedYear()
+    clearSelectedDay()
+    clearSelectedDayName()
+    clearSelectedHour()
     clearMesAnio()
+    clearDiaHora()
     clearReadings()
     clearExcelData()
     clearConsumption()
@@ -96,36 +106,33 @@ export default function AddDailyReadingsPage() {
 
   // Obtener lecturas del día anterior
   const fetchPreviousDayReadings = async () => {
-    if (!selectedDate) {
+    if (!diaHora || !mesAnio) {
       setPreviousDayReadings(null)
       console.log('ℹ️ No hay fecha seleccionada')
       return null
     }
 
     try {
-      const currentDate = new Date(selectedDate)
-      const previousDate = new Date(currentDate)
-      previousDate.setDate(previousDate.getDate() - 1)
-      const previousDateStr = previousDate.toISOString().split('T')[0]
-      
+      // Buscar la última lectura del mismo mes/año
       const { data, error: fetchError } = await supabase
         .from('lecturas_diarias')
         .select('*')
-        .eq('dia_hora', previousDateStr)
-        .single()
+        .eq('mes_anio', mesAnio)
+        .order('id', { ascending: false })
+        .limit(2)
 
-      if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
-          console.log('ℹ️ No existe lectura del día anterior:', previousDateStr)
-          setPreviousDayReadings(null)
-          return null
-        }
-        throw fetchError
+      if (fetchError) throw fetchError
+
+      // Si hay al menos 2 registros, usar el segundo (el anterior)
+      if (data && data.length >= 2) {
+        setPreviousDayReadings(data[1])
+        console.log('✅ Lecturas del día anterior cargadas:', data[1].dia_hora)
+        return data[1]
       }
 
-      setPreviousDayReadings(data)
-      console.log('✅ Lecturas del día anterior cargadas:', previousDateStr)
-      return data
+      console.log('ℹ️ No existe lectura del día anterior')
+      setPreviousDayReadings(null)
+      return null
     } catch (err) {
       console.error('❌ Error al obtener día anterior:', err)
       setPreviousDayReadings(null)
@@ -135,8 +142,8 @@ export default function AddDailyReadingsPage() {
 
   // Crear nuevo registro de fecha
   const createDateEntry = async () => {
-    if (!selectedDate) {
-      setError('Por favor selecciona una fecha')
+    if (!selectedMonth || !selectedYear || !selectedDay || !selectedDayName || !selectedHour) {
+      setError('Por favor completa todos los campos de fecha y hora')
       return
     }
 
@@ -144,34 +151,36 @@ export default function AddDailyReadingsPage() {
       setLoading(true)
       setError(null)
 
-      // Calcular mes_anio
-      const date = new Date(selectedDate)
-      const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
-                     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-      const mesAnioStr = `${meses[date.getMonth()]} ${date.getFullYear()}`
+      // Construir mes_anio: "enero 2026"
+      const mesAnioStr = `${selectedMonth} ${selectedYear}`
       setMesAnio(mesAnioStr)
+      
+      // Construir dia_hora: "Lun12 09:00"
+      const diaHoraStr = `${selectedDayName}${selectedDay} ${selectedHour}`
+      setDiaHora(diaHoraStr)
       
       // Verificar si ya existe
       const { data: existing } = await supabase
         .from('lecturas_diarias')
         .select('id')
-        .eq('dia_hora', selectedDate)
+        .eq('dia_hora', diaHoraStr)
+        .eq('mes_anio', mesAnioStr)
         .single()
 
       if (existing) {
-        setSuccess(`Fecha ${selectedDate} ya existe. Puedes editarla.`)
+        setSuccess(`Fecha ${diaHoraStr} ya existe. Puedes editarla.`)
       } else {
         // Crear la entrada
         const { error: insertError } = await supabase
           .from('lecturas_diarias')
           .insert([{
-            dia_hora: selectedDate,
+            dia_hora: diaHoraStr,
             mes_anio: mesAnioStr
           }])
 
         if (insertError) throw insertError
-        console.log('✅ Entrada de fecha creada:', selectedDate)
-        setSuccess(`Fecha ${selectedDate} creada exitosamente`)
+        console.log('✅ Entrada de fecha creada:', diaHoraStr)
+        setSuccess(`Fecha ${diaHoraStr} creada exitosamente`)
       }
 
       setStep(2)
@@ -686,23 +695,118 @@ export default function AddDailyReadingsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    {/* Mes y Año */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Mes
+                        </label>
+                        <select
+                          value={selectedMonth}
+                          onChange={(e) => setSelectedMonth(e.target.value)}
+                          className="w-full px-4 py-3 border border-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="">Seleccionar mes</option>
+                          <option value="enero">Enero</option>
+                          <option value="febrero">Febrero</option>
+                          <option value="marzo">Marzo</option>
+                          <option value="abril">Abril</option>
+                          <option value="mayo">Mayo</option>
+                          <option value="junio">Junio</option>
+                          <option value="julio">Julio</option>
+                          <option value="agosto">Agosto</option>
+                          <option value="septiembre">Septiembre</option>
+                          <option value="octubre">Octubre</option>
+                          <option value="noviembre">Noviembre</option>
+                          <option value="diciembre">Diciembre</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Año
+                        </label>
+                        <select
+                          value={selectedYear}
+                          onChange={(e) => setSelectedYear(e.target.value)}
+                          className="w-full px-4 py-3 border border-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="">Seleccionar año</option>
+                          <option value="2026">2026</option>
+                          <option value="2025">2025</option>
+                          <option value="2024">2024</option>
+                          <option value="2023">2023</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Día de la semana y número */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Día de la semana
+                        </label>
+                        <select
+                          value={selectedDayName}
+                          onChange={(e) => setSelectedDayName(e.target.value)}
+                          className="w-full px-4 py-3 border border-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="">Seleccionar día</option>
+                          <option value="Lun">Lunes</option>
+                          <option value="mar">Martes</option>
+                          <option value="Mie">Miércoles</option>
+                          <option value="Jue">Jueves</option>
+                          <option value="Vie">Viernes</option>
+                          <option value="Sab">Sábado</option>
+                          <option value="Dom">Domingo</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Número del día
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={selectedDay}
+                          onChange={(e) => setSelectedDay(e.target.value)}
+                          placeholder="Ej: 12"
+                          className="w-full px-4 py-3 border border-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Hora */}
                     <div>
                       <label className="block text-sm font-medium mb-2">
-                        Fecha de la Lectura
+                        Hora
                       </label>
                       <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
+                        type="time"
+                        value={selectedHour}
+                        onChange={(e) => setSelectedHour(e.target.value)}
                         className="w-full px-4 py-3 border border-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
+
+                    {/* Vista previa del formato */}
+                    {selectedMonth && selectedYear && selectedDay && selectedDayName && selectedHour && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Vista previa:</p>
+                        <p className="text-xs text-blue-800 dark:text-blue-200">
+                          <strong>Mes/Año:</strong> {selectedMonth} {selectedYear}
+                        </p>
+                        <p className="text-xs text-blue-800 dark:text-blue-200">
+                          <strong>Día/Hora:</strong> {selectedDayName}{selectedDay} {selectedHour}
+                        </p>
+                      </div>
+                    )}
 
                     <Button 
                       className="w-full mt-4" 
                       size="lg"
                       onClick={createDateEntry}
-                      disabled={loading || !selectedDate}
+                      disabled={loading || !selectedMonth || !selectedYear || !selectedDay || !selectedDayName || !selectedHour}
                     >
                       {loading ? (
                         <>
@@ -730,7 +834,7 @@ export default function AddDailyReadingsPage() {
                     <div>
                       <h3 className="text-xl font-semibold">Paso 2: Subir Archivo Excel</h3>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Fecha: {selectedDate}
+                        Fecha: {diaHora} ({mesAnio})
                       </p>
                     </div>
                   </div>

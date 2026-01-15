@@ -48,6 +48,12 @@ import DailyReadingsPage from './pages/DailyReadingsPage'
 import AnalysisSectionPage from './pages/AnalysisSectionPage'
 import ErrorPage from './pages/ErrorPage'
 
+// Lecturas Mensuales de Agua
+import MonthlyWaterConsumptionPage from './pages/MonthlyWaterConsumptionPage'
+import AddMonthlyWaterReadingsPage from './pages/AddMonthlyWaterReadingsPage'
+import EditMonthlyWaterReadingsPage from './pages/EditMonthlyWaterReadingsPage'
+import ExcelToSqlMonthlyWater from './pages/ExcelToSql/ExcelToSqlMonthlyWater'
+
 
 function App() {
   return (
@@ -92,6 +98,12 @@ function App() {
         <Route path="/editar-lecturas-gas" element={<DataRoute><EditGasReadingsPage /></DataRoute>} />
         <Route path="/agregar-lecturas-ptar" element={<DataRoute><AddPTARReadingsPage /></DataRoute>} />
         <Route path="/editar-lecturas-ptar" element={<DataRoute><EditPTARReadingsPage /></DataRoute>} />
+        
+        {/* Rutas de Lecturas Mensuales de Agua */}
+        <Route path="/consumo-mensual-agua" element={<PermissionRoute permission="water"><MonthlyWaterConsumptionPage /></PermissionRoute>} />
+        <Route path="/agregar-lecturas-mensuales-agua" element={<DataRoute><AddMonthlyWaterReadingsPage /></DataRoute>} />
+        <Route path="/editar-lecturas-mensuales-agua" element={<DataRoute><EditMonthlyWaterReadingsPage /></DataRoute>} />
+        
         <Route path="/excel-to-sql" element={<DataRoute><ExcelToSqlPage /></DataRoute>} />
         <Route path="/excel-to-sql/agua/2023" element={<DataRoute><ExcelToSqlAgua2023 /></DataRoute>} />
         <Route path="/excel-to-sql/agua/2024" element={<DataRoute><ExcelToSqlAgua2024 /></DataRoute>} />
@@ -101,6 +113,7 @@ function App() {
         <Route path="/excel-to-sql/gas/2025" element={<DataRoute><ExcelToSqlGas2025 /></DataRoute>} />
         <Route path="/excel-to-sql/gas/2025/comedor-tec-food" element={<DataRoute><GasComedorTecFoodPage /></DataRoute>} />
         <Route path="/excel-to-sql/ptar" element={<DataRoute><ExcelToSqlPTAR /></DataRoute>} />
+        <Route path="/excel-to-sql/agua-mensual" element={<DataRoute><ExcelToSqlMonthlyWater /></DataRoute>} />
         <Route path="/csv-to-sql-daily" element={<DataRoute><CsvToSqlDailyPage /></DataRoute>} />
 
         {/* Rutas exclusivas de admin - solo rol admin */}

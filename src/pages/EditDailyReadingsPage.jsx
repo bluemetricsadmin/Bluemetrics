@@ -76,29 +76,55 @@ export default function EditDailyReadingsPage() {
   const pageSize = 50
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [filterYear, setFilterYear] = useState('')
+  const [filterMonth, setFilterMonth] = useState('')
 
   // Cargar fechas existentes
   useEffect(() => {
     fetchExistingDates(0)
   }, [])
 
+  // Recargar cuando cambian los filtros
+  useEffect(() => {
+    fetchExistingDates(0)
+  }, [filterYear, filterMonth])
+
   const fetchExistingDates = async (page = 0) => {
     try {
       setLoading(true)
       setError(null)
       
-      // Obtener total de registros
-      const { count, error: countError } = await supabase
+      // Construir query base
+      let countQuery = supabase
         .from('lecturas_diarias')
         .select('*', { count: 'exact', head: true })
+      
+      let dataQuery = supabase
+        .from('lecturas_diarias')
+        .select('dia_hora, mes_anio, id')
+      
+      // Aplicar filtros si existen
+      // Formato real en DB: mes_anio = "enero 2026" (minúsculas)
+      if (filterYear && filterMonth) {
+        const filterValue = `${filterMonth.toLowerCase()} ${filterYear}`
+        countQuery = countQuery.eq('mes_anio', filterValue)
+        dataQuery = dataQuery.eq('mes_anio', filterValue)
+      } else if (filterYear) {
+        countQuery = countQuery.like('mes_anio', `% ${filterYear}`)
+        dataQuery = dataQuery.like('mes_anio', `% ${filterYear}`)
+      } else if (filterMonth) {
+        countQuery = countQuery.like('mes_anio', `${filterMonth.toLowerCase()} %`)
+        dataQuery = dataQuery.like('mes_anio', `${filterMonth.toLowerCase()} %`)
+      }
+      
+      // Obtener total de registros
+      const { count, error: countError } = await countQuery
       
       if (countError) throw countError
       setTotalCount(count || 0)
       
       // Obtener datos con paginación
-      const { data, error: fetchError } = await supabase
-        .from('lecturas_diarias')
-        .select('dia_hora, mes_anio, id')
+      const { data, error: fetchError } = await dataQuery
         .order('id', { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1)
 
@@ -409,6 +435,47 @@ export default function EditDailyReadingsPage() {
                         Error
                       </span>
                     )}
+                  </div>
+
+                  {/* Filtros de Año y Mes */}
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={filterYear}
+                      onChange={(e) => {
+                        setFilterYear(e.target.value)
+                        setCurrentPage(0)
+                      }}
+                      className="px-3 py-1.5 text-sm border rounded-md bg-background"
+                    >
+                      <option value="">Todos los años</option>
+                      <option value="2026">2026</option>
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                    </select>
+                    
+                    <select
+                      value={filterMonth}
+                      onChange={(e) => {
+                        setFilterMonth(e.target.value)
+                        setCurrentPage(0)
+                      }}
+                      className="px-3 py-1.5 text-sm border rounded-md bg-background"
+                    >
+                      <option value="">Todos los meses</option>
+                      <option value="enero">Enero</option>
+                      <option value="febrero">Febrero</option>
+                      <option value="marzo">Marzo</option>
+                      <option value="abril">Abril</option>
+                      <option value="mayo">Mayo</option>
+                      <option value="junio">Junio</option>
+                      <option value="julio">Julio</option>
+                      <option value="agosto">Agosto</option>
+                      <option value="septiembre">Septiembre</option>
+                      <option value="octubre">Octubre</option>
+                      <option value="noviembre">Noviembre</option>
+                      <option value="diciembre">Diciembre</option>
+                    </select>
                   </div>
 
                   <Button 

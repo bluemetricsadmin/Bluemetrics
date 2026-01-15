@@ -87,7 +87,9 @@ export function DashboardSidebar() {
       allowedRoles: ['admin', 'datos'],
       items: [
        { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput, allowedRoles: ['admin', 'datos'] },
-        { id: "edit-readings", label: "Editar Lecturas Agua", path: "/editar-lecturas", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-readings", label: "Editar Lecturas Semanales", path: "/editar-lecturas", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "add-monthly-readings", label: "Lecturas Mensuales Agua", path: "/agregar-lecturas-mensuales-agua", icon: Calendar, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-monthly-readings", label: "Editar Lecturas Mensuales", path: "/editar-lecturas-mensuales-agua", icon: Edit, allowedRoles: ['admin', 'datos'] },
         { id: "add-readings-gas", label: "Lecturas Semanales Gas", path: "/agregar-lecturas-gas", icon: FileInput, allowedRoles: ['admin', 'datos'] },
         { id: "edit-readings-gas", label: "Editar Lecturas Gas", path: "/editar-lecturas-gas", icon: Edit, allowedRoles: ['admin', 'datos'] },
         { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'datos'] },
@@ -107,7 +109,8 @@ export function DashboardSidebar() {
         { id: "excel-agua-2025", label: "Agua 2025", path: "/excel-to-sql/agua/2025", icon: Droplets, allowedRoles: ['admin', 'datos'] },
         { id: "excel-gas-2023", label: "Gas 2023", path: "/excel-to-sql/gas/2023", icon: Flame, allowedRoles: ['admin', 'datos'] },
         { id: "excel-gas-2024", label: "Gas 2024", path: "/excel-to-sql/gas/2024", icon: Flame, allowedRoles: ['admin', 'datos'] },
-        { id: "excel-gas-2025", label: "Gas 2025", path: "/excel-to-sql/gas/2025", icon: Flame, allowedRoles: ['admin', 'datos'] }
+        { id: "excel-gas-2025", label: "Gas 2025", path: "/excel-to-sql/gas/2025", icon: Flame, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-agua-mensual", label: "Agua Mensual", path: "/excel-to-sql/agua-mensual", icon: Calendar, allowedRoles: ['admin', 'datos'] }
       ]
     },
     {
@@ -116,7 +119,8 @@ export function DashboardSidebar() {
       allowedRoles: ['admin', 'ejecutivo'],
       items: [
         { id: "wells", label: "Pozos", path: "/pozos", icon: Drill, allowedRoles: ['admin', 'ejecutivo'] },
-        { id: "consumption", label: "Consumo Agua", path: "/consumo", icon: Droplets, allowedRoles: ['admin', 'ejecutivo'] },
+        { id: "consumption", label: "Consumo Semanal Agua", path: "/consumo", icon: Droplets, allowedRoles: ['admin', 'ejecutivo'] },
+        { id: "monthly-consumption", label: "Consumo Mensual Agua", path: "/consumo-mensual-agua", icon: Calendar, allowedRoles: ['admin', 'ejecutivo'] },
         { id: "daily-readings", label: "Lecturas Diarias", path: "/lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'ejecutivo'] },
         { id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle, allowedRoles: ['admin', 'ejecutivo'] },
         { id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale, allowedRoles: ['admin', 'ejecutivo'] }
