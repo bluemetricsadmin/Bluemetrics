@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import gasConsumptionPointsData from '../lib/gas-consumption-points.json'
 import { supabase } from '../supabaseClient'
+import * as XLSX from 'xlsx'
 import { 
   SaveIcon, 
   CopyIcon, 
@@ -14,7 +15,8 @@ import {
   AlertCircleIcon,
   CalendarIcon,
   Loader2Icon,
-  RefreshCwIcon
+  RefreshCwIcon,
+  DownloadIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getGasTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
@@ -31,6 +33,38 @@ export default function EditGasReadingsPage() {
   const [existingWeeks, setExistingWeeks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false)
+    setSelectedWeek(null)
+    setReadings({})
+    setAutoSaveStatus('saved')
+    setError(null)
+    setSavedCount(0)
+    console.log('✅ Proceso completado, volviendo al inicio')
+  }
+
+  const downloadTemplate = () => {
+    const templateData = []
+    gasConsumptionPointsData.categories.forEach(category => {
+      category.points.forEach(point => {
+        templateData.push({
+          'Punto de Consumo': point.name,
+          'ID': point.id,
+          'Lectura': 0
+        })
+      })
+    })
+    const ws = XLSX.utils.json_to_sheet(templateData)
+    ws['!cols'] = [{ wch: 70 }, { wch: 35 }, { wch: 15 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Lecturas Gas')
+    const fecha = new Date().toISOString().split('T')[0]
+    XLSX.writeFile(wb, `Plantilla_Lecturas_Gas_${fecha}.xlsx`)
+    console.log('✅ Plantilla descargada')
+  }
 
   // Cargar semanas existentes
   useEffect(() => {
@@ -193,7 +227,9 @@ export default function EditGasReadingsPage() {
       
       console.log('✅ Lecturas gas actualizadas exitosamente')
       setAutoSaveStatus('saved')
-      setTimeout(() => setAutoSaveStatus('saved'), 2000)
+      const count = Object.keys(weekData).filter(k => k !== 'numero_semana' && k !== 'fecha_inicio' && k !== 'fecha_fin').length
+      setSavedCount(count)
+      setShowSuccessModal(true)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
@@ -509,14 +545,25 @@ export default function EditGasReadingsPage() {
                               {category.description}
                             </p>
                           </div>
-                          <Button 
-                            size="sm"
-                            onClick={saveReadings}
-                            disabled={autoSaveStatus === 'saving'}
-                          >
-                            <SaveIcon className="h-4 w-4 mr-2" />
-                            Guardar Ahora
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={downloadTemplate}
+                              className="border-green-300 text-green-600 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/20"
+                            >
+                              <DownloadIcon className="h-4 w-4 mr-2" />
+                              Descargar Plantilla
+                            </Button>
+                            <Button 
+                              size="sm"
+                              onClick={saveReadings}
+                              disabled={autoSaveStatus === 'saving'}
+                            >
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Ahora
+                            </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -601,6 +648,45 @@ export default function EditGasReadingsPage() {
           </main>
         </div>
       </div>
+
+      {/* Modal de Guardado Exitoso */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                  <CheckCircle2Icon className="h-10 w-10 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">¡Guardado Exitoso!</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Las lecturas de gas se han actualizado correctamente
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center mb-6">
+                <p className="text-lg font-semibold mb-2">
+                  {savedCount} lecturas actualizadas
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Semana: {selectedWeek}
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleCloseSuccessModal}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Aceptar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </RedirectIfNotAuth>
   )
 }

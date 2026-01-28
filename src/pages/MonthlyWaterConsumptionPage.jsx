@@ -470,9 +470,7 @@ export default function MonthlyWaterConsumptionPage() {
                         </optgroup>
                         <optgroup label="Residencias">
                           <option value="residencias_10_15">Residencias 10 y 15</option>
-                          <option value="residencias_1_antiguo">Residencias 1 (Antiguo)</option>
                           <option value="residencias_3">Residencias 3</option>
-                          <option value="residencias_4">Residencias 4</option>
                           <option value="residencias_5">Residencias 5</option>
                         </optgroup>
                         <optgroup label="Edificios Principales">

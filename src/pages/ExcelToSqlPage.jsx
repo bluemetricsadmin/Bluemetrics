@@ -84,6 +84,7 @@ const ExcelToSqlPage = () => {
     'expedition',
     'expedition_bread',
     'expedition_matthew',
+    'caffenio',
     'cedes_e2',
     'aulas_1',
     'rectoria_norte',

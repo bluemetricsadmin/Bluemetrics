@@ -16,7 +16,8 @@ import {
   FileSpreadsheetIcon,
   EyeIcon,
   DownloadIcon,
-  ListOrderedIcon
+  ListOrderedIcon,
+  XIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
@@ -51,6 +52,8 @@ export default function AddWeeklyReadingsPage() {
   const [orderedCategoriesData, setOrderedCategoriesData] = useState(() => 
     applyOrderToCategories(consumptionPointsData.categories)
   )
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
   
   // Función para limpiar todos los datos persistidos
   const clearAllPersistedData = () => {
@@ -63,6 +66,30 @@ export default function AddWeeklyReadingsPage() {
     clearConsumption()
     clearActiveCategory()
     console.log('✅ Datos persistidos limpiados')
+  }
+
+  // Función para cancelar y volver al inicio
+  const handleCancel = () => {
+    clearAllPersistedData()
+    setStep(1)
+    setExcelFile(null)
+    setLoading(false)
+    setError(null)
+    setSuccess(null)
+    setPreviousWeekReadings(null)
+    console.log('🔄 Proceso cancelado, volviendo al inicio')
+  }
+
+  // Función para cerrar el modal de éxito y volver al inicio
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false)
+    clearAllPersistedData()
+    setStep(1)
+    setExcelFile(null)
+    setError(null)
+    setSuccess(null)
+    setPreviousWeekReadings(null)
+    console.log('✅ Proceso completado, volviendo al inicio')
   }
 
   // Calcular siguiente número de semana al cargar
@@ -474,12 +501,8 @@ export default function AddWeeklyReadingsPage() {
         setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente`)
       }
       
-      setStep(4)
-      
-      // Limpiar datos persistidos después de guardar exitosamente
-      setTimeout(() => {
-        clearAllPersistedData()
-      }, 3000)
+      setSavedCount(readingsCount)
+      setShowSuccessModal(true)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
@@ -907,6 +930,16 @@ export default function AddWeeklyReadingsPage() {
                           </Button>
                         </label>
                         <Button 
+                          variant="outline"
+                          size="lg"
+                          onClick={handleCancel}
+                          disabled={loading}
+                          className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                        >
+                          <XIcon className="h-4 w-4 mr-2" />
+                          Cancelar
+                        </Button>
+                        <Button 
                           size="lg"
                           onClick={saveReadings}
                           disabled={loading || progress.completed === 0}
@@ -1156,6 +1189,45 @@ export default function AddWeeklyReadingsPage() {
           </main>
         </div>
       </div>
+
+      {/* Modal de Guardado Exitoso */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                  <CheckCircle2Icon className="h-10 w-10 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">¡Guardado Exitoso!</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Las lecturas semanales de agua se han guardado correctamente
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center mb-6">
+                <p className="text-lg font-semibold mb-2">
+                  {savedCount} lecturas guardadas
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Semana {weekNumber}: {startDate} - {endDate}
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleCloseSuccessModal}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Aceptar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Modal de Ordenamiento */}
       <PointsOrderModal

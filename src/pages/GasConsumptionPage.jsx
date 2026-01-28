@@ -319,20 +319,20 @@ export default function GasConsumptionPage() {
 
     // Columnas de calderas y calefacción
     const calderasCols = [
-      'caldera_1_leon', 'caldera_2', 'caldera_3', 
+      'caldera_3', 
       'mega_calefaccion_1', 'wellness_general_calefaccion', 'residencias_abc_calefaccion'
     ]
     
     // Columnas de comedores y restaurantes
     const comedoresCols = [
       'comedor_centrales_tec_food', 'dona_tota', 'chilaquiles_tec',
-      'carls_junior', 'comedor_estudiantes', 'wellness_supersalads'
+      'carls_junior', 'wellness_supersalads'
     ]
     
     // Columnas de residencias estudiantiles
     const residenciasCols = [
-      'estudiantes_acometida_principal_digital', 'residencias_1', 'residencias_2',
-      'residencias_3', 'residencias_4', 'residencias_5'
+      'estudiantes_acometida_principal_digital', 'residencias_2',
+      'residencias_3', 'residencias_5'
     ]
 
     return {
@@ -908,12 +908,9 @@ export default function GasConsumptionPage() {
                           <option value="dona_tota">Doña Tota</option>
                           <option value="chilaquiles_tec">Chilaquiles Tec</option>
                           <option value="carls_junior">Carl´s Junior</option>
-                          <option value="comedor_estudiantes">Comedor Estudiantes</option>
                           <option value="wellness_supersalads">Wellness SuperSalads</option>
                         </optgroup>
                         <optgroup label="Calderas y Calefacción">
-                          <option value="caldera_1_leon">Caldera 1 (Leon)</option>
-                          <option value="caldera_2">Caldera 2</option>
                           <option value="caldera_3">Caldera 3</option>
                           <option value="mega_calefaccion_1">Mega Calefacción 1</option>
                           <option value="wellness_general_calefaccion">Wellness General (Calefacción)</option>
@@ -932,10 +929,8 @@ export default function GasConsumptionPage() {
                         </optgroup>
                         <optgroup label="Residencias Estudiantiles">
                           <option value="estudiantes_acometida_principal_digital">Estudiantes Acometida Ppal digital</option>
-                          <option value="residencias_1">Residencias 1</option>
                           <option value="residencias_2">Residencias 2</option>
                           <option value="residencias_3">Residencias 3</option>
-                          <option value="residencias_4">Residencias 4</option>
                           <option value="residencias_5">Residencias 5</option>
                         </optgroup>
                         <optgroup label="Campus Norte">

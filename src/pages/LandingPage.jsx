@@ -243,6 +243,7 @@ const Header = () => {
 // HERO SECTION - Main Landing Area with Video Background Placeholder
 // ============================================================================
 const HeroSection = () => {
+  const navigate = useNavigate();
   const heroRef = useRef(null);
   const headlineRef = useRef(null);
   const subheadlineRef = useRef(null);
@@ -436,7 +437,10 @@ const HeroSection = () => {
 
         <div ref={ctaRef} className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4">
           {/* Primary CTA - Glassmorphism */}
-          <button className="group relative w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-[#2EE6FF]/40 text-white font-semibold text-base sm:text-lg hover:bg-white/20 hover:border-[#2EE6FF]/80 hover:shadow-[0_0_40px_rgba(46,230,255,0.4)] hover:scale-105 transition-all duration-500 animate-pulse-slow">
+          <button 
+            onClick={() => navigate('/contacto')}
+            className="group relative w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-[#2EE6FF]/40 text-white font-semibold text-base sm:text-lg hover:bg-white/20 hover:border-[#2EE6FF]/80 hover:shadow-[0_0_40px_rgba(46,230,255,0.4)] hover:scale-105 transition-all duration-500 animate-pulse-slow"
+          >
             <span className="relative z-10 flex items-center gap-2">
               Calcular mi Ahorro Potencial
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -444,7 +448,10 @@ const HeroSection = () => {
           </button>
 
           {/* Secondary CTA */}
-          <button className="group flex items-center gap-2 text-white/80 hover:text-white font-medium text-base sm:text-lg transition-all hover:scale-110">
+          <button 
+            onClick={() => navigate('/contacto')}
+            className="group flex items-center gap-2 text-white/80 hover:text-white font-medium text-base sm:text-lg transition-all hover:scale-110"
+          >
             <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center group-hover:border-[#2EE6FF] group-hover:bg-[#2EE6FF]/10 group-hover:rotate-90 transition-all duration-500">
               <Play className="w-5 h-5 ml-0.5" />
             </div>
@@ -681,6 +688,7 @@ const TriplePlaySection = () => {
 // IA PREDICTION SECTION
 // ============================================================================
 const IAPredictionSection = () => {
+  const navigate = useNavigate();
   const sectionRef = useRef(null);
   const contentRef = useRef(null);
   const counterRef = useRef(null);
@@ -802,6 +810,7 @@ const IAPredictionSection = () => {
 // ROI ENGINE SECTION - Interactive Calculator
 // ============================================================================
 const ROIEngineSection = () => {
+  const navigate = useNavigate();
   const sectionRef = useRef(null);
   const [industry, setIndustry] = useState(50);
   const [monthlySpend, setMonthlySpend] = useState(50000);
@@ -958,9 +967,12 @@ const ROIEngineSection = () => {
                 </div>
 
                 {/* CTA */}
-                <button className="w-full py-4 rounded-xl bg-gradient-to-r from-[#0A4C8A] to-[#1FB6C9] text-white font-semibold flex items-center justify-center gap-2 hover:shadow-[0_0_30px_rgba(31,182,201,0.4)] transition-all duration-300">
+                <button 
+                  onClick={() => navigate('/contacto')}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-[#0A4C8A] to-[#1FB6C9] text-white font-semibold flex items-center justify-center gap-2 hover:shadow-[0_0_30px_rgba(31,182,201,0.4)] transition-all duration-300"
+                >
                   <Download className="w-5 h-5" />
-                  Descargar reporte personalizado (PDF)
+                  Solicitar reporte personalizado
                 </button>
               </div>
             </div>
@@ -975,6 +987,7 @@ const ROIEngineSection = () => {
 // TECHNOLOGY SECTION
 // ============================================================================
 const TechnologySection = () => {
+  const navigate = useNavigate();
   const sectionRef = useRef(null);
   const cardsRef = useRef([]);
 
@@ -1046,6 +1059,7 @@ const TechnologySection = () => {
 // SOCIAL PROOF SECTION
 // ============================================================================
 const SocialProofSection = () => {
+  const navigate = useNavigate();
   const sectionRef = useRef(null);
   const logosRef = useRef([]);
 
@@ -1111,6 +1125,7 @@ const SocialProofSection = () => {
 // FOOTER SECTION
 // ============================================================================
 const FooterSection = () => {
+  const navigate = useNavigate();
   const footerRef = useRef(null);
   const ctaRef = useRef(null);
 
@@ -1145,7 +1160,10 @@ const FooterSection = () => {
             <span className="text-[#2EE6FF]">Empiece a gestionar datos.</span>
           </h2>
           
-          <button className="mt-8 px-10 py-5 rounded-2xl bg-gradient-to-r from-[#0A4C8A] to-[#1FB6C9] text-white font-semibold text-lg hover:shadow-[0_0_40px_rgba(31,182,201,0.5)] transition-all duration-500 group">
+          <button 
+            onClick={() => navigate('/contacto')}
+            className="mt-8 px-10 py-5 rounded-2xl bg-gradient-to-r from-[#0A4C8A] to-[#1FB6C9] text-white font-semibold text-lg hover:shadow-[0_0_40px_rgba(31,182,201,0.5)] transition-all duration-500 group"
+          >
             <span className="flex items-center gap-2">
               Comenzar mi transformación digital
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -1191,7 +1209,7 @@ const FooterSection = () => {
               <ul className="space-y-2 text-white/50 text-sm">
                 <li><a href="#" className="hover:text-white transition-colors">Nosotros</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Casos de Éxito</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contacto</a></li>
+                <li><button onClick={() => navigate('/contacto')} className="hover:text-white transition-colors">Contacto</button></li>
               </ul>
             </div>
 

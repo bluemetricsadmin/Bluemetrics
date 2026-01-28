@@ -4,6 +4,7 @@ import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { supabase } from '../supabaseClient'
+import * as XLSX from 'xlsx'
 import { 
   SaveIcon, 
   SearchIcon,
@@ -13,7 +14,10 @@ import {
   CalendarIcon,
   Loader2Icon,
   RefreshCwIcon,
-  Trash2Icon
+  Trash2Icon,
+  UploadIcon,
+  FileSpreadsheetIcon,
+  DownloadIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 
@@ -78,6 +82,10 @@ export default function EditDailyReadingsPage() {
   const [deleting, setDeleting] = useState(false)
   const [filterYear, setFilterYear] = useState('')
   const [filterMonth, setFilterMonth] = useState('')
+  const [excelFile, setExcelFile] = useState(null)
+  const [uploadingExcel, setUploadingExcel] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
 
   // Cargar fechas existentes
   useEffect(() => {
@@ -291,6 +299,7 @@ export default function EditDailyReadingsPage() {
     setAutoSaveStatus('saving')
     try {
       const readingData = {}
+      let count = 0
 
       dailyReadingPointsData.categories.forEach(category => {
         category.points.forEach(point => {
@@ -298,6 +307,7 @@ export default function EditDailyReadingsPage() {
           
           if (value && value.trim() !== '') {
             readingData[point.id] = parseFloat(value)
+            count++
           }
         })
       })
@@ -313,7 +323,8 @@ export default function EditDailyReadingsPage() {
       
       console.log('✅ Lecturas actualizadas exitosamente')
       setAutoSaveStatus('saved')
-      setTimeout(() => setAutoSaveStatus('saved'), 2000)
+      setSavedCount(count)
+      setShowSuccessModal(true)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
@@ -356,6 +367,19 @@ export default function EditDailyReadingsPage() {
     return points
   }
 
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false)
+    setSelectedDate(null)
+    setSelectedMonth(null)
+    setSelectedRecordId(null)
+    setAvailableRecords([])
+    setReadings({})
+    setAutoSaveStatus('saved')
+    setError(null)
+    setSavedCount(0)
+    console.log('✅ Proceso completado, volviendo al inicio')
+  }
+
   const deleteReading = async () => {
     if (!selectedRecordId) {
       console.warn('⚠️ No hay registro seleccionado para eliminar')
@@ -391,6 +415,243 @@ export default function EditDailyReadingsPage() {
       setError(`Error al eliminar: ${error.message}`)
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const downloadTemplate = () => {
+    // Crear datos de plantilla con todas las columnas
+    const templateData = [
+      {
+        'mes año': 'enero 2026',
+        'dia hora': 'Lun27 09:00',
+        'Consumo': '',
+        'General pozos': '',
+        'Pozo 3': '',
+        'Pozo 8': '',
+        'Pozo 15': '',
+        'Pozo 4': '',
+        'A y D': '',
+        'Campus 8': '',
+        'A7-CC': '',
+        'Megacentral': '',
+        'Planta Física': '',
+        'Residencias': '',
+        'Pozo7': '',
+        'Pozo11': '',
+        'Pozo 12': '',
+        'Pozo 14': ''
+      }
+    ]
+
+    // Crear workbook y worksheet
+    const ws = XLSX.utils.json_to_sheet(templateData)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Lecturas Diarias')
+
+    // Descargar archivo
+    XLSX.writeFile(wb, 'plantilla_lecturas_diarias.xlsx')
+    console.log('✅ Plantilla descargada')
+  }
+
+  const handleExcelUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (!selectedRecordId) {
+      setError('Por favor selecciona primero una fecha para editar')
+      return
+    }
+
+    setExcelFile(file)
+    setUploadingExcel(true)
+    setError(null)
+
+    try {
+      const data = await file.arrayBuffer()
+      const workbook = XLSX.read(data)
+      const sheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[sheetName]
+      const jsonData = XLSX.utils.sheet_to_json(worksheet)
+
+      console.log('📊 Datos del Excel:', jsonData)
+
+      if (!jsonData || jsonData.length === 0) {
+        throw new Error('El archivo Excel está vacío')
+      }
+
+      const firstRow = jsonData[0]
+      const columns = Object.keys(firstRow)
+      
+      const hasMesAnio = columns.some(col => /mes.?a[ñn]o/i.test(col))
+      const hasFechaHora = columns.some(col => /(fecha|dia).?hora/i.test(col))
+      const isHorizontalFormat = hasMesAnio && hasFechaHora
+
+      console.log('🔍 Formato detectado:', isHorizontalFormat ? 'HORIZONTAL' : 'VERTICAL')
+
+      let newReadings = {}
+      let matched = 0
+      let unmatched = []
+
+      if (isHorizontalFormat) {
+        const row = jsonData[0]
+        
+        console.log('📋 Columnas del Excel:', Object.keys(row))
+        console.log('📊 Datos de la fila:', row)
+        
+        const pointMapping = {
+          'consumo': 'consumo',
+          'general pozos': 'general_pozos',
+          'pozo 3': 'pozo_3',
+          'pozo 8': 'pozo_8',
+          'pozo 15': 'pozo_15',
+          'pozo 4': 'pozo_4',
+          'a y d': 'a_y_d',
+          'campus 8': 'campus_8',
+          'a7-cc': 'a7_cc',
+          'megacentral': 'megacentral',
+          'planta física': 'planta_fisica',
+          'planta fisica': 'planta_fisica',
+          'residencias': 'residencias',
+          'pozo7': 'pozo7',
+          'pozo11': 'pozo11',
+          'pozo 12': 'pozo_12',
+          'pozo 14': 'pozo_14',
+          'pozo_3': 'pozo_3',
+          'pozo_8': 'pozo_8',
+          'pozo_15': 'pozo_15',
+          'pozo_4': 'pozo_4',
+          'pozo_12': 'pozo_12',
+          'pozo_14': 'pozo_14'
+        }
+
+        Object.keys(row).forEach(columnName => {
+          if (/mes.?a[ñn]o/i.test(columnName) || /dia.?hora/i.test(columnName)) {
+            console.log(`⏭️ Saltando columna de fecha: ${columnName}`)
+            return
+          }
+
+          const value = row[columnName]
+          if (value === undefined || value === null || value === '') {
+            console.log(`⏭️ Saltando columna vacía: ${columnName}`)
+            return
+          }
+
+          const columnLower = columnName.toLowerCase().trim()
+          const pointId = pointMapping[columnLower]
+
+          // Convertir el valor a string y limpiar comas si es necesario
+          let cleanValue = value.toString().replace(/,/g, '')
+          
+          if (pointId) {
+            console.log(`✅ Mapeo directo: "${columnName}" -> ${pointId} = ${cleanValue}`)
+            newReadings[pointId] = cleanValue
+            matched++
+          } else {
+            let found = false
+            dailyReadingPointsData.categories.forEach(category => {
+              category.points.forEach(point => {
+                const pointNameLower = point.name.toLowerCase()
+                const pointIdLower = point.id.toLowerCase()
+                
+                if (columnLower === pointNameLower || 
+                    columnLower === pointIdLower ||
+                    pointNameLower.includes(columnLower) ||
+                    columnLower.includes(pointNameLower)) {
+                  console.log(`✅ Mapeo por búsqueda: "${columnName}" -> ${point.id} = ${cleanValue}`)
+                  newReadings[point.id] = cleanValue
+                  found = true
+                  matched++
+                }
+              })
+            })
+
+            if (!found) {
+              console.warn(`❌ No se encontró mapeo para: "${columnName}"`)
+              unmatched.push(columnName)
+            }
+          }
+        })
+
+      } else {
+        const nameColumn = columns.find(col => 
+          /^(punto|nombre|name|id|medidor)$/i.test(col.toLowerCase().trim())
+        ) || columns.find(col => 
+          /(punto|nombre|name|id|medidor)/i.test(col.toLowerCase())
+        )
+
+        const readingColumn = columns.find(col => 
+          /^(lectura|valor|value|m3|m³|reading)$/i.test(col.toLowerCase().trim())
+        ) || columns.find(col => 
+          /(lectura|valor|value|m3|m³|reading)/i.test(col.toLowerCase())
+        )
+
+        console.log('🔍 Columnas detectadas:', { nameColumn, readingColumn })
+
+        if (!nameColumn || !readingColumn) {
+          throw new Error('No se pudieron detectar las columnas necesarias. Use formato horizontal o vertical válido.')
+        }
+
+        jsonData.forEach(row => {
+          const pointName = row[nameColumn]?.toString().trim()
+          const reading = row[readingColumn]
+          
+          if (!pointName || reading === undefined || reading === null) return
+
+          let found = false
+
+          dailyReadingPointsData.categories.forEach(category => {
+            category.points.forEach(point => {
+              const pointNameLower = pointName.toLowerCase()
+              const pointIdLower = point.id.toLowerCase()
+              const pointDisplayNameLower = point.name.toLowerCase()
+              
+              if (pointNameLower === pointIdLower || 
+                  pointNameLower === pointDisplayNameLower ||
+                  pointIdLower.includes(pointNameLower) ||
+                  pointDisplayNameLower.includes(pointNameLower)) {
+                newReadings[point.id] = reading.toString()
+                found = true
+                matched++
+              }
+            })
+          })
+
+          if (!found) {
+            unmatched.push(pointName)
+          }
+        })
+      }
+
+      console.log(`✅ Coincidencias encontradas: ${matched}`)
+      console.log('📦 Nuevas lecturas a cargar:', newReadings)
+      if (unmatched.length > 0) {
+        console.warn('⚠️ Columnas no coincidentes:', unmatched)
+      }
+
+      if (matched === 0) {
+        throw new Error('No se encontraron coincidencias con los puntos de medición')
+      }
+
+      console.log('🔄 Actualizando estado de lecturas...')
+      setReadings(prev => {
+        const updated = { ...prev, ...newReadings }
+        console.log('📝 Estado anterior:', prev)
+        console.log('📝 Estado actualizado:', updated)
+        return updated
+      })
+      setAutoSaveStatus('saved')
+      setError(null)
+      
+      const successMsg = `✅ ${matched} lecturas cargadas desde Excel${unmatched.length > 0 ? ` (${unmatched.length} no coincidieron)` : ''}`
+      console.log(successMsg)
+
+    } catch (error) {
+      console.error('❌ Error procesando Excel:', error)
+      setError(`Error al procesar Excel: ${error.message}`)
+    } finally {
+      setUploadingExcel(false)
+      setExcelFile(null)
+      e.target.value = ''
     }
   }
 
@@ -671,6 +932,45 @@ export default function EditDailyReadingsPage() {
                             <Button 
                               variant="outline"
                               size="sm"
+                              onClick={downloadTemplate}
+                              className="border-green-300 text-green-600 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/20"
+                            >
+                              <DownloadIcon className="h-4 w-4 mr-2" />
+                              Descargar Plantilla
+                            </Button>
+                            <label className="inline-block">
+                              <input
+                                type="file"
+                                accept=".xlsx,.xls"
+                                onChange={handleExcelUpload}
+                                className="hidden"
+                                disabled={uploadingExcel || !selectedRecordId}
+                              />
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                disabled={uploadingExcel || !selectedRecordId}
+                                className="cursor-pointer"
+                                asChild
+                              >
+                                <span>
+                                  {uploadingExcel ? (
+                                    <>
+                                      <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                                      Cargando...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FileSpreadsheetIcon className="h-4 w-4 mr-2" />
+                                      Cargar Excel
+                                    </>
+                                  )}
+                                </span>
+                              </Button>
+                            </label>
+                            <Button 
+                              variant="outline"
+                              size="sm"
                               onClick={() => setShowDeleteConfirm(true)}
                               disabled={deleting}
                               className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
@@ -826,6 +1126,45 @@ export default function EditDailyReadingsPage() {
                   )}
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Guardado Exitoso */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                  <CheckCircle2Icon className="h-10 w-10 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">¡Guardado Exitoso!</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Las lecturas diarias se han actualizado correctamente
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center mb-6">
+                <p className="text-lg font-semibold mb-2">
+                  {savedCount} lecturas actualizadas
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Fecha: {selectedDate}
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleCloseSuccessModal}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Aceptar
+              </Button>
             </CardContent>
           </Card>
         </div>

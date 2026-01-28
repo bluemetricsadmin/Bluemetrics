@@ -1,0 +1,134 @@
+Medidor General de los pozos 7,12,11 y 14 / TOTAL POZOS
+Pozo de agua potable 11
+Pozo de agua potable 14
+Pozo de agua potable 12
+Pozo de agua potable 7
+Pozo de agua potable 3
+Pozo de riego 4
+Pozo de riego 8
+Pozo de riego 15
+Circuito 8" Campus
+Auditorio Luis Elizondo
+CDB2
+CDB2 Baños nuevos 2025
+Arena Borrego
+Farnville
+Em Box
+Edificio de Negocios (DAF)
+Aulas 6
+Domo Cultural
+Wellness Parque Central (Parque Central Tunel Instalaciones) MISMA LECTURA DESDE SEM 48 2023
+WELLNESS REGISTRO (Wellness-Parque Central)
+Parque Central Registro
+Wellness-edificio
+Wellness-Super Salads
+Wellness Torre de Enfriamiento
+Wellness Alberca
+Centrales Comedor 1 (Puertas Giratorias) (Concesiones)
+Centrales Comedor 1-Doña Tota
+Centrales Comedor 1-Subway
+Centrales Comedor 1-Carls Jr.
+Centrales Comedor 1-Pizza Little Cesars
+Centrales Comedor 1- Grill Team (Davila´s, GRILL)
+Centrales Comedor 1 Chilaquiles
+Centrales Comedor 1 Tec Food
+Centrales Comedor 1-oxxo
+Comedor Central (Comedor Comedor 1 tunel)
+Administrativo
+Biotecnología
+Escuela de Arte y Caldera 1
+Ciap-Oriente
+Ciap-Centro
+Ciap-Poniente
+Ciap-Green Shake
+Ciap-Andatti (Tim Horton)
+Ciap DC Jochos
+Crepaso
+El Negro
+Aulas 5
+Ciap-Starbucks
+Ciap-Super Salads
+Ciap-sótano
+Reflexión
+Residencias 10 y 15
+Residencias 10 y 15 llenado
+Cedes (Cisterna)
+Cedes Site
+Nucleo
+Expedition
+Expedition Bread
+Expedition Matthew
+Caffenio
+Cedes-E2 MISMA LECTURA DESDE SEM 37 2025
+E2-Beiker
+E2-Evobike
+E2-Pancho de Rigo
+E2 bebedero Nube (Tinaco)
+Aulas 1
+Rectoría Norte
+Pabellon La Carreta
+Rectoría Sur  (NO TOMAR LECTURA) MISMA LECTURA DESDE SEM 11 2024 SI EXISTE MEDIDOR
+Aulas 2
+Cetec
+Biblioteca
+Biblioteca-Nikkori
+Biblioteca-Nectar Works
+Biblioteca-Tim Horton
+Aulas 3
+Basanti
+Aulas 3 - Sr. Latino
+Centrales Sur
+Aulas 4 Norte (MISMA LECTURA DESDE SEM 30) MEDIDOR NUEVO 10-Nov-25
+Circuito 6" Residencias
+Residencias 2 ote
+Residencias 2 pte (NO HAY MEDIDOR desde 29-Sep-25)
+Residencias 3
+Residencias 5
+Correos Mr Heppy
+Residencias ABC (Residencias 1 Nuevas)
+Residencias ABC (Lavandería) NO SE HA LOCALIZADO MEDIDOR
+Circuito 4" A7-CE
+Aulas 7
+CAH 3 Torre de Enfriamiento
+Caldera 3 (NO TOMAR LECTURA) SI HAY MEDIDOR MISMA LECTURA DESDE SEM 32 2025 SI EXISTE MEDIDOR
+La Dia
+Aulas 4 sur
+Aulas 4 maestros
+Centro Congresos
+Jubileo
+Aulas 4 OXXO
+Circuito Planta Física
+Estacionamiento E1
+Megacentral Torres de Enfriamiento 2"
+Escamilla baños trabajadores (CDB1 Jardineros)
+Estadio Banorte (Estadio Borrego)
+Estadio Banorte Torre Enfriamiento NUEVO MEDIDOR 19-ENE-26
+Campus Norte Edificios (agua de la ciudad) Edificio D (NO TOMAR LECTURA) MISMA LECTURA DESDE SEM 12 2025
+Estadio Azul
+Circuito Megacentral
+Megacentral Torre Enfriamiento 4"
+Pozo 4 (Riego)
+Pozo 8 (Riego)
+Pozo 15 (Riego)
+Campus Norte (Ciudad "riego")
+Comedor D (agua de la ciudad)
+Estadio Banorte purgas (Estadio Borrego Torre Enfriamiento purgas (importante)
+Wellnes Cisterna Pluvial purgas (medidor dañado) MISMA LECTURA DESDE SEM 50 2023 SIN LOCALIZACION DE MEDIDOR
+Wellness Suavizador purga (importante)
+Wellness T.E. rebosadero
+Wellness T.E. purga (importante) MISMA LECTURA DESDE SEM 52 2024
+Megacentral Torres Enfriamiento purgas
+Megacentral Suavizador (purga) (fuera de servcicio provisional) MISMA LECTURA DESDE SEM 7 2023
+CAH3 Torre Enfriamiento purgas
+Residencias 10 y 15 T.E. purga
+Ciap Cisterna Pluvial-Riego al sanitario 2"
+Estacionamiento E3 (Ciudad)
+Guardería (Ciudad)
+Naranjos (Ciudad-Guardería)
+Casa Solar (Ciudad)
+Estudiantes Residencias 11 (Ciudad)
+Estudiantes Residencias 12 (Ciudad)
+Estudiantes Residencias 13 (Ciudad) MISMA LECTURA DESDE SEM 52 2024
+Estudiantes Residencias 13-2 (Ciudad)
+Estudiantes Residencias 13-3 (Ciudad)
+Residencias 15 sótano

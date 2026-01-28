@@ -271,7 +271,7 @@ export default function DashboardPage() {
     const labels = gasWeeklyData.map(w => `S${w.numero_semana}`)
     const totalConsumption = gasWeeklyData.map(w => {
       // Sumar consumo de calderas y comedores principales
-      const total = (parseFloat(w.caldera_1_leon) || 0) + (parseFloat(w.caldera_2) || 0) + 
+      const total = (parseFloat(w.caldera_3) || 0) + 
                     (parseFloat(w.comedor_centrales_tec_food) || 0) + (parseFloat(w.dona_tota) || 0)
       return Math.round(total)
     })

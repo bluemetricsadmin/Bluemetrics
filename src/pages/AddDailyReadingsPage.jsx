@@ -14,7 +14,8 @@ import {
   Loader2Icon,
   FileSpreadsheetIcon,
   EyeIcon,
-  DownloadIcon
+  DownloadIcon,
+  XIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { usePersistedState } from '../hooks/usePersistedState'
@@ -86,6 +87,8 @@ export default function AddDailyReadingsPage() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [activeCategory, setActiveCategory, clearActiveCategory] = usePersistedState('daily_activeCategory', 'pozos')
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
   
   // Función para limpiar todos los datos persistidos
   const clearAllPersistedData = () => {
@@ -102,6 +105,30 @@ export default function AddDailyReadingsPage() {
     clearConsumption()
     clearActiveCategory()
     console.log('✅ Datos persistidos limpiados')
+  }
+
+  // Función para cancelar y volver al inicio
+  const handleCancel = () => {
+    clearAllPersistedData()
+    setStep(1)
+    setExcelFile(null)
+    setLoading(false)
+    setError(null)
+    setSuccess(null)
+    setPreviousDayReadings(null)
+    console.log('🔄 Proceso cancelado, volviendo al inicio')
+  }
+
+  // Función para cerrar el modal de éxito y volver al inicio
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false)
+    clearAllPersistedData()
+    setStep(1)
+    setExcelFile(null)
+    setError(null)
+    setSuccess(null)
+    setPreviousDayReadings(null)
+    console.log('✅ Proceso completado, volviendo al inicio')
   }
 
   // Obtener lecturas del día anterior
@@ -390,14 +417,17 @@ export default function AddDailyReadingsPage() {
 
   // Guardar lecturas en Supabase
   const saveReadings = async () => {
-    if (!selectedDate) return
+    if (!diaHora || !mesAnio) {
+      setError('No hay fecha seleccionada')
+      return
+    }
 
     setLoading(true)
     setError(null)
 
     try {
       const readingData = {
-        dia_hora: selectedDate,
+        dia_hora: diaHora,
         mes_anio: mesAnio
       }
 
@@ -428,7 +458,8 @@ export default function AddDailyReadingsPage() {
       const { data: existingDate, error: checkError } = await supabase
         .from('lecturas_diarias')
         .select('id, dia_hora')
-        .eq('dia_hora', selectedDate)
+        .eq('dia_hora', diaHora)
+        .eq('mes_anio', mesAnio)
         .single()
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -436,7 +467,7 @@ export default function AddDailyReadingsPage() {
       }
 
       if (!existingDate) {
-        throw new Error(`La fecha ${selectedDate} no existe. Por favor créala primero.`)
+        throw new Error(`La fecha ${diaHora} no existe. Por favor créala primero.`)
       }
 
       console.log('✅ Fecha encontrada:', existingDate)
@@ -445,7 +476,8 @@ export default function AddDailyReadingsPage() {
       const { data, error: updateError } = await supabase
         .from('lecturas_diarias')
         .update(readingData)
-        .eq('dia_hora', selectedDate)
+        .eq('dia_hora', diaHora)
+        .eq('mes_anio', mesAnio)
         .select()
 
       if (updateError) {
@@ -459,12 +491,8 @@ export default function AddDailyReadingsPage() {
       
       console.log('✅ Lecturas guardadas exitosamente:', data)
       setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente`)
-      setStep(4)
-      
-      // Limpiar datos persistidos después de guardar exitosamente
-      setTimeout(() => {
-        clearAllPersistedData()
-      }, 3000)
+      setSavedCount(readingsCount)
+      setShowSuccessModal(true)
 
     } catch (error) {
       console.error('❌ Error guardando:', error)
@@ -929,6 +957,16 @@ export default function AddDailyReadingsPage() {
                         </div>
                       </div>
                       <div className="flex gap-3">
+                        <Button 
+                          variant="outline"
+                          size="lg"
+                          onClick={handleCancel}
+                          disabled={loading}
+                          className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                        >
+                          <XIcon className="h-4 w-4 mr-2" />
+                          Cancelar
+                        </Button>
                         <label className="inline-block">
                           <input
                             type="file"
@@ -1183,6 +1221,45 @@ export default function AddDailyReadingsPage() {
           </main>
         </div>
       </div>
+
+      {/* Modal de Guardado Exitoso */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                  <CheckCircle2Icon className="h-10 w-10 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">¡Guardado Exitoso!</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Las lecturas diarias se han guardado correctamente
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center mb-6">
+                <p className="text-lg font-semibold mb-2">
+                  {savedCount} lecturas guardadas
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Fecha: {diaHora}
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={handleCloseSuccessModal}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Aceptar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </RedirectIfNotAuth>
   )
 }

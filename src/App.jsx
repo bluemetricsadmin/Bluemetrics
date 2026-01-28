@@ -62,6 +62,7 @@ function App() {
         {/* Rutas públicas */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/contacto" element={<ContactPage />} />
         <Route path="/confirmacion" element={<ConfirmationPage />} />
 
         {/* Dashboard - requiere permiso dashboard */}
@@ -86,7 +87,6 @@ function App() {
         <Route path="/alertas" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
         <Route path="/predicciones" element={<ProtectedRoute><PredictionsPage /></ProtectedRoute>} />
         <Route path="/analisis" element={<ProtectedRoute><AnalysisSectionPage /></ProtectedRoute>} />
-        <Route path="/contacto" element={<ProtectedRoute><ContactPage /></ProtectedRoute>} />
 
         {/* Rutas de ingreso de datos - accesibles para roles admin y datos */}
         <Route path="/agregar-datos" element={<DataRoute><AddDataPage /></DataRoute>} />

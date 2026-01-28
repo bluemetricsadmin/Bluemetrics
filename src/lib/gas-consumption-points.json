@@ -101,9 +101,10 @@
         },
         {
           "id": "caldera_1_leon",
-          "name": "Caldera 1 (Leon)",
+          "name": "Caldera 1 (Leon) MISMA LECTURA DESDE SEM 20 2025",
           "type": "caldera",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {
@@ -290,37 +291,42 @@
         },
         {
           "id": "cedes_trabajadores_vestidores",
-          "name": "Cedes Trabajadores Vestidores MISMA LECTURA DESDE 8-Oct-21 NO EXISTE",
+          "name": "Cedes Trabajadores Vestidores MISMA LECTURA DESDE 4-Oct-23",
           "type": "vestidores",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {
           "id": "caldera_2",
-          "name": "Caldera 2 MISMA LECTURA DESDE 22-Dic-21 NO EXISTE",
+          "name": "Caldera 2 MISMA LECTURA DESDE 29-Dic-21",
           "type": "caldera",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {
           "id": "comedor_estudiantes",
-          "name": "Comedor Estudiantes MISMA LECTURA DESDE 8-Nov-22 NO EXISTE",
+          "name": "Comedor Estudiantes MISMA LECTURA DESDE 12-Jul-23",
           "type": "comedor",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {
           "id": "residencias_4",
-          "name": "Residencias 4 MISMA LECTURA DESDE SEM 8 2025 NO EXISTE",
+          "name": "Residencias 4 MISMA LECTURA DESDE 8-Nov-23",
           "type": "residencia",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {
           "id": "residencias_1",
-          "name": "Residencias 1 MISMA LECTURA DESDE 22-Nov-22 NO EXISTE",
+          "name": "Residencias 1 MISMA LECTURA DESDE 22-Nov-23",
           "type": "residencia",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {
@@ -339,16 +345,18 @@
         },
         {
           "id": "residencias_8",
-          "name": "Residencias 8 MISMA LECTURA DESDE 15-Nov-22 NO EXISTE",
+          "name": "Residencias 8 MISMA LECTURA DESDE 15-Nov-23",
           "type": "residencia",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {
           "id": "residencias_7",
-          "name": "Residencias 7 MISMA LECTURA DESDE 8-Nov-22 NO EXISTE",
+          "name": "Residencias 7  MISMA LECTURA DESDE 8-Nov-23",
           "type": "residencia",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {
@@ -479,9 +487,10 @@
         },
         {
           "id": "pabellon_tec_semillero",
-          "name": "Pabellon Tec semillero MISMA LECTURA DESDE 7-Feb-24 NO EXISTE",
+          "name": "Pabellon Tec semillero MISMA LECTURA DESDE 7-Feb-24",
           "type": "edificio_academico",
           "unit": "m³",
+          "noRead": true,
           "weeklyData": []
         },
         {

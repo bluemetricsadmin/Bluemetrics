@@ -357,8 +357,8 @@ export default function ConsumptionPage() {
     
     // Columnas de PUNTOS DE SERVICIO (edificios, residencias, torres de enfriamiento, etc)
     const puntosServicioCols = [
-      'l_residencias_10_15', 'l_residencias_1_antiguo', 'l_residencias_2_ote',
-      'l_residencias_3', 'l_residencias_4', 'l_residencias_5',
+      'l_residencias_10_15', 'l_residencias_2_ote',
+      'l_residencias_3', 'l_residencias_5',
       'l_wellness_edificio', 'l_biblioteca', 'l_cetec', 'l_biotecnologia',
       'l_arena_borrego', 'l_centro_congresos', 'l_auditorio_luis_elizondo',
       'l_nucleo', 'l_expedition', 'l_wellness_torre_enfriamiento',
@@ -718,10 +718,8 @@ export default function ConsumptionPage() {
                       </optgroup>
                       <optgroup label="Residencias">
                         <option value="residencias_10_15">Residencias 10 y 15</option>
-                        <option value="residencias_1_antiguo">Residencias 1 (Antiguo)</option>
                         <option value="residencias_2_ote">Residencias 2 Oriente</option>
                         <option value="residencias_3">Residencias 3</option>
-                        <option value="residencias_4">Residencias 4</option>
                         <option value="residencias_5">Residencias 5</option>
                       </optgroup>
                       <optgroup label="Edificios Principales">

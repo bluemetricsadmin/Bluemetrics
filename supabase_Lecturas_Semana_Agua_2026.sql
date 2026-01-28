@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS public.Lecturas_Semana_Agua_2026 (
     L_expedition DECIMAL(10, 2),
     L_expedition_bread DECIMAL(10, 2),
     L_expedition_matthew DECIMAL(10, 2),
+    L_caffenio DECIMAL(10, 2),
     L_cedes_e2 DECIMAL(10, 2),
     L_aulas_1 DECIMAL(10, 2),
     L_rectoria_norte DECIMAL(10, 2),
