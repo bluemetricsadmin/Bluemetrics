@@ -17,7 +17,8 @@ import {
   TrendingUpIcon,
   Loader2Icon,
   RefreshCwIcon,
-  EditIcon
+  EditIcon,
+  DownloadIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
