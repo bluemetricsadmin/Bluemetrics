@@ -1087,38 +1087,7 @@ const SocialProofSection = () => {
     return () => ctx.revert();
   }, []);
 
-  return (
-    <section ref={sectionRef} className="py-32 bg-gradient-to-b from-[#08375F] to-[#0B1623]">
-      <div className="max-w-7xl mx-auto px-6 ">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Validado por <span className="text-[#2EE6FF]">líderes de la industria.</span>
-          </h2>
-        </div>
-
-        {/* Testimonial */}
-        <div className="max-w-4xl mx-auto transition-all duration-300
-                        hover:drop-shadow-[0_0_18px_rgba(56,189,248,0.85)]">
-          <div className="p-8 md:p-12 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 relative">
-            <div className="absolute -top-4 left-8 text-6xl text-[#2EE6FF]/30">"</div>
-            <blockquote className="text-xl md:text-2xl text-white/80 leading-relaxed mb-6 relative z-10">
-              BlueMetrics transformó nuestra gestión de recursos. En 6 meses redujimos un 23% 
-              nuestro consumo de agua y detectamos fugas que nos costaban más de $50,000 USD anuales.
-            </blockquote>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1FB6C9] to-[#0A4C8A] flex items-center justify-center p-2">
-                <img src={TecIcon} alt="Tec" className="w-full h-full object-contain brightness-0 invert" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">Director de Operaciones</p>
-                <p className="text-white/50">Tec de Monterrey</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+  return null;
 };
 
 // ============================================================================
