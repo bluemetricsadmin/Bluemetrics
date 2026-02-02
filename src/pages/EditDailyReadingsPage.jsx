@@ -71,6 +71,7 @@ export default function EditDailyReadingsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [autoSaveStatus, setAutoSaveStatus] = useState('saved')
   const firstInputRef = useRef(null)
+  const isInitialLoadRef = useRef(false)
 
   const [existingDates, setExistingDates] = useState([])
   const [loading, setLoading] = useState(true)
@@ -252,6 +253,7 @@ export default function EditDailyReadingsPage() {
         })
       })
 
+      isInitialLoadRef.current = true
       setReadings(loadedReadings)
 
     } catch (err) {
@@ -278,17 +280,6 @@ export default function EditDailyReadingsPage() {
   }
 
   const progress = calculateProgress()
-
-  // Auto-guardar cada 3 segundos
-  useEffect(() => {
-    if (Object.keys(readings).length === 0 || !selectedDate) return
-
-    const timer = setTimeout(() => {
-      saveReadings()
-    }, 3000)
-
-    return () => clearTimeout(timer)
-  }, [readings])
 
   const saveReadings = async () => {
     if (!selectedRecordId) {

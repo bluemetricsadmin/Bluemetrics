@@ -29,6 +29,7 @@ export default function EditGasReadingsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [autoSaveStatus, setAutoSaveStatus] = useState('saved')
   const firstInputRef = useRef(null)
+  const isInitialLoadRef = useRef(false)
 
   const [existingWeeks, setExistingWeeks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -143,6 +144,7 @@ export default function EditGasReadingsPage() {
         })
       })
 
+      isInitialLoadRef.current = true
       setReadings(loadedReadings)
 
     } catch (err) {
@@ -171,17 +173,6 @@ export default function EditGasReadingsPage() {
   }
 
   const progress = calculateProgress()
-
-  // Auto-guardar cada 3 segundos
-  useEffect(() => {
-    if (Object.keys(readings).length === 0 || !selectedWeek) return
-
-    const timer = setTimeout(() => {
-      saveReadings()
-    }, 3000)
-
-    return () => clearTimeout(timer)
-  }, [readings])
 
   const saveReadings = async () => {
     if (!selectedWeek) {

@@ -31,6 +31,7 @@ export default function EditWeeklyReadingsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [autoSaveStatus, setAutoSaveStatus] = useState('saved') // 'saved', 'saving', 'error'
   const firstInputRef = useRef(null)
+  const isInitialLoadRef = useRef(false)
 
   // Estados para datos de Supabase
   const [existingWeeks, setExistingWeeks] = useState([])
@@ -128,6 +129,7 @@ export default function EditWeeklyReadingsPage() {
 
       if (fetchError) {
         console.log('🆕 Semana sin datos')
+        isInitialLoadRef.current = true
         setReadings({})
         return
       }
@@ -149,6 +151,7 @@ export default function EditWeeklyReadingsPage() {
         })
       })
 
+      isInitialLoadRef.current = true
       setReadings(loadedReadings)
 
     } catch (err) {
@@ -178,17 +181,6 @@ export default function EditWeeklyReadingsPage() {
   }
 
   const progress = calculateProgress()
-
-  // Auto-guardar cada 3 segundos
-  useEffect(() => {
-    if (Object.keys(readings).length === 0 || !selectedWeek) return
-
-    const timer = setTimeout(() => {
-      saveReadings()
-    }, 3000)
-
-    return () => clearTimeout(timer)
-  }, [readings])
 
   // Guardar lecturas en Supabase
   const saveReadings = async () => {
