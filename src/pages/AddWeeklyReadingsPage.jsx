@@ -25,6 +25,16 @@ import PointsOrderModal, { applyOrderToCategories } from '../components/PointsOr
 import { usePersistedState } from '../hooks/usePersistedState'
 
 export default function AddWeeklyReadingsPage() {
+  // IDs que solo aparecen en plantilla Excel, NO en la plataforma web
+  const templateOnlyIds = [
+    'comedor_2_residencias_10_15', 'comedor_2_caldera_2', 'la_choza',
+    'biblioteca_starbucks', 'aulas_3_starbucks', 'residencias_1_antiguo',
+    'residencias_4', 'residencias_7', 'residencias_8', 'alberca',
+    'arquitectura_e1', 'arquitectura_anexo', 'ptar_riego',
+    'cedes_tinaco_riego', 'estadio_borrego_pluvial', 'campo_soft_bol_ciudad',
+    'cedes_ciudad', 'escamilla_banos_alumnos_ciudad'
+  ]
+
   // Estados principales con persistencia
   const [selectedYear, setSelectedYear, clearSelectedYear] = usePersistedState('weekly_selectedYear', DEFAULT_YEAR)
   const [step, setStep, clearStep] = usePersistedState('weekly_step', 1)
@@ -296,7 +306,7 @@ export default function AddWeeklyReadingsPage() {
 
         // Buscar el punto de consumo por nombre o ID
         consumptionPointsData.categories.forEach(category => {
-          category.points.forEach(point => {
+          category.points.filter(p => !templateOnlyIds.includes(p.id)).forEach(point => {
             if (!point.noRead) {
               // Coincidencia exacta o parcial (case insensitive)
               const pointNameLower = pointName.toLowerCase()
@@ -337,7 +347,7 @@ export default function AddWeeklyReadingsPage() {
       // Calcular consumo
       const newConsumption = {}
       consumptionPointsData.categories.forEach(category => {
-        category.points.forEach(point => {
+        category.points.filter(p => !templateOnlyIds.includes(p.id)).forEach(point => {
           if (!point.noRead) {
             const key = `${point.id}_${weekNumber}`
             const currentValue = parseFloat(newReadings[key])
@@ -390,7 +400,7 @@ export default function AddWeeklyReadingsPage() {
       // Agregar todas las lecturas al objeto (solo puntos habilitados)
       let readingsCount = 0
       orderedCategoriesData.forEach(category => {
-        category.points.forEach(point => {
+        category.points.filter(p => !templateOnlyIds.includes(p.id)).forEach(point => {
           if (!point.noRead) {
             const key = `${point.id}_${weekNumber}`
             const value = readings[key]
@@ -465,7 +475,7 @@ export default function AddWeeklyReadingsPage() {
       // Agregar consumo calculado (solo puntos habilitados)
       let consumoCount = 0
       orderedCategoriesData.forEach(category => {
-        category.points.forEach(point => {
+        category.points.filter(p => !templateOnlyIds.includes(p.id)).forEach(point => {
           if (!point.noRead) {
             const key = `${point.id}_${weekNumber}`
             const consumoValue = consumption[key]
@@ -965,7 +975,7 @@ export default function AddWeeklyReadingsPage() {
                 <div className="mb-6 overflow-x-auto">
                   <div className="flex gap-2 border-b border-muted pb-2">
                     {orderedCategoriesData.map(category => {
-                      const categoryPoints = category.points.filter(p => !p.noRead)
+                      const categoryPoints = category.points.filter(p => !p.noRead && !templateOnlyIds.includes(p.id))
                       const categoryCompleted = categoryPoints.filter(p => {
                         const key = `${p.id}_${weekNumber}`
                         return readings[key] && readings[key].trim() !== ''
@@ -995,7 +1005,7 @@ export default function AddWeeklyReadingsPage() {
                 {orderedCategoriesData.map(category => {
                   if (category.id !== activeCategory) return null
 
-                  const filteredPoints = category.points.filter(p => !p.noRead)
+                  const filteredPoints = category.points.filter(p => !p.noRead && !templateOnlyIds.includes(p.id))
 
                   return (
                     <Card key={category.id}>
@@ -1140,7 +1150,7 @@ export default function AddWeeklyReadingsPage() {
                         <h3 className="text-lg font-semibold mb-4 text-center">Resumen por Categoría</h3>
                         <div className="space-y-3">
                           {orderedCategoriesData.map(category => {
-                            const categoryPoints = category.points.filter(p => !p.noRead)
+                            const categoryPoints = category.points.filter(p => !p.noRead && !templateOnlyIds.includes(p.id))
                             const categoryCompleted = categoryPoints.filter(p => {
                               const key = `${p.id}_${weekNumber}`
                               return readings[key] && readings[key].trim() !== ''

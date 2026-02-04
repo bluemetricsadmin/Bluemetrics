@@ -335,6 +335,13 @@
           "unit": "m³"
         },
         {
+          "id": "comedor_2_residencias_10_15",
+          "name": "Comedor 2 - Residencias 10 y 15 (NO TOMAR LECTURA) MISMA LECTURA DESDE SEM 30 2025 NO EXISTE",
+          "type": "comedor",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
           "id": "residencias_10_15",
           "name": "Residencias 10 y 15",
           "type": "residencia",
@@ -345,6 +352,20 @@
           "name": "Residencias 10 y 15 llenado",
           "type": "residencia",
           "unit": "m³"
+        },
+        {
+          "id": "comedor_2_caldera_2",
+          "name": "Comedor 2 - Caldera 2 MISMA LECTURA DESDE 14-DIC-2022 NO EXISTE",
+          "type": "comedor",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
+          "id": "la_choza",
+          "name": "La choza MISMA LECTURA DESDE SEM 26 2024 NO EXISTE",
+          "type": "concesion",
+          "unit": "m³",
+          "noRead": true
         },
         {
           "id": "cedes_cisterna",
@@ -481,6 +502,13 @@
           "unit": "m³"
         },
         {
+          "id": "biblioteca_starbucks",
+          "name": "Biblioteca-Starbucks (NO HAY NINGUNA LECTURA REGISTRADA) NO EXISTE MEDIDOR",
+          "type": "concesion",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
           "id": "aulas_3",
           "name": "Aulas 3",
           "type": "edificio_academico",
@@ -497,6 +525,13 @@
           "name": "Aulas 3 - Sr. Latino",
           "type": "concesion",
           "unit": "m³"
+        },
+        {
+          "id": "aulas_3_starbucks",
+          "name": "Aulas 3 - Starbucks (NO HAY NINGUNA LECTURA REGISTRADA) NO EXISTE MEDIDOR",
+          "type": "concesion",
+          "unit": "m³",
+          "noRead": true
         },
         {
           "id": "centrales_sur",
@@ -523,6 +558,13 @@
           "unit": "m³"
         },
         {
+          "id": "residencias_1_antiguo",
+          "name": "Residencias 1 (antiguo) (NO TOMAR LECTURA) MISMA LECTURA SEM 44 2023 NO EXISTE MEDIDIOR",
+          "type": "residencia",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
           "id": "residencias_2_ote",
           "name": "Residencias 2 ote",
           "type": "residencia",
@@ -542,16 +584,44 @@
           "unit": "m³"
         },
         {
+          "id": "residencias_4",
+          "name": "Residencias 4 (NO TOMAR LECTURA MISMA LECTURA DESDE SEM 44 2023 NO EXISTE MEDIDOR",
+          "type": "residencia",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
           "id": "residencias_5",
           "name": "Residencias 5",
           "type": "residencia",
           "unit": "m³"
         },
         {
+          "id": "residencias_7",
+          "name": "Residencias 7 (NO TOMAR LECTURA) MISMA LECTURA DESDE SEM 44 2023 NO EXISTE MEDIDOR",
+          "type": "residencia",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
+          "id": "residencias_8",
+          "name": "Residencias 8 (NO TOMAR LECTURA) MISMA LECTURA DESDE SEM 46 2023 NO EXISTE MEDIDIDOR",
+          "type": "residencia",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
           "id": "correos",
           "name": "Correos Mr Heppy",
           "type": "edificio",
           "unit": "m³"
+        },
+        {
+          "id": "alberca",
+          "name": "Alberca (NO TOMAR LECTURAS) MISMA LECTURA DESDE SEM 30 2023 NO EXISTE MEDIDIR",
+          "type": "instalacion_deportiva",
+          "unit": "m³",
+          "noRead": true
         },
         {
           "id": "residencias_abc",
@@ -652,6 +722,20 @@
           "unit": "m³"
         },
         {
+          "id": "arquitectura_e1",
+          "name": "Arquitectura y E1 (NO TOMAR LECTURA) MISMA LECTURA DESDE SEM 51 2023 NO EXISTE MEDIDOR",
+          "type": "edificio",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
+          "id": "arquitectura_anexo",
+          "name": "Arquitectura Anexo (ya no existe) MISMA LECTURA DESDE SEM 9 2023 NO EXISTE MEDIDOR",
+          "type": "edificio",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
           "id": "megacentral_te_2",
           "name": "Megacentral Torres de Enfriamiento 2\"",
           "type": "torre_enfriamiento",
@@ -712,6 +796,13 @@
       "id": "riego_ptar",
       "name": "Riego y PTAR",
       "points": [
+        {
+          "id": "ptar_riego",
+          "name": "PTAR (Riego) MISMA LECTURA DESDE SEM 6 2025 NO EXISTE MEDIDOR",
+          "type": "ptar",
+          "unit": "m³",
+          "noRead": true
+        },
         {
           "id": "pozo_4_riego_alt",
           "name": "Pozo 4 (Riego)",
@@ -781,6 +872,13 @@
           "noRead": true
         },
         {
+          "id": "cedes_tinaco_riego",
+          "name": "Cedes Tinaco Riego SS2 pluvial (fuera de servicio MISMA LECTURA DESDE SEM 52 2024 NO EXISTE MEDIDOR",
+          "type": "purga",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
           "id": "megacentral_te_purgas",
           "name": "Megacentral Torres Enfriamiento purgas",
           "type": "purga",
@@ -804,6 +902,13 @@
           "name": "Residencias 10 y 15 T.E. purga",
           "type": "purga",
           "unit": "m³"
+        },
+        {
+          "id": "estadio_borrego_pluvial",
+          "name": "Estadio Borrego pluvial al sanitario MISMA LECTURA DESDE 31-Ago-22 NO EXISTE MEDIDOR",
+          "type": "pluvial",
+          "unit": "m³",
+          "noRead": true
         },
         {
           "id": "ciap_cisterna_pluvial",
@@ -844,6 +949,30 @@
           "type": "edificio",
           "source": "ciudad",
           "unit": "m³"
+        },
+        {
+          "id": "campo_soft_bol_ciudad",
+          "name": "Campo Soft bol (Ciudad) MISMA LECTURA DESDE SEM 42 2024 NO EXISTE MEDIDOR",
+          "type": "instalacion_deportiva",
+          "source": "ciudad",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
+          "id": "cedes_ciudad",
+          "name": "Cedes (Ciudad) MISMA LECTURA DESDE 20-Julio-22 NO EXISTE MEDIDOR",
+          "type": "edificio",
+          "source": "ciudad",
+          "unit": "m³",
+          "noRead": true
+        },
+        {
+          "id": "escamilla_banos_alumnos_ciudad",
+          "name": "Escamilla Baños Alumnos (Ciudad) NO HAY NINGUNA LECTURA REGISTRADA NO EXISTE MEDIDOR",
+          "type": "edificio",
+          "source": "ciudad",
+          "unit": "m³",
+          "noRead": true
         },
         {
           "id": "residencias_11_ciudad",

@@ -33,6 +33,16 @@ export default function EditWeeklyReadingsPage() {
   const firstInputRef = useRef(null)
   const isInitialLoadRef = useRef(false)
 
+  // IDs que solo aparecen en plantilla Excel, NO en la plataforma web
+  const templateOnlyIds = [
+    'comedor_2_residencias_10_15', 'comedor_2_caldera_2', 'la_choza',
+    'biblioteca_starbucks', 'aulas_3_starbucks', 'residencias_1_antiguo',
+    'residencias_4', 'residencias_7', 'residencias_8', 'alberca',
+    'arquitectura_e1', 'arquitectura_anexo', 'ptar_riego',
+    'cedes_tinaco_riego', 'estadio_borrego_pluvial', 'campo_soft_bol_ciudad',
+    'cedes_ciudad', 'escamilla_banos_alumnos_ciudad'
+  ]
+
   // Estados para datos de Supabase
   const [existingWeeks, setExistingWeeks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -51,10 +61,53 @@ export default function EditWeeklyReadingsPage() {
   }
 
   const downloadTemplate = () => {
+    // Lista de todos los IDs existentes en el archivo JSON (155 puntos totales)
+    const allowedIds = [
+      'medidor_general_pozos', 'pozo_11', 'pozo_14', 'pozo_12', 'pozo_7', 'pozo_3',
+      'pozo_4_riego', 'pozo_8_riego', 'pozo_15_riego',
+      'circuito_8_campus', 'auditorio_luis_elizondo', 'cdb2', 'cdb2_banos_nuevos_2025',
+      'arena_borrego', 'farnville', 'em_box', 'edificio_negocios_daf', 'aulas_6',
+      'domo_cultural', 'wellness_parque_central_tunel', 'wellness_registro',
+      'parque_central_registro', 'wellness_edificio', 'wellness_super_salads',
+      'wellness_torre_enfriamiento', 'wellness_alberca', 'centrales_comedor_1_principal',
+      'centrales_dona_tota', 'centrales_subway', 'centrales_carls_jr',
+      'centrales_little_cesars', 'centrales_grill_team', 'centrales_chilaquiles',
+      'centrales_tec_food', 'centrales_oxxo', 'comedor_central_tunel', 'administrativo',
+      'biotecnologia', 'escuela_arte_caldera_1', 'ciap_oriente', 'ciap_centro',
+      'ciap_poniente', 'ciap_green_shake', 'ciap_andatti', 'ciap_dc_jochos',
+      'crepaso', 'el_negro', 'aulas_5', 'ciap_starbucks', 'ciap_super_salads',
+      'ciap_sotano', 'reflexion', 'comedor_2_residencias_10_15', 'residencias_10_15',
+      'residencias_10_15_llenado', 'comedor_2_caldera_2', 'la_choza', 'cedes_cisterna',
+      'cedes_site', 'nucleo', 'expedition', 'expedition_bread', 'expedition_matthew',
+      'caffenio', 'cedes_e2', 'e2_beiker', 'e2_evobike', 'e2_pancho_de_rigo',
+      'e2_bebedero_nube', 'aulas_1', 'rectoria_norte', 'pabellon_la_carreta',
+      'rectoria_sur', 'aulas_2', 'cetec', 'biblioteca', 'biblioteca_nikkori',
+      'biblioteca_nectar_works', 'biblioteca_tim_horton', 'biblioteca_starbucks',
+      'aulas_3', 'basanti', 'aulas_3_sr_latino', 'aulas_3_starbucks', 'centrales_sur',
+      'aulas_4_norte', 'circuito_6_residencias', 'residencias_1_antiguo', 'residencias_2_ote',
+      'residencias_2_pte', 'residencias_3', 'residencias_4', 'residencias_5',
+      'residencias_7', 'residencias_8', 'correos', 'alberca', 'residencias_abc',
+      'residencias_abc_lavanderia', 'circuito_4_a7_ce', 'aulas_7', 'cah3_torre_enfriamiento',
+      'caldera_3', 'la_dia', 'aulas_4_sur', 'aulas_4_maestros', 'centro_congresos',
+      'jubileo', 'aulas_4_oxxo', 'circuito_planta_fisica', 'estacionamiento_e1',
+      'arquitectura_e1', 'arquitectura_anexo', 'megacentral_te_2', 'escamilla_banos_trabajadores',
+      'estadio_banorte', 'estadio_banorte_te', 'campus_norte_edificios_ciudad',
+      'estadio_azul', 'circuito_megacentral', 'megacentral_te_4', 'ptar_riego',
+      'pozo_4_riego_alt', 'pozo_8_riego_alt', 'pozo_15_riego_alt', 'campus_norte_ciudad_riego',
+      'comedor_d_ciudad', 'estadio_banorte_purgas', 'wellness_cisterna_pluvial_purgas',
+      'wellness_suavizador_purga', 'wellness_te_rebosadero', 'wellness_te_purga',
+      'cedes_tinaco_riego', 'megacentral_te_purgas', 'megacentral_suavizador_purga',
+      'cah3_te_purgas', 'residencias_10_15_te_purga', 'estadio_borrego_pluvial',
+      'ciap_cisterna_pluvial', 'campo_soft_bol_ciudad', 'cedes_ciudad',
+      'estacionamiento_e3', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos_ciudad',
+      'residencias_11_ciudad', 'residencias_12_ciudad', 'residencias_13_1_ciudad',
+      'residencias_13_2_ciudad', 'residencias_13_3_ciudad', 'residencias_15_sotano'
+    ]
+
     const templateData = []
     consumptionPointsData.categories.forEach(category => {
       category.points.forEach(point => {
-        if (!point.noRead) {
+        if (allowedIds.includes(point.id)) {
           templateData.push({
             'Punto de Consumo': point.name,
             'ID': point.id,
@@ -141,12 +194,10 @@ export default function EditWeeklyReadingsPage() {
       
       consumptionPointsData.categories.forEach(category => {
         category.points.forEach(point => {
-          if (!point.noRead) {
-            const dbFieldName = `l_${point.id}`
-            if (data[dbFieldName] !== null && data[dbFieldName] !== undefined) {
-              const key = `${point.id}_${weekNumber}`
-              loadedReadings[key] = data[dbFieldName].toString()
-            }
+          const dbFieldName = `l_${point.id}`
+          if (data[dbFieldName] !== null && data[dbFieldName] !== undefined) {
+            const key = `${point.id}_${weekNumber}`
+            loadedReadings[key] = data[dbFieldName].toString()
           }
         })
       })
@@ -166,7 +217,7 @@ export default function EditWeeklyReadingsPage() {
     const category = consumptionPointsData.categories.find(c => c.id === activeCategory)
     if (!category) return { completed: 0, total: 0, percentage: 0 }
 
-    const activePoints = category.points.filter(p => !p.noRead)
+    const activePoints = category.points.filter(p => !templateOnlyIds.includes(p.id))
     const total = activePoints.length
     const completed = activePoints.filter(p => {
       const key = `${p.id}_${selectedWeek}`
@@ -198,13 +249,11 @@ export default function EditWeeklyReadingsPage() {
       // Agregar todas las lecturas al objeto
       consumptionPointsData.categories.forEach(category => {
         category.points.forEach(point => {
-          if (!point.noRead) {
-            const key = `${point.id}_${selectedWeek}`
-            const value = readings[key]
-            
-            if (value && value.trim() !== '') {
-              weekData[`l_${point.id}`] = parseFloat(value)
-            }
+          const key = `${point.id}_${selectedWeek}`
+          const value = readings[key]
+          
+          if (value && value.trim() !== '') {
+            weekData[`l_${point.id}`] = parseFloat(value)
           }
         })
       })
@@ -268,12 +317,10 @@ export default function EditWeeklyReadingsPage() {
 
       consumptionPointsData.categories.forEach(category => {
         category.points.forEach(point => {
-          if (!point.noRead) {
-            const dbFieldName = `l_${point.id}`
-            if (data[dbFieldName] !== null && data[dbFieldName] !== undefined) {
-              const key = `${point.id}_${selectedWeek}`
-              newReadings[key] = data[dbFieldName].toString()
-            }
+          const dbFieldName = `l_${point.id}`
+          if (data[dbFieldName] !== null && data[dbFieldName] !== undefined) {
+            const key = `${point.id}_${selectedWeek}`
+            newReadings[key] = data[dbFieldName].toString()
           }
         })
       })
@@ -313,7 +360,8 @@ export default function EditWeeklyReadingsPage() {
 
   // Filtrar puntos por búsqueda
   const getFilteredPoints = (category) => {
-    let points = category.points
+    // Excluir puntos que solo aparecen en plantilla
+    let points = category.points.filter(p => !templateOnlyIds.includes(p.id))
     
     if (searchTerm) {
       points = points.filter(p => 
@@ -512,7 +560,7 @@ export default function EditWeeklyReadingsPage() {
                 <div className="mb-6 overflow-x-auto">
                   <div className="flex gap-2 border-b border-muted pb-2">
                     {consumptionPointsData.categories.map(category => {
-                      const categoryPoints = category.points.filter(p => !p.noRead)
+                      const categoryPoints = category.points.filter(p => !templateOnlyIds.includes(p.id))
                       const categoryCompleted = categoryPoints.filter(p => {
                         const key = `${p.id}_${selectedWeek}`
                         return readings[key] && readings[key].trim() !== ''
@@ -586,9 +634,6 @@ export default function EditWeeklyReadingsPage() {
                               const key = `${point.id}_${selectedWeek}`
                               const value = readings[key] || ''
                               const isCompleted = value.trim() !== ''
-
-                              // Saltar medidores sin lectura
-                              if (point.noRead) return null
 
                               return (
                                 <div 
