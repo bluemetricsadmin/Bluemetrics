@@ -40,6 +40,28 @@ export default function EditMonthlyWaterReadingsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [autoSaveStatus, setAutoSaveStatus] = useState('saved')
   const firstInputRef = useRef(null)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
+
+  const getMonthlyDbFieldName = (pointId) => {
+    const overrides = {
+      caffenio: null,
+      campo_soft_bol_ciudad: 'l_campo_soft_bol',
+      cedes_tinaco_riego: 'l_cedes_tinaco_riego_pluvial',
+      escamilla_banos_alumnos_ciudad: 'l_escamilla_banos_alumnos'
+    }
+
+    if (Object.prototype.hasOwnProperty.call(overrides, pointId)) {
+      return overrides[pointId]
+    }
+
+    return `l_${pointId}`
+  }
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false)
+    setSavedCount(0)
+  }
   
   // Estado para seleccionar tipo de tabla (lecturas o consumo)
   const [targetTable, setTargetTable] = useState('lectura') // 'lectura' o 'consumo'
@@ -128,7 +150,8 @@ export default function EditMonthlyWaterReadingsPage() {
       consumptionPointsData.categories.forEach(category => {
         category.points.forEach(point => {
           if (!point.noRead) {
-            const dbFieldName = `l_${point.id}`
+            const dbFieldName = getMonthlyDbFieldName(point.id)
+            if (!dbFieldName) return
             if (data[dbFieldName] !== null && data[dbFieldName] !== undefined) {
               const key = `${point.id}_${readingKey}`
               loadedReadings[key] = data[dbFieldName].toString()
@@ -152,7 +175,7 @@ export default function EditMonthlyWaterReadingsPage() {
     if (!category || !selectedMonth) return { completed: 0, total: 0, percentage: 0 }
 
     const readingKey = `${selectedYear}_${selectedMonth}`
-    const activePoints = category.points.filter(p => !p.noRead)
+    const activePoints = category.points.filter(p => !p.noRead && !!getMonthlyDbFieldName(p.id))
     const total = activePoints.length
     const completed = activePoints.filter(p => {
       const key = `${p.id}_${readingKey}`
@@ -173,14 +196,14 @@ export default function EditMonthlyWaterReadingsPage() {
     if (Object.keys(readings).length === 0 || !selectedMonth) return
 
     const timer = setTimeout(() => {
-      saveReadings()
+      saveReadings({ showModal: false })
     }, 3000)
 
     return () => clearTimeout(timer)
   }, [readings])
 
   // Guardar lecturas en Supabase
-  const saveReadings = async () => {
+  const saveReadings = async ({ showModal = false } = {}) => {
     if (!selectedMonth) {
       console.warn('⚠️ No hay mes seleccionado')
       return
@@ -200,9 +223,15 @@ export default function EditMonthlyWaterReadingsPage() {
           if (!point.noRead) {
             const key = `${point.id}_${readingKey}`
             const value = readings[key]
-            
-            if (value && value.trim() !== '') {
-              monthData[`l_${point.id}`] = parseFloat(value)
+
+            const dbFieldName = getMonthlyDbFieldName(point.id)
+            if (!dbFieldName) return
+
+            if (value === undefined || value === null || value.trim() === '') {
+              monthData[dbFieldName] = null
+            } else {
+              const parsed = parseFloat(value)
+              monthData[dbFieldName] = Number.isFinite(parsed) ? parsed : null
             }
           }
         })
@@ -215,17 +244,22 @@ export default function EditMonthlyWaterReadingsPage() {
         ? getMonthlyWaterConsumptionTableName() 
         : getMonthlyWaterTableName()
 
-      // UPDATE - Actualizar mes existente
-      const { error: updateError } = await supabase
+      // UPSERT - Crear o actualizar (evita casos donde UPDATE no afecta filas)
+      const { error: upsertError } = await supabase
         .from(tableName)
-        .update(monthData)
-        .eq('anio', parseInt(selectedYear))
-        .eq('mes', selectedMonth)
+        .upsert(monthData, { onConflict: 'anio,mes' })
 
-      if (updateError) throw updateError
+      if (upsertError) throw upsertError
       
       console.log(`✅ ${tableLabel.charAt(0).toUpperCase() + tableLabel.slice(1)} actualizadas exitosamente`)
       setAutoSaveStatus('saved')
+      setError(null)
+
+      if (showModal) {
+        const count = Object.keys(monthData).filter(k => k !== 'anio' && k !== 'mes').length
+        setSavedCount(count)
+        setShowSuccessModal(true)
+      }
       setTimeout(() => setAutoSaveStatus('saved'), 2000)
 
     } catch (error) {
@@ -271,11 +305,12 @@ export default function EditMonthlyWaterReadingsPage() {
 
       const newReadings = {}
       const readingKey = `${selectedYear}_${selectedMonth}`
-
       consumptionPointsData.categories.forEach(category => {
         category.points.forEach(point => {
           if (!point.noRead) {
-            const dbFieldName = `l_${point.id}`
+            const dbFieldName = getMonthlyDbFieldName(point.id)
+            if (!dbFieldName) return
+
             if (data[dbFieldName] !== null && data[dbFieldName] !== undefined) {
               const key = `${point.id}_${readingKey}`
               newReadings[key] = data[dbFieldName].toString()
@@ -561,6 +596,8 @@ export default function EditMonthlyWaterReadingsPage() {
   // Filtrar puntos por búsqueda
   const getFilteredPoints = (category) => {
     let points = category.points
+      .filter(p => !p.noRead)
+      .filter(p => !!getMonthlyDbFieldName(p.id))
     
     if (searchTerm) {
       points = points.filter(p => 
@@ -851,7 +888,7 @@ export default function EditMonthlyWaterReadingsPage() {
                 <div className="mb-6 overflow-x-auto">
                   <div className="flex gap-2 border-b border-muted pb-2">
                     {consumptionPointsData.categories.map(category => {
-                      const categoryPoints = category.points.filter(p => !p.noRead)
+                      const categoryPoints = category.points.filter(p => !p.noRead && !!getMonthlyDbFieldName(p.id))
                       const readingKey = `${selectedYear}_${selectedMonth}`
                       const categoryCompleted = categoryPoints.filter(p => {
                         const key = `${p.id}_${readingKey}`
@@ -897,7 +934,7 @@ export default function EditMonthlyWaterReadingsPage() {
                           </div>
                           <Button 
                             size="sm"
-                            onClick={saveReadings}
+                            onClick={() => saveReadings({ showModal: true })}
                             disabled={autoSaveStatus === 'saving'}
                           >
                             <SaveIcon className="h-4 w-4 mr-2" />
@@ -992,6 +1029,35 @@ export default function EditMonthlyWaterReadingsPage() {
           </main>
         </div>
       </div>
+
+      {/* Modal de Guardado Exitoso */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="text-center">
+                <CheckCircle2Icon className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-foreground mb-2">
+                  ¡Guardado Exitoso!
+                </h2>
+                <p className="text-muted-foreground">
+                  Se guardaron {savedCount} lecturas en el mes seleccionado.
+                </p>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <Button
+                size="lg"
+                onClick={handleCloseSuccessModal}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Aceptar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </RedirectIfNotAuth>
   )
 }
