@@ -105,15 +105,33 @@ export default function EditWeeklyReadingsPage() {
     ]
 
     const templateData = []
+    const aguaCiudadOrder = [
+      'campo_soft_bol_ciudad',
+      'cedes_ciudad',
+      'estacionamiento_e3',
+      'guarderia',
+      'naranjos',
+      'casa_solar'
+    ]
+    const aguaCiudadOrderIndex = new Map(aguaCiudadOrder.map((id, idx) => [id, idx]))
+
     consumptionPointsData.categories.forEach(category => {
-      category.points.forEach(point => {
-        if (allowedIds.includes(point.id)) {
-          templateData.push({
-            'Punto de Consumo': point.name,
-            'ID': point.id,
-            'Lectura': 0
-          })
-        }
+      const pointsInTemplate = category.points.filter(point => allowedIds.includes(point.id))
+      const orderedPoints =
+        category.id === 'agua_ciudad'
+          ? [...pointsInTemplate].sort((a, b) => {
+              const aIdx = aguaCiudadOrderIndex.has(a.id) ? aguaCiudadOrderIndex.get(a.id) : Number.POSITIVE_INFINITY
+              const bIdx = aguaCiudadOrderIndex.has(b.id) ? aguaCiudadOrderIndex.get(b.id) : Number.POSITIVE_INFINITY
+              return aIdx - bIdx
+            })
+          : pointsInTemplate
+
+      orderedPoints.forEach(point => {
+        templateData.push({
+          'Punto de Consumo': point.name,
+          'ID': point.id,
+          'Lectura': 0
+        })
       })
     })
     const ws = XLSX.utils.json_to_sheet(templateData)
