@@ -45,7 +45,7 @@ export default function EditMonthlyWaterReadingsPage() {
 
   const getMonthlyDbFieldName = (pointId) => {
     const overrides = {
-      caffenio: null,
+      caffenio: 'l_caffenio',
       campo_soft_bol_ciudad: 'l_campo_soft_bol',
       cedes_tinaco_riego: 'l_cedes_tinaco_riego_pluvial',
       escamilla_banos_alumnos_ciudad: 'l_escamilla_banos_alumnos'
@@ -496,17 +496,17 @@ export default function EditMonthlyWaterReadingsPage() {
       'pozo_4_riego_alt', 'pozo_8_riego_alt', 'pozo_15_riego_alt', 'campus_norte_ciudad_riego',
       'comedor_d_ciudad', 'estadio_banorte_purgas', 'wellness_cisterna_pluvial_purgas',
       'wellness_suavizador_purga', 'wellness_te_rebosadero', 'wellness_te_purga',
-      'cedes_tinaco_riego', 'megacentral_te_purgas', 'megacentral_suavizador_purga',
+      'cedes_tinaco_riego_pluvial', 'megacentral_te_purgas', 'megacentral_suavizador_purga',
       'cah3_te_purgas', 'residencias_10_15_te_purga', 'estadio_borrego_pluvial',
-      'ciap_cisterna_pluvial', 'campo_soft_bol_ciudad', 'cedes_ciudad',
-      'estacionamiento_e3', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos_ciudad',
+      'ciap_cisterna_pluvial', 'campo_soft_bol', 'cedes_ciudad',
+      'estacionamiento_e3', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos',
       'residencias_11_ciudad', 'residencias_12_ciudad', 'residencias_13_1_ciudad',
       'residencias_13_2_ciudad', 'residencias_13_3_ciudad', 'residencias_15_sotano'
     ]
 
     const templateData = []
     const aguaCiudadOrder = [
-      'campo_soft_bol_ciudad',
+      'campo_soft_bol',
       'cedes_ciudad',
       'estacionamiento_e3',
       'guarderia',

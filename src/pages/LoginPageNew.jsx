@@ -324,13 +324,16 @@ const LoginPage = () => {
             )}
           </Button>
 
-          <button
+
+          {/*             
+            <button
             type="button"
             onClick={() => setIsRegisterMode(true)}
             className="w-full text-sm text-blue-600 hover:text-blue-700 mt-4"
           >
             ¿No tienes cuenta? Regístrate
           </button>
+          */}
         </form>
         )}
       </Card>
