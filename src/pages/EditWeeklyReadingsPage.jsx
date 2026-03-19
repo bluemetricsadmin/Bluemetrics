@@ -16,6 +16,7 @@ import {
   CalendarIcon,
   TrendingUpIcon,
   Loader2Icon,
+  Trash2Icon,
   RefreshCwIcon,
   EditIcon,
   DownloadIcon
@@ -32,6 +33,9 @@ export default function EditWeeklyReadingsPage() {
   const [autoSaveStatus, setAutoSaveStatus] = useState('saved') // 'saved', 'saving', 'error'
   const firstInputRef = useRef(null)
   const isInitialLoadRef = useRef(false)
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // IDs que solo aparecen en plantilla Excel, NO en la plataforma web
   const templateOnlyIds = [
@@ -250,6 +254,48 @@ export default function EditWeeklyReadingsPage() {
   }
 
   const progress = calculateProgress()
+
+
+  //Borrar registros 
+   const deleteReading = async () => {
+    if (!selectedWeek) {
+      console.warn('⚠️ No hay semana seleccionada para eliminar')
+      return
+    }
+
+    try {
+      setDeleting(true)
+      const tableName = getTableNameByYear(selectedYear)
+      
+      console.log(`🗑️ Eliminando semana ${selectedWeek} de la tabla ${tableName}`)
+
+      // Eliminar todos los datos de la semana
+      const { error: deleteError } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('l_numero_semana', selectedWeek)
+
+      if (deleteError) throw deleteError
+
+      console.log('✅ Semana eliminada exitosamente')
+      
+      // Limpiar estados específicos para semanales
+      setSelectedWeek(null)
+      setReadings({})
+      setShowDeleteConfirm(false)
+      setAutoSaveStatus('saved')
+      
+      // Recargar las semanas disponibles
+      await fetchExistingWeeks()
+
+    } catch (error) {
+      console.error('❌ Error eliminando semana:', error)
+      setError(`Error al eliminar: ${error.message}`)
+      setAutoSaveStatus('error')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   // Guardar lecturas en Supabase
   const saveReadings = async () => {
@@ -630,6 +676,18 @@ export default function EditWeeklyReadingsPage() {
                               <DownloadIcon className="h-4 w-4 mr-2" />
                               Descargar Plantilla
                             </Button>
+
+                             <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(true)}
+                              disabled={deleting}
+                              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2Icon className="h-4 w-4 mr-2" />
+                              Eliminar Lectura
+                            </Button>
+
                             <Button 
                               size="sm"
                               onClick={saveReadings}
@@ -725,6 +783,68 @@ export default function EditWeeklyReadingsPage() {
           </main>
         </div>
       </div>
+
+
+
+       {/* Modal de Confirmación de Eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                  <Trash2Icon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Eliminar Lectura Diaria</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Esta acción no se puede deshacer
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-foreground mb-4">
+                  ¿Estás seguro de que deseas eliminar la lectura de la semana <strong>{selectedWeek}</strong>?
+                </p>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <p className="text-xs text-red-800 dark:text-red-200">
+                    <strong>Advertencia:</strong> Se eliminarán permanentemente todas las lecturas de esta semana.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={deleteReading}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2Icon className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Modal de Guardado Exitoso */}
       {showSuccessModal && (
