@@ -772,7 +772,7 @@ export default function EditDailyReadingsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {existingDates.map(date => (
                         <button
-                          key={date.dia_hora}
+                          key={date.id}
                           onClick={() => {
                             console.log('\n🖱️ === CLICK EN CARTA DE FECHA ===')
                             console.log('📅 Fecha clickeada:', date.dia_hora)
@@ -785,7 +785,7 @@ export default function EditDailyReadingsPage() {
                             setSelectedMonth(date.mes_anio)
                           }}
                           className={`p-4 rounded-lg border-2 transition-all ${
-                            selectedDate === date.dia_hora
+                           selectedDate === date.dia_hora && selectedMonth === date.mes_anio
                               ? 'border-primary bg-primary/10 shadow-md'
                               : 'border-muted hover:border-primary/50'
                           }`}
@@ -916,7 +916,7 @@ export default function EditDailyReadingsPage() {
                           <div>
                             <h3 className="text-lg font-semibold">{category.name}</h3>
                             <p className="text-sm text-muted-foreground mt-1">
-                              Fecha: {selectedDate}
+                              Fecha: {selectedMonth} {selectedDate}
                             </p>
                           </div>
                           <div className="flex gap-2">
