@@ -16,7 +16,8 @@ import {
   CalendarIcon,
   Loader2Icon,
   RefreshCwIcon,
-  DownloadIcon
+  DownloadIcon,
+  Trash2Icon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getGasTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
@@ -25,7 +26,7 @@ export default function EditGasReadingsPage() {
   const [selectedWeek, setSelectedWeek] = useState(null)
   const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
   const [readings, setReadings] = useState({})
-  const [activeCategory, setActiveCategory] = useState('acometidas_campus')
+  const [activeCategory, setActiveCategory] = useState('todos_los_puntos')
   const [searchTerm, setSearchTerm] = useState('')
   const [autoSaveStatus, setAutoSaveStatus] = useState('saved')
   const firstInputRef = useRef(null)
@@ -36,6 +37,9 @@ export default function EditGasReadingsPage() {
   const [error, setError] = useState(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false)
@@ -272,6 +276,47 @@ export default function EditGasReadingsPage() {
     } catch (err) {
       console.error('❌ Error al copiar lecturas:', err)
       alert(`Error al copiar lecturas: ${err.message}`)
+    }
+  }
+
+  const deleteReading = async () => {
+    if (!selectedWeek) {
+      console.warn('⚠️ No hay semana seleccionada para eliminar')
+      return
+    }
+
+    try {
+      setDeleting(true)
+      const tableName = getGasTableNameByYear(selectedYear)
+      
+      console.log(`🗑️ Eliminando semana ${selectedWeek} de la tabla ${tableName}`)
+
+      // Eliminar todos los datos de la semana
+      const { error: deleteError } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('numero_semana', selectedWeek)
+
+      if (deleteError) throw deleteError
+
+      console.log('✅ Semana eliminada exitosamente')
+      
+      // Limpiar estados específicos para semanales
+      setSelectedWeek(null)
+      setReadings({})
+      setShowDeleteConfirm(false)
+      setAutoSaveStatus('saved')
+      setError(null)
+      
+      // Recargar las semanas disponibles
+      await fetchExistingWeeks()
+
+    } catch (error) {
+      console.error('❌ Error eliminando semana:', error)
+      setError(`Error al eliminar: ${error.message}`)
+      setAutoSaveStatus('error')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -547,6 +592,15 @@ export default function EditGasReadingsPage() {
                               Descargar Plantilla
                             </Button>
                             <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(true)}
+                              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2Icon className="h-4 w-4 mr-2" />
+                              Eliminar Semana
+                            </Button>
+                            <Button 
                               size="sm"
                               onClick={saveReadings}
                               disabled={autoSaveStatus === 'saving'}
@@ -554,6 +608,7 @@ export default function EditGasReadingsPage() {
                               <SaveIcon className="h-4 w-4 mr-2" />
                               Guardar Ahora
                             </Button>
+                            
                           </div>
                         </div>
                       </CardHeader>
@@ -674,6 +729,66 @@ export default function EditGasReadingsPage() {
               >
                 Aceptar
               </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                  <Trash2Icon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Eliminar Lectura de Gas</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Esta acción no se puede deshacer
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-foreground mb-4">
+                  ¿Estás seguro de que deseas eliminar la lectura de la semana <strong>{selectedWeek}</strong>?
+                </p>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <p className="text-xs text-red-800 dark:text-red-200">
+                    <strong>Advertencia:</strong> Se eliminarán permanentemente todas las lecturas de esta semana.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={deleteReading}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2Icon className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
