@@ -19,6 +19,7 @@ import {
   DatabaseIcon,
   CalculatorIcon,
   UploadIcon,
+  Trash2Icon,
   FileSpreadsheetIcon,
   DownloadIcon
 } from 'lucide-react'
@@ -42,6 +43,9 @@ export default function EditMonthlyWaterReadingsPage() {
   const firstInputRef = useRef(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [deleting, setDeleting] = useState(false)
 
   const getMonthlyDbFieldName = (pointId) => {
     const overrides = {
@@ -268,6 +272,45 @@ export default function EditMonthlyWaterReadingsPage() {
       setError(error.message)
     }
   }
+
+  //Borrar lecturas 
+  const deleteReading = async () => {
+      if (!selectedMonth) {
+        console.warn('⚠️ No hay registro seleccionado para eliminar')
+        return
+      }
+  
+      try {
+        setDeleting(true)
+        console.log(`🗑️ Eliminando registro: ${selectedMonth}/${selectedYear}`)
+
+        // Debes eliminar por ANIO y MES, no por ID
+        const { error: deleteError } = await supabase
+          .from('lecturas_mensuales_agua')
+          .delete()
+          .eq('anio', parseInt(selectedYear))
+          .eq('mes', selectedMonth)
+
+        if (deleteError) throw deleteError
+
+        console.log('✅ Lectura eliminada exitosamente')
+        
+        // Limpiar estados
+        setSelectedMonth(null)
+        setReadings({})
+        setShowDeleteConfirm(false)
+        setAutoSaveStatus('saved')
+        
+        // Recargar la lista de fechas
+        await fetchExistingMonths()
+  
+      } catch (error) {
+        console.error('❌ Error eliminando lectura:', error)
+        setError(`Error al eliminar: ${error.message}`)
+      } finally {
+        setDeleting(false)
+      }
+    }
 
   // Copiar lecturas del mes anterior desde Supabase
   const copyPreviousMonthReadings = async () => {
@@ -932,6 +975,18 @@ export default function EditMonthlyWaterReadingsPage() {
                               {category.description}
                             </p>
                           </div>
+
+                          <div className="flex gap-2">
+                             <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(true)}
+                              disabled={deleting}
+                              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2Icon className="h-4 w-4 mr-2" />
+                              Eliminar Lectura
+                            </Button>
                           <Button 
                             size="sm"
                             onClick={() => saveReadings({ showModal: true })}
@@ -940,6 +995,8 @@ export default function EditMonthlyWaterReadingsPage() {
                             <SaveIcon className="h-4 w-4 mr-2" />
                             Guardar Ahora
                           </Button>
+                            </div>
+
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -1029,6 +1086,68 @@ export default function EditMonthlyWaterReadingsPage() {
           </main>
         </div>
       </div>
+
+
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                  <Trash2Icon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Eliminar Lectura Diaria</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Esta acción no se puede deshacer
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-foreground mb-4">
+                  ¿Estás seguro de que deseas eliminar la lectura de la semana <strong>{selectedMonth}</strong>?
+                </p>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <p className="text-xs text-red-800 dark:text-red-200">
+                    <strong>Advertencia:</strong> Se eliminarán permanentemente todas las lecturas de esta semana.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={deleteReading}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2Icon className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Modal de Guardado Exitoso */}
       {showSuccessModal && (
