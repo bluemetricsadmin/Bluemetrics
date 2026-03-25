@@ -485,10 +485,52 @@ export default function AddMonthlyWaterReadingsPage() {
 
   // Descargar plantilla de Excel
   const downloadTemplate = () => {
-    const templateData = []
+    // Lista de IDs permitidos en la plantilla (mismo set que semanales)
+    const allowedIds = [
+      'medidor_general_pozos', 'pozo_11', 'pozo_14', 'pozo_12', 'pozo_7', 'pozo_3',
+      'pozo_4_riego', 'pozo_8_riego', 'pozo_15_riego',
+      'circuito_8_campus', 'auditorio_luis_elizondo', 'cdb2', 'cdb2_banos_nuevos_2025',
+      'arena_borrego', 'farnville', 'em_box', 'edificio_negocios_daf', 'aulas_6',
+      'domo_cultural', 'wellness_parque_central_tunel', 'wellness_registro',
+      'parque_central_registro', 'wellness_edificio', 'wellness_super_salads',
+      'wellness_torre_enfriamiento', 'wellness_alberca', 'centrales_comedor_1_principal',
+      'centrales_dona_tota', 'centrales_subway', 'centrales_carls_jr',
+      'centrales_little_cesars', 'centrales_grill_team', 'centrales_chilaquiles',
+      'centrales_tec_food', 'centrales_oxxo', 'comedor_central_tunel', 'administrativo',
+      'biotecnologia', 'escuela_arte_caldera_1', 'ciap_oriente', 'ciap_centro',
+      'ciap_poniente', 'ciap_green_shake', 'ciap_andatti', 'ciap_dc_jochos',
+      'crepaso', 'el_negro', 'aulas_5', 'ciap_starbucks', 'ciap_super_salads',
+      'ciap_sotano', 'reflexion', 'comedor_2_residencias_10_15', 'residencias_10_15',
+      'residencias_10_15_llenado', 'comedor_2_caldera_2', 'la_choza', 'cedes_cisterna',
+      'cedes_site', 'nucleo', 'expedition', 'expedition_bread', 'expedition_matthew',
+      'caffenio', 'cedes_e2', 'e2_beiker', 'e2_evobike', 'e2_pancho_de_rigo',
+      'e2_bebedero_nube', 'aulas_1', 'rectoria_norte', 'pabellon_la_carreta',
+      'rectoria_sur', 'aulas_2', 'cetec', 'biblioteca', 'biblioteca_nikkori',
+      'biblioteca_nectar_works', 'biblioteca_tim_horton', 'biblioteca_starbucks',
+      'aulas_3', 'basanti', 'aulas_3_sr_latino', 'aulas_3_starbucks', 'centrales_sur',
+      'aulas_4_norte', 'circuito_6_residencias', 'residencias_1_antiguo', 'residencias_2_ote',
+      'residencias_2_pte', 'residencias_3', 'residencias_4', 'residencias_5',
+      'residencias_7', 'residencias_8', 'correos', 'alberca', 'residencias_abc',
+      'residencias_abc_lavanderia', 'circuito_4_a7_ce', 'aulas_7', 'cah3_torre_enfriamiento',
+      'caldera_3', 'la_dia', 'aulas_4_sur', 'aulas_4_maestros', 'centro_congresos',
+      'jubileo', 'aulas_4_oxxo', 'circuito_planta_fisica', 'estacionamiento_e1',
+      'arquitectura_e1', 'arquitectura_anexo', 'megacentral_te_2', 'escamilla_banos_trabajadores',
+      'estadio_banorte', 'estadio_banorte_te', 'campus_norte_edificios_ciudad',
+      'estadio_azul', 'circuito_megacentral', 'megacentral_te_4', 'ptar_riego',
+      'pozo_4_riego_alt', 'pozo_8_riego_alt', 'pozo_15_riego_alt', 'campus_norte_ciudad_riego',
+      'comedor_d_ciudad', 'estadio_banorte_purgas', 'wellness_cisterna_pluvial_purgas',
+      'wellness_suavizador_purga', 'wellness_te_rebosadero', 'wellness_te_purga',
+      'cedes_tinaco_riego_pluvial', 'megacentral_te_purgas', 'megacentral_suavizador_purga',
+      'cah3_te_purgas', 'residencias_10_15_te_purga', 'estadio_borrego_pluvial',
+      'ciap_cisterna_pluvial', 'campo_soft_bol', 'cedes_ciudad',
+      'estacionamiento_e3', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos',
+      'residencias_11_ciudad', 'residencias_12_ciudad', 'residencias_13_1_ciudad',
+      'residencias_13_2_ciudad', 'residencias_13_3_ciudad', 'residencias_15_sotano'
+    ]
 
+    const templateData = []
     const aguaCiudadOrder = [
-      'campo_soft_bol_ciudad',
+      'campo_soft_bol',
       'cedes_ciudad',
       'estacionamiento_e3',
       'guarderia',
@@ -496,22 +538,23 @@ export default function AddMonthlyWaterReadingsPage() {
       'casa_solar'
     ]
     const aguaCiudadOrderIndex = new Map(aguaCiudadOrder.map((id, idx) => [id, idx]))
-    
-    orderedCategoriesData.forEach(category => {
+
+    consumptionPointsData.categories.forEach(category => {
+      const pointsInTemplate = category.points.filter(point => allowedIds.includes(point.id))
       const orderedPoints =
         category.id === 'agua_ciudad'
-          ? [...category.points].sort((a, b) => {
+          ? [...pointsInTemplate].sort((a, b) => {
               const aIdx = aguaCiudadOrderIndex.has(a.id) ? aguaCiudadOrderIndex.get(a.id) : Number.POSITIVE_INFINITY
               const bIdx = aguaCiudadOrderIndex.has(b.id) ? aguaCiudadOrderIndex.get(b.id) : Number.POSITIVE_INFINITY
               return aIdx - bIdx
             })
-          : category.points
+          : pointsInTemplate
 
       orderedPoints.forEach(point => {
         templateData.push({
           'Punto de Consumo': point.name,
           'ID': point.id,
-          'Lectura': 0
+          'Lectura': ''
         })
       })
     })
@@ -527,21 +570,18 @@ export default function AddMonthlyWaterReadingsPage() {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Lecturas Mensuales')
     
-    const totalPuntos = consumptionPointsData.categories.reduce((acc, cat) => acc + cat.points.length, 0)
-    
+    // Hoja de instrucciones
     const instrucciones = [
-      { 'INSTRUCCIONES': 'Plantilla de Lecturas Mensuales de Agua - Aquanet' },
+      { 'INSTRUCCIONES': 'Plantilla de Lecturas Mensuales de Agua' },
       { 'INSTRUCCIONES': '' },
       { 'INSTRUCCIONES': '📋 INSTRUCCIONES:' },
       { 'INSTRUCCIONES': '' },
       { 'INSTRUCCIONES': '1. Complete la columna "Lectura" con los valores en m³' },
       { 'INSTRUCCIONES': '2. NO modifique las columnas "Punto de Consumo" ni "ID"' },
-      { 'INSTRUCCIONES': '3. Guarde el archivo y súbalo en el sistema' },
+      { 'INSTRUCCIONES': '3. Deje vacíos los campos que no tenga datos' },
+      { 'INSTRUCCIONES': '4. Guarde el archivo y súbalo en el sistema' },
       { 'INSTRUCCIONES': '' },
-      { 'INSTRUCCIONES': '📊 Total de puntos: ' + totalPuntos },
-      { 'INSTRUCCIONES': '' },
-      { 'INSTRUCCIONES': '⚠️ Nota: Algunos puntos están marcados como "(NO TOMAR LECTURA)"' },
-      { 'INSTRUCCIONES': '   Puede dejar esos en 0 o vacío.' }
+      { 'INSTRUCCIONES': `📊 Total de puntos: ${templateData.length}` }
     ]
     
     const wsInstrucciones = XLSX.utils.json_to_sheet(instrucciones)

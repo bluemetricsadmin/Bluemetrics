@@ -159,7 +159,7 @@ export default function EditWeeklyReadingsPage() {
       XLSX.utils.book_append_sheet(wb, wsInstrucciones, 'Instrucciones')
   
       const fecha = new Date().toISOString().split('T')[0]
-      XLSX.writeFile(wb, `Plantilla_Lecturas_Mensuales_${fecha}.xlsx`)
+      XLSX.writeFile(wb, `Plantilla_Lecturas_Semanales_${fecha}.xlsx`)
     }
 
   // Cargar semanas existentes desde Supabase cuando cambia el año
