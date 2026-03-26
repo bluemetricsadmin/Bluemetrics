@@ -393,20 +393,50 @@ export default function AddMonthlyWaterReadingsPage() {
       // Guardar en tabla de CONSUMO si es 'consumo' o 'ambas'
       if (targetTable === 'consumo' || targetTable === 'ambas') {
         const consumoTableName = getMonthlyWaterConsumptionTableName()
-        const { data, error: consumoError } = await supabase
-          .from(consumoTableName)
-          .update(monthData)
-          .eq('anio', parseInt(selectedYear))
-          .eq('mes', selectedMonth)
-          .select()
-
-        if (consumoError) {
-          console.error('❌ Error en tabla de consumo:', consumoError)
-          throw new Error(`Error en consumo: ${consumoError.message}`)
-        }
         
-        console.log('✅ Guardado en tabla de CONSUMO')
-        successMessages.push(`${dataCount} consumos`)
+        // Construir objeto de CONSUMO separado usando los valores calculados (no las lecturas crudas)
+        const consumoData = {
+          anio: parseInt(selectedYear),
+          mes: selectedMonth
+        }
+
+        let consumoCount = 0
+        orderedCategoriesData.forEach(category => {
+          category.points.forEach(point => {
+            if (!point.noRead) {
+              const key = `${point.id}_${readingKey}`
+              const consumoValue = consumption[key]
+              
+              if (consumoValue !== undefined && !isNaN(consumoValue)) {
+                consumoData[`l_${point.id}`] = consumoValue
+                consumoCount++
+              }
+            }
+          })
+        })
+
+        if (consumoCount > 0) {
+          console.log('💾 Guardando consumo calculado:', consumoData)
+          console.log(`📊 Total de consumos a guardar: ${consumoCount}`)
+
+          const { data, error: consumoError } = await supabase
+            .from(consumoTableName)
+            .update(consumoData)
+            .eq('anio', parseInt(selectedYear))
+            .eq('mes', selectedMonth)
+            .select()
+
+          if (consumoError) {
+            console.error('❌ Error en tabla de consumo:', consumoError)
+            throw new Error(`Error en consumo: ${consumoError.message}`)
+          }
+          
+          console.log('✅ Guardado en tabla de CONSUMO')
+          successMessages.push(`${consumoCount} consumos`)
+        } else {
+          console.warn('⚠️ No hay datos de consumo calculados para guardar. Verifica que existan lecturas del mes anterior.')
+          successMessages.push('0 consumos (sin mes anterior para calcular)')
+        }
       }
       
       const finalMessage = targetTable === 'ambas' 
