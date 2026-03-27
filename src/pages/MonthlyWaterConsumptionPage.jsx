@@ -10,7 +10,6 @@ import {
   TrendingDownIcon,
   DropletIcon,
   BarChart3Icon,
-  CalendarIcon,
   DownloadIcon,
   Waves,
   TableIcon,
@@ -18,19 +17,8 @@ import {
   RefreshCwIcon,
   AlertCircleIcon
 } from 'lucide-react'
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  LineChart,
-  Line
-} from 'recharts'
 
+import MonthlyComparisonChart from '../components/MonthlyComparisonChart'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { 
   getMonthlyWaterTableName, 
@@ -43,18 +31,22 @@ import {
 
 export default function MonthlyWaterConsumptionPage() {
   const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
-  const [viewMode, setViewMode] = useState('chart') // 'chart' o 'table'
-  const [chartType, setChartType] = useState('bar') // 'bar' o 'line'
   
   // Estados para datos de Supabase
-  const [monthlyReadings, setMonthlyReadings] = useState([])
   const [monthlyConsumption, setMonthlyConsumption] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Estados para comparativas entre años
-  const [comparisonYears, setComparisonYears] = useState([DEFAULT_YEAR])
-  const [comparisonData, setComparisonData] = useState({})
+  // Estados para comparativas entre años (per-year data para MonthlyComparisonChart)
+  const [monthlyData2023, setMonthlyData2023] = useState([])
+  const [monthlyData2024, setMonthlyData2024] = useState([])
+  const [monthlyData2025, setMonthlyData2025] = useState([])
+  const [monthlyData2026, setMonthlyData2026] = useState([])
+
+  // Estados para controles de gráfica (estilo ConsumptionPage)
+  const [comparisonChartType, setComparisonChartType] = useState('line')
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2025', '2026'])
+  const [availableYears] = useState(['2023', '2024', '2025', '2026'])
   
   // Estado para punto de medición seleccionado
   const [selectedPoint, setSelectedPoint] = useState('medidor_general_pozos')
@@ -65,35 +57,21 @@ export default function MonthlyWaterConsumptionPage() {
   // Cargar datos cuando cambia el año
   useEffect(() => {
     fetchMonthlyData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear])
 
-  // Cargar datos de comparación cuando cambian los años seleccionados
+  // Cargar datos de comparación cuando cambia el punto seleccionado
   useEffect(() => {
-    fetchComparisonData()
-  }, [comparisonYears, selectedPoint])
+    fetchAllYearsMonthlyData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPoint])
 
   const fetchMonthlyData = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const readingsTableName = getMonthlyWaterTableName()
       const consumptionTableName = getMonthlyWaterConsumptionTableName()
-      
-      console.log('🔍 Cargando lecturas mensuales desde:', readingsTableName)
-      console.log('🔍 Cargando consumo mensual desde:', consumptionTableName)
-      
-      // Cargar lecturas mensuales
-      const { data: readingsData, error: readingsError } = await supabase
-        .from(readingsTableName)
-        .select('*')
-        .eq('anio', parseInt(selectedYear))
-        .order('mes', { ascending: true })
-      
-      if (readingsError) {
-        console.error('❌ Error cargando lecturas:', readingsError)
-        throw readingsError
-      }
       
       // Cargar consumo mensual
       const { data: consumptionData, error: consumptionError } = await supabase
@@ -104,13 +82,9 @@ export default function MonthlyWaterConsumptionPage() {
       
       if (consumptionError) {
         console.error('❌ Error cargando consumo:', consumptionError)
-        // No lanzar error, puede que la tabla no exista aún
+        throw consumptionError
       }
       
-      console.log('✅ Lecturas obtenidas:', readingsData?.length, 'meses')
-      console.log('✅ Consumo obtenido:', consumptionData?.length, 'meses')
-      
-      setMonthlyReadings(readingsData || [])
       setMonthlyConsumption(consumptionData || [])
       
     } catch (err) {
@@ -121,50 +95,112 @@ export default function MonthlyWaterConsumptionPage() {
     }
   }
 
-  const fetchComparisonData = async () => {
+  // Función para cargar datos de un año específico para la gráfica de comparación
+  const fetchYearMonthlyData = async (year, setStateFunction) => {
     try {
+      const shouldSumAll = selectedPoint === 'todos'
+      const readingsTableName = getMonthlyWaterTableName()
       const consumptionTableName = getMonthlyWaterConsumptionTableName()
-      const newComparisonData = {}
-      
-      for (const year of comparisonYears) {
-        const { data, error } = await supabase
-          .from(consumptionTableName)
-          .select('*')
-          .eq('anio', parseInt(year))
-          .order('mes', { ascending: true })
-        
-        if (!error && data) {
-          newComparisonData[year] = data.map(row => ({
-            mes: row.mes,
-            monthName: getMonthName(row.mes),
-            value: selectedPoint === 'todos' 
-              ? calculateTotalConsumption(row)
-              : parseFloat(row[`l_${selectedPoint}`]) || 0
-          }))
-        }
+
+      // Cargar lecturas mensuales
+      const { data: readingsData, error: readingsError } = await supabase
+        .from(readingsTableName)
+        .select('*')
+        .eq('anio', parseInt(year))
+        .order('mes', { ascending: true })
+
+      if (readingsError) {
+        console.error(`❌ Error cargando lecturas de ${year}:`, readingsError)
+        setStateFunction([])
+        return
       }
-      
-      setComparisonData(newComparisonData)
+
+      // Cargar consumo mensual
+      const { data: consumptionData, error: consumptionError } = await supabase
+        .from(consumptionTableName)
+        .select('*')
+        .eq('anio', parseInt(year))
+        .order('mes', { ascending: true })
+
+      if (consumptionError) {
+        console.error(`❌ Error cargando consumo de ${year}:`, consumptionError)
+        setStateFunction([])
+        return
+      }
+
+      if (!readingsData || readingsData.length === 0) {
+        setStateFunction([])
+        return
+      }
+
+      let formattedData
+      if (shouldSumAll) {
+        formattedData = (consumptionData || []).map(row => {
+          let totalConsumption = 0
+          Object.keys(row).forEach(key => {
+            if (key.startsWith('l_') && 
+                key !== 'l_id' &&
+                row[key] !== null) {
+              const value = parseFloat(row[key])
+              if (!isNaN(value)) {
+                totalConsumption += value
+              }
+            }
+          })
+          return {
+            month: row.mes,
+            monthName: getMonthName(row.mes),
+            reading: totalConsumption,
+            consumption: totalConsumption
+          }
+        })
+      } else {
+        const columnName = `l_${selectedPoint}`
+        formattedData = readingsData.map(reading => {
+          const consumption = (consumptionData || []).find(c => c.mes === reading.mes)
+          return {
+            month: reading.mes,
+            monthName: getMonthName(reading.mes),
+            reading: parseFloat(reading[columnName]) || 0,
+            consumption: parseFloat(consumption?.[columnName]) || 0
+          }
+        })
+      }
+
+      setStateFunction(formattedData)
     } catch (err) {
-      console.error('❌ Error cargando datos de comparación:', err)
+      console.error(`❌ Error al cargar datos de ${year}:`, err)
+      setStateFunction([])
     }
   }
 
-  // Calcular consumo total de un mes (suma de todos los puntos)
-  const calculateTotalConsumption = (row) => {
-    let total = 0
-    Object.keys(row).forEach(key => {
-      if (key.startsWith('l_') && 
-          key !== 'l_id' &&
-          row[key] !== null) {
-        const value = parseFloat(row[key])
-        if (!isNaN(value)) {
-          total += value
-        }
-      }
-    })
-    return total
+  // Cargar datos de todos los años para comparación
+  const fetchAllYearsMonthlyData = async () => {
+    await Promise.all([
+      fetchYearMonthlyData('2023', setMonthlyData2023),
+      fetchYearMonthlyData('2024', setMonthlyData2024),
+      fetchYearMonthlyData('2025', setMonthlyData2025),
+      fetchYearMonthlyData('2026', setMonthlyData2026)
+    ])
   }
+
+  // Preparar datos multi-año para MonthlyComparisonChart
+  const getMultiYearChartData = () => {
+    const yearDataMap = {
+      '2023': monthlyData2023,
+      '2024': monthlyData2024,
+      '2025': monthlyData2025,
+      '2026': monthlyData2026
+    }
+
+    const sortedSelectedYears = [...comparisonYearsToShow].sort()
+    return sortedSelectedYears.map(year => ({
+      year,
+      data: yearDataMap[year] || []
+    }))
+  }
+
+  const multiYearData = getMultiYearChartData()
 
   // Calcular métricas principales
   const calculateMetrics = () => {
@@ -212,60 +248,6 @@ export default function MonthlyWaterConsumptionPage() {
   const serviciosTrend = metrics.serviciosPrev > 0
     ? ((metrics.servicios - metrics.serviciosPrev) / metrics.serviciosPrev * 100).toFixed(1)
     : 0
-
-  // Preparar datos para gráficas
-  const prepareChartData = () => {
-    const data = monthlyConsumption.map(row => {
-      const columnName = `l_${selectedPoint}`
-      return {
-        mes: getMonthName(row.mes),
-        mesNum: row.mes,
-        value: selectedPoint === 'todos' 
-          ? calculateTotalConsumption(row)
-          : parseFloat(row[columnName]) || 0
-      }
-    })
-    return data
-  }
-
-  // Preparar datos de comparación entre años para gráfica
-  const prepareComparisonChartData = () => {
-    const allMonths = MONTHS.map(m => ({
-      mes: m.label,
-      mesNum: m.value
-    }))
-
-    return allMonths.map(month => {
-      const dataPoint = { mes: month.mes }
-      comparisonYears.forEach(year => {
-        const yearData = comparisonData[year]?.find(d => d.mes === month.mesNum)
-        dataPoint[year] = yearData?.value || 0
-      })
-      return dataPoint
-    })
-  }
-
-  const chartData = prepareChartData()
-  const comparisonChartData = prepareComparisonChartData()
-
-  // Colores para años en comparación
-  const yearColors = {
-    '2023': '#94a3b8',
-    '2024': '#60a5fa',
-    '2025': '#34d399',
-    '2026': '#f97316'
-  }
-
-  // Toggle año en comparación
-  const toggleComparisonYear = (year) => {
-    if (comparisonYears.includes(year)) {
-      if (comparisonYears.length > 1) {
-        setComparisonYears(comparisonYears.filter(y => y !== year))
-      }
-    } else {
-      setComparisonYears([...comparisonYears, year])
-    }
-  }
 
   return (
     <RedirectIfNotAuth>
@@ -419,168 +401,114 @@ export default function MonthlyWaterConsumptionPage() {
                   </Card>
                 </div>
 
-                {/* Sección de Gráficas de Consumo Mensual */}
-                <Card className="mb-6">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+                {/* Controles de Comparativas Mensuales */}
+                <Card className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                  <CardContent className="p-6">
+                    <div className="flex flex-wrap items-center gap-4">
+                      {/* Punto de Medición */}
                       <div className="flex items-center gap-2">
-                        <BarChart3Icon className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">Consumo Mensual por Punto de Medición</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant={chartType === 'bar' ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setChartType('bar')}
+                        <label className="text-sm font-semibold text-foreground whitespace-nowrap">Punto de Medición:</label>
+                        <select
+                          value={selectedPoint}
+                          onChange={(e) => setSelectedPoint(e.target.value)}
+                          className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors min-w-[200px]"
                         >
-                          Barras
-                        </Button>
-                        <Button
-                          variant={chartType === 'line' ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setChartType('line')}
-                        >
-                          Líneas
-                        </Button>
+                          <option value="todos">📊 Total (Todos los puntos)</option>
+                          <optgroup label="Pozos de Servicios">
+                            <option value="medidor_general_pozos">Medidor General de Pozos</option>
+                            <option value="pozo_11">Pozo 11</option>
+                            <option value="pozo_12">Pozo 12</option>
+                            <option value="pozo_14">Pozo 14</option>
+                            <option value="pozo_7">Pozo 7</option>
+                            <option value="pozo_3">Pozo 3</option>
+                          </optgroup>
+                          <optgroup label="Pozos de Riego">
+                            <option value="pozo_4_riego">Pozo 4 Riego</option>
+                            <option value="pozo_8_riego">Pozo 8 Riego</option>
+                            <option value="pozo_15_riego">Pozo 15 Riego</option>
+                          </optgroup>
+                          <optgroup label="Residencias">
+                            <option value="residencias_10_15">Residencias 10 y 15</option>
+                            <option value="residencias_3">Residencias 3</option>
+                            <option value="residencias_5">Residencias 5</option>
+                          </optgroup>
+                          <optgroup label="Edificios Principales">
+                            <option value="wellness_edificio">Wellness Edificio</option>
+                            <option value="biblioteca">Biblioteca</option>
+                            <option value="cetec">CETEC</option>
+                            <option value="biotecnologia">Biotecnología</option>
+                            <option value="arena_borrego">Arena Borrego</option>
+                            <option value="centro_congresos">Centro de Congresos</option>
+                          </optgroup>
+                        </select>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Selector de punto de medición */}
-                    <div className="mb-4">
-                      <label className="text-sm font-medium mr-2">Punto de Medición:</label>
-                      <select
-                        value={selectedPoint}
-                        onChange={(e) => setSelectedPoint(e.target.value)}
-                        className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-[250px]"
-                      >
-                        <option value="todos">📊 Total (Todos los puntos)</option>
-                        <optgroup label="Pozos de Servicios">
-                          <option value="medidor_general_pozos">Medidor General de Pozos</option>
-                          <option value="pozo_11">Pozo 11</option>
-                          <option value="pozo_12">Pozo 12</option>
-                          <option value="pozo_14">Pozo 14</option>
-                          <option value="pozo_7">Pozo 7</option>
-                          <option value="pozo_3">Pozo 3</option>
-                        </optgroup>
-                        <optgroup label="Pozos de Riego">
-                          <option value="pozo_4_riego">Pozo 4 Riego</option>
-                          <option value="pozo_8_riego">Pozo 8 Riego</option>
-                          <option value="pozo_15_riego">Pozo 15 Riego</option>
-                        </optgroup>
-                        <optgroup label="Residencias">
-                          <option value="residencias_10_15">Residencias 10 y 15</option>
-                          <option value="residencias_3">Residencias 3</option>
-                          <option value="residencias_5">Residencias 5</option>
-                        </optgroup>
-                        <optgroup label="Edificios Principales">
-                          <option value="wellness_edificio">Wellness Edificio</option>
-                          <option value="biblioteca">Biblioteca</option>
-                          <option value="cetec">CETEC</option>
-                          <option value="biotecnologia">Biotecnología</option>
-                          <option value="arena_borrego">Arena Borrego</option>
-                          <option value="centro_congresos">Centro de Congresos</option>
-                        </optgroup>
-                      </select>
-                    </div>
 
-                    {/* Gráfica */}
-                    {chartData.length > 0 ? (
-                      <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                          {chartType === 'bar' ? (
-                            <BarChart data={chartData}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="mes" />
-                              <YAxis />
-                              <Tooltip 
-                                formatter={(value) => [`${value.toLocaleString()} m³`, 'Consumo']}
-                              />
-                              <Legend />
-                              <Bar dataKey="value" name="Consumo (m³)" fill="#3b82f6" />
-                            </BarChart>
-                          ) : (
-                            <LineChart data={chartData}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="mes" />
-                              <YAxis />
-                              <Tooltip 
-                                formatter={(value) => [`${value.toLocaleString()} m³`, 'Consumo']}
-                              />
-                              <Legend />
-                              <Line 
-                                type="monotone" 
-                                dataKey="value" 
-                                name="Consumo (m³)" 
-                                stroke="#3b82f6" 
-                                strokeWidth={2}
-                                dot={{ fill: '#3b82f6' }}
-                              />
-                            </LineChart>
-                          )}
-                        </ResponsiveContainer>
-                      </div>
-                    ) : (
-                      <div className="h-80 flex items-center justify-center text-muted-foreground">
-                        No hay datos de consumo mensual para {selectedYear}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      {/* Separador */}
+                      <div className="h-8 w-px bg-gray-300"></div>
 
-                {/* Comparativa entre años */}
-                <Card className="mb-6">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+                      {/* Tipo de Gráfico */}
                       <div className="flex items-center gap-2">
-                        <CalendarIcon className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">Comparativa entre Años</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {AVAILABLE_YEARS.map(year => (
+                        <label className="text-sm font-semibold text-foreground whitespace-nowrap">Tipo de Gráfico:</label>
+                        <div className="flex gap-1 border rounded-lg p-1 bg-background">
                           <Button
-                            key={year}
-                            variant={comparisonYears.includes(year) ? 'default' : 'outline'}
+                            variant={comparisonChartType === 'line' ? 'default' : 'ghost'}
                             size="sm"
-                            onClick={() => toggleComparisonYear(year)}
-                            style={{
-                              backgroundColor: comparisonYears.includes(year) ? yearColors[year] : undefined,
-                              borderColor: yearColors[year]
-                            }}
+                            onClick={() => setComparisonChartType('line')}
+                            className="h-8 px-3"
                           >
-                            {year}
+                            Líneas
                           </Button>
-                        ))}
+                          <Button
+                            variant={comparisonChartType === 'bar' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setComparisonChartType('bar')}
+                            className="h-8 px-3"
+                          >
+                            Barras
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={comparisonChartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="mes" />
-                          <YAxis />
-                          <Tooltip 
-                            formatter={(value, name) => [`${value.toLocaleString()} m³`, name]}
-                          />
-                          <Legend />
-                          {comparisonYears.map(year => (
-                            <Line
+
+                      {/* Separador */}
+                      <div className="h-8 w-px bg-gray-300"></div>
+
+                      {/* Años a mostrar */}
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-semibold text-foreground whitespace-nowrap">Años:</label>
+                        <div className="flex gap-1 border rounded-lg p-1 bg-background">
+                          {availableYears.map(year => (
+                            <Button
                               key={year}
-                              type="monotone"
-                              dataKey={year}
-                              name={year}
-                              stroke={yearColors[year]}
-                              strokeWidth={2}
-                              dot={{ fill: yearColors[year] }}
-                            />
+                              variant={comparisonYearsToShow.includes(year) ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => {
+                                setComparisonYearsToShow(prev => {
+                                  if (prev.includes(year)) {
+                                    if (prev.length === 1) return prev
+                                    return prev.filter(y => y !== year)
+                                  }
+                                  return [...prev, year].sort()
+                                })
+                              }}
+                              className="h-8 px-3"
+                            >
+                              {year}
+                            </Button>
                           ))}
-                        </LineChart>
-                      </ResponsiveContainer>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Gráfica de comparación mensual */}
+                <MonthlyComparisonChart
+                  title={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPointsData.categories.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
+                  unit="m³"
+                  chartType={comparisonChartType}
+                  showControls={false}
+                  multiYearData={multiYearData}
+                />
 
                 {/* Tabla de datos detallados */}
                 <Card>
