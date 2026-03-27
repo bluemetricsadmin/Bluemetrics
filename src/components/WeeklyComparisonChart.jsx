@@ -60,6 +60,14 @@ export default function WeeklyComparisonChart({
   
   // Determinar si usar modo multi-año
   const useMultiYear = filteredMultiYearData.length > 0
+
+  // Derivar currentYear y previousYear dinámicamente del multiYearData
+  const effectiveCurrentYear = useMultiYear && filteredMultiYearData.length > 0
+    ? filteredMultiYearData[filteredMultiYearData.length - 1].year
+    : currentYear
+  const effectivePreviousYear = useMultiYear && filteredMultiYearData.length > 1
+    ? filteredMultiYearData[filteredMultiYearData.length - 2].year
+    : previousYear
   
   // Función para alternar selección de año
   const toggleYear = (year) => {
@@ -229,7 +237,7 @@ export default function WeeklyComparisonChart({
 
     if (comparisonMode === 'current' || comparisonMode === 'both') {
       datasets.push({
-        label: `${currentYear}`,
+        label: `${effectiveCurrentYear}`,
         data: processedCurrent.map(d => d.consumption),
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: chartType === 'bar' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(59, 130, 246, 0.1)',
@@ -248,7 +256,7 @@ export default function WeeklyComparisonChart({
 
     if ((comparisonMode === 'previous' || comparisonMode === 'both') && processedPrevious.length > 0) {
       datasets.push({
-        label: `${previousYear}`,
+        label: `${effectivePreviousYear}`,
         data: processedPrevious.map(d => d.consumption),
         borderColor: 'rgb(156, 163, 175)',
         backgroundColor: chartType === 'bar' ? 'rgba(156, 163, 175, 0.4)' : 'rgba(156, 163, 175, 0.05)',
@@ -262,7 +270,7 @@ export default function WeeklyComparisonChart({
     }
 
     return { labels, datasets }
-  }, [processedCurrent, processedPrevious, currentYear, previousYear, chartType, comparisonMode, useMultiYear, processedMultiYear])
+  }, [processedCurrent, processedPrevious, effectiveCurrentYear, effectivePreviousYear, chartType, comparisonMode, useMultiYear, processedMultiYear])
 
   const chartOptions = {
     responsive: true,
@@ -403,35 +411,54 @@ export default function WeeklyComparisonChart({
               >
                 2025
               </Button>
+              <Button
+                variant={selectedYears.includes('2026') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleYear('2026')}
+                className="h-8"
+              >
+                2026
+              </Button>
             </div>
           </div>
         )}
 
         {/* Estadísticas de comparación */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
-          {/* Total año actual */}
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
-            <p className="text-xs text-muted-foreground">Total {currentYear}</p>
-            <p className="text-lg font-bold text-foreground">
-              {comparisonStats.currentTotal.toLocaleString()} {unit}
-            </p>
-          </div>
-
-          {/* Total año anterior */}
-          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
-            <p className="text-xs text-muted-foreground">Total {previousYear}</p>
-            <p className="text-lg font-bold text-muted-foreground">
-              {comparisonStats.previousTotal.toLocaleString()} {unit}
-            </p>
-          </div>
-
-          {/* Total 2023 */}
-          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
-            <p className="text-xs text-muted-foreground">Total 2023</p>
-            <p className="text-lg font-bold text-muted-foreground">
-              {comparisonStats.total2023?.toLocaleString() || '0'} {unit}
-            </p>
-          </div>
+          {/* Totales dinámicos por año */}
+          {useMultiYear && processedMultiYear.length > 0 ? (
+            processedMultiYear.slice().reverse().map((yearItem, index) => {
+              const yearTotal = yearItem.processed.reduce((sum, w) => sum + w.consumption, 0)
+              const isLatest = index === 0
+              return (
+                <div key={yearItem.year} className={`p-3 rounded-lg border ${
+                  isLatest
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200'
+                    : 'bg-gray-50 dark:bg-gray-800 border-gray-200'
+                }`}>
+                  <p className="text-xs text-muted-foreground">Total {yearItem.year}</p>
+                  <p className={`text-lg font-bold ${isLatest ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {yearTotal.toLocaleString()} {unit}
+                  </p>
+                </div>
+              )
+            })
+          ) : (
+            <>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+                <p className="text-xs text-muted-foreground">Total {effectiveCurrentYear}</p>
+                <p className="text-lg font-bold text-foreground">
+                  {comparisonStats.currentTotal.toLocaleString()} {unit}
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
+                <p className="text-xs text-muted-foreground">Total {effectivePreviousYear}</p>
+                <p className="text-lg font-bold text-muted-foreground">
+                  {comparisonStats.previousTotal.toLocaleString()} {unit}
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Cambio año sobre año */}
           <div className={`p-3 rounded-lg border ${
