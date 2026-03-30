@@ -83,14 +83,24 @@ export default function MonthlyComparisonChart({
   const processMonthlyData = (monthlyData) => {
     if (!monthlyData || monthlyData.length === 0) return []
 
-    return monthlyData.map((item, index) => {
+    const allMonths = [
+      {month:1,monthName:'Enero'},{month:2,monthName:'Febrero'},{month:3,monthName:'Marzo'},
+      {month:4,monthName:'Abril'},{month:5,monthName:'Mayo'},{month:6,monthName:'Junio'},
+      {month:7,monthName:'Julio'},{month:8,monthName:'Agosto'},{month:9,monthName:'Septiembre'},
+      {month:10,monthName:'Octubre'},{month:11,monthName:'Noviembre'},{month:12,monthName:'Diciembre'}
+    ]
+    // Map incoming data by month number, fill gaps with 0
+    const dataByMonth = Object.fromEntries(monthlyData.map(d => [d.month, d]))
+    const normalized = allMonths.map(m => dataByMonth[m.month] || { ...m, consumption: 0, reading: 0 })
+
+    return normalized.map((item, index) => {
       const consumption = item.consumption !== undefined && item.consumption !== null
         ? item.consumption
-        : (index > 0 ? Math.max(0, (item.reading || 0) - (monthlyData[index - 1].reading || 0)) : 0)
+        : (index > 0 ? Math.max(0, (item.reading || 0) - (normalized[index - 1].reading || 0)) : 0)
 
       const lastMonthConsumption = index > 0
-        ? (monthlyData[index - 1].consumption !== undefined && monthlyData[index - 1].consumption !== null
-            ? monthlyData[index - 1].consumption
+        ? (normalized[index - 1].consumption !== undefined && normalized[index - 1].consumption !== null
+            ? normalized[index - 1].consumption
             : 0)
         : 0
 
