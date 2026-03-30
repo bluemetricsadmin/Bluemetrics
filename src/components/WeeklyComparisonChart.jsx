@@ -82,19 +82,24 @@ export default function WeeklyComparisonChart({
     })
   }
 
-  // Procesar datos para obtener consumo semanal
+  // Procesar datos para obtener consumo semanal (siempre 52 semanas)
   const processWeeklyData = (weeklyData) => {
     if (!weeklyData || weeklyData.length === 0) return []
-    
-    return weeklyData.map((week, index) => {
+
+    // Crear template de 52 semanas y mapear datos existentes por número de semana
+    const allWeeks = Array.from({ length: 52 }, (_, i) => ({ week: i + 1 }))
+    const dataByWeek = Object.fromEntries(weeklyData.map(d => [d.week, d]))
+    const normalized = allWeeks.map(w => dataByWeek[w.week] || { ...w, consumption: 0, reading: 0 })
+
+    return normalized.map((week, index) => {
       // Usar el campo consumption directamente si existe, sino calcular
       const consumption = week.consumption !== undefined && week.consumption !== null
         ? week.consumption
-        : (index > 0 ? Math.max(0, week.reading - weeklyData[index - 1].reading) : 0)
+        : (index > 0 ? Math.max(0, (week.reading || 0) - (normalized[index - 1].reading || 0)) : 0)
       
       const lastWeekConsumption = index > 0 
-        ? (weeklyData[index - 1].consumption !== undefined && weeklyData[index - 1].consumption !== null
-            ? weeklyData[index - 1].consumption
+        ? (normalized[index - 1].consumption !== undefined && normalized[index - 1].consumption !== null
+            ? normalized[index - 1].consumption
             : 0)
         : 0
       
@@ -233,7 +238,7 @@ export default function WeeklyComparisonChart({
     }
 
     // Modo original de 2 años
-    const labels = processedCurrent.map(d => `Sem ${d.week}`)
+    const labels = Array.from({ length: 52 }, (_, i) => `Sem ${i + 1}`)
 
     if (comparisonMode === 'current' || comparisonMode === 'both') {
       datasets.push({
