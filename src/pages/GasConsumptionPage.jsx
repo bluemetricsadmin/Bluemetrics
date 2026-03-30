@@ -864,38 +864,29 @@ export default function GasConsumptionPage() {
               </p>
             </div>
 
-            {/* Bento Grid: Gráfica a la izquierda, Filtros a la derecha */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              {/* Gráfica de comparación - 2 columnas */}
-              <div className="lg:col-span-2">
-                <WeeklyComparisonChart
-                  title={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
-                  unit="m³"
-                  chartType={comparisonChartType}
-                  showControls={false}
-                  multiYearData={multiYearData}
-                />
-              </div>
-
-              {/* Filtros a la derecha - 1 columna */}
-              <Card className="lg:col-span-1">
-                <CardHeader>
+            {/* Filtros arriba, Gráfica abajo */}
+            <div className="flex flex-col gap-6 mb-6">
+              {/* Filtros arriba */}
+              <Card className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+               {/* 
+               <CardHeader>
                   <div className="flex items-center gap-2">
                     <TrendingUpIcon className="h-5 w-5 text-orange-500" />
                     <h3 className="text-lg font-semibold">Filtros</h3>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+               */} 
+                <CardContent className='p-6'>
+                  <div className="flex flex-wrap items-center gap-4">
                     {/* Medidor de Gas */}
-                    <div className="border-b pb-3">
+                    <div className="flex items-center gap-2">
                       <label className="text-sm font-semibold text-foreground mb-2 block">Medidor de Gas</label>
                       <select
                         value={selectedPoint}
                         onChange={(e) => setSelectedPoint(e.target.value)}
                         className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
                       >
-                        <option value="todos">📊 TODOS LOS MEDIDORES</option>
+                        <option value="todos">TODOS LOS MEDIDORES</option>
                         <optgroup label="Acometidas Principales Campus">
                           <option value="campus_acometida_principal_digital">Campus Acometida Ppal digital</option>
                           <option value="campus_acometida_principal_analogica">Campus Acometida Ppal analógica</option>
@@ -939,6 +930,8 @@ export default function GasConsumptionPage() {
                         </optgroup>
                       </select>
                     </div>
+                     {/* Separador */}
+                  <div className="h-8 w-px bg-gray-300"></div>
 
                     {/* Tipo de Gráfico */}
                     <div className="border-b pb-3">
@@ -952,11 +945,13 @@ export default function GasConsumptionPage() {
                         <option value="bar">Barras</option>
                       </select>
                     </div>
+                    {/* Separador */}
+                  <div className="h-8 w-px bg-gray-300"></div>
 
                     {/* Selección de años para comparación */}
-                    <div className="pt-2">
+                    <div className="flex items-center gap-2">
                       <label className="text-sm font-semibold text-foreground mb-2 block">Años a mostrar</label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="flex gap-1 border rounded-lg p-1 bg-background">
                         {availableYearsForComparison.map(year => (
                           <Button
                             key={year}
@@ -990,6 +985,15 @@ export default function GasConsumptionPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Gráfica de comparación */}
+              <WeeklyComparisonChart
+                title={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
+                unit="m³"
+                chartType={comparisonChartType}
+                showControls={false}
+                multiYearData={multiYearData}
+              />
             </div>
 
 
