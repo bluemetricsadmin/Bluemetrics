@@ -219,6 +219,108 @@ export default function EditGasReadingsPage() {
         .eq('numero_semana', selectedWeek)
 
       if (updateError) throw updateError
+
+
+      //Actualizar consumo de gas
+      let consumoCount = 0
+      try {
+        // Obtener lecturas de la semana anterior
+        let prevTableName = tableName
+        let prevWeekNum = selectedWeek - 1
+
+        if (selectedWeek === 1) {
+          // Si es semana 1, buscar última semana del año anterior
+          const previousYear = String(parseInt(selectedYear) - 1)
+          prevTableName = getGasTableNameByYear(previousYear)
+
+          const { data: lastWeekData, error: lastWeekError } = await supabase
+            .from(prevTableName)
+            .select('l_numero_semana')
+            .order('l_numero_semana', { ascending: false })
+            .limit(1)
+            .single()
+
+          if (lastWeekError) {
+            console.warn('⚠️ No se encontraron datos del año anterior para calcular consumo')
+            prevWeekNum = null
+          } else {
+            prevWeekNum = lastWeekData.l_numero_semana
+            console.log(`📅 Semana 1: usando semana ${prevWeekNum} del año ${previousYear} como referencia`)
+          }
+        }
+
+        let prevWeekData = null
+        if (prevWeekNum !== null) {
+          const { data, error: prevError } = await supabase
+            .from(prevTableName)
+            .select('*')
+            .eq('l_numero_semana', prevWeekNum)
+            .single()
+
+          if (!prevError && data) {
+            prevWeekData = data
+          } else {
+            console.warn(`⚠️ No se encontró semana anterior ${prevWeekNum} en ${prevTableName}`)
+          }
+        }
+
+        // Casos especiales con factor 10 (mismos que AddWeeklyReadingsPage)
+        const specialCases = {
+          'circuito_6_residencias': 10,
+          'circuito_8_campus': 10,
+          'medidor_general_pozos': 10,
+          'campo_soft_bol': 10
+        }
+
+        // Calcular consumo para cada punto
+        const consumoTableName = `lecturas_semana_agua_consumo_${selectedYear}`
+        const consumoData = {
+          l_numero_semana: selectedWeek
+        }
+
+        if (weekInfo) {
+          consumoData.l_fecha_inicio = weekInfo.startDate
+          consumoData.l_fecha_fin = weekInfo.endDate
+        }
+
+        gasConsumptionPointsData.categories.forEach(category => {
+          category.points.forEach(point => {
+            if (point.noRead) return
+            const key = `${point.id}_${selectedWeek}`
+            const currentValue = readings[key] ? parseFloat(readings[key]) : NaN
+
+            if (!isNaN(currentValue) && prevWeekData) {
+              const previousValue = parseFloat(prevWeekData[`l_${point.id}`]) || 0
+              const factor = specialCases[point.id] || 1
+              const consumption = (currentValue - previousValue) * factor
+              consumoData[`l_${point.id}`] = consumption
+              consumoCount++
+            }
+          })
+        })
+
+        if (consumoCount > 0) {
+          console.log(`📊 Guardando consumo calculado (${consumoCount} puntos) en ${consumoTableName}`)
+
+          const { error: consumoError } = await supabase
+            .from(consumoTableName)
+            .upsert(consumoData, {
+              onConflict: 'l_numero_semana',
+              ignoreDuplicates: false
+            })
+
+          if (consumoError) {
+            console.warn('⚠️ Error guardando consumo:', consumoError)
+          } else {
+            console.log('✅ Consumo actualizado exitosamente')
+          }
+        } else {
+          console.warn('⚠️ No se pudo calcular consumo (sin semana anterior o sin lecturas)')
+        }
+      } catch (consumoErr) {
+        console.warn('⚠️ Error al recalcular consumo:', consumoErr)
+        // No lanzar error - las lecturas ya se guardaron correctamente
+      }
       
       console.log('✅ Lecturas gas actualizadas exitosamente')
       setAutoSaveStatus('saved')
