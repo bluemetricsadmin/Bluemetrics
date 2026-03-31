@@ -256,6 +256,87 @@ export default function EditMonthlyWaterReadingsPage() {
       if (upsertError) throw upsertError
       
       console.log(`✅ ${tableLabel.charAt(0).toUpperCase() + tableLabel.slice(1)} actualizadas exitosamente`)
+
+      // --- Recalcular y actualizar tabla de consumo (solo cuando se editan lecturas) ---
+      if (targetTable === 'lectura') {
+        let consumoCount = 0
+        try {
+          // Determinar mes anterior
+          let prevYear = parseInt(selectedYear)
+          let prevMonth = selectedMonth - 1
+
+          if (selectedMonth === 1) {
+            prevYear = prevYear - 1
+            prevMonth = 12
+          }
+
+          // Obtener lecturas del mes anterior desde tabla de lecturas
+          const { data: prevMonthData, error: prevError } = await supabase
+            .from(getMonthlyWaterTableName())
+            .select('*')
+            .eq('anio', prevYear)
+            .eq('mes', prevMonth)
+            .single()
+
+          if (prevError) {
+            console.warn(`⚠️ No se encontró mes anterior ${prevMonth}/${prevYear} para calcular consumo`)
+          }
+
+          // Casos especiales con factor 10 (mismos que semanales y AddMonthly)
+          const specialCases = {
+            'circuito_6_residencias': 10,
+            'circuito_8_campus': 10,
+            'medidor_general_pozos': 10,
+            'campo_soft_bol': 10
+          }
+
+          // Calcular consumo para cada punto
+          const consumoData = {
+            anio: parseInt(selectedYear),
+            mes: selectedMonth
+          }
+
+          consumptionPointsData.categories.forEach(category => {
+            category.points.forEach(point => {
+              if (point.noRead) return
+              const dbFieldName = getMonthlyDbFieldName(point.id)
+              if (!dbFieldName) return
+
+              const key = `${point.id}_${readingKey}`
+              const currentValue = readings[key] ? parseFloat(readings[key]) : NaN
+
+              if (!isNaN(currentValue) && prevMonthData) {
+                const previousValue = parseFloat(prevMonthData[dbFieldName]) || 0
+                const factor = specialCases[point.id] || 1
+                const consumption = (currentValue - previousValue) * factor
+                consumoData[dbFieldName] = consumption
+                consumoCount++
+              }
+            })
+          })
+
+          if (consumoCount > 0) {
+            const consumoTableName = getMonthlyWaterConsumptionTableName()
+            console.log(`📊 Guardando consumo calculado (${consumoCount} puntos) en ${consumoTableName}`)
+
+            const { error: consumoError } = await supabase
+              .from(consumoTableName)
+              .upsert(consumoData, { onConflict: 'anio,mes' })
+
+            if (consumoError) {
+              console.warn('⚠️ Error guardando consumo:', consumoError)
+            } else {
+              console.log('✅ Consumo mensual actualizado exitosamente')
+            }
+          } else {
+            console.warn('⚠️ No se pudo calcular consumo (sin mes anterior o sin lecturas)')
+          }
+        } catch (consumoErr) {
+          console.warn('⚠️ Error al recalcular consumo:', consumoErr)
+          // No lanzar error - las lecturas ya se guardaron correctamente
+        }
+      }
+
       setAutoSaveStatus('saved')
       setError(null)
 
