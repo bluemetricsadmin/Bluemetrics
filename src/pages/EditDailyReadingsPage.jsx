@@ -17,7 +17,11 @@ import {
   Trash2Icon,
   UploadIcon,
   FileSpreadsheetIcon,
-  DownloadIcon
+  DownloadIcon,
+  DropletIcon,
+  ToggleLeftIcon,
+  ToggleRightIcon,
+  AlertTriangleIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 
@@ -87,6 +91,15 @@ export default function EditDailyReadingsPage() {
   const [uploadingExcel, setUploadingExcel] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
+
+  // === Estados para edición manual de consumo ===
+  const [editConsumoMode, setEditConsumoMode] = useState(false)
+  const [consumoReadings, setConsumoReadings] = useState({})
+  const [loadingConsumo, setLoadingConsumo] = useState(false)
+  const [showConsumoConfirm, setShowConsumoConfirm] = useState(false)
+  const [savingConsumo, setSavingConsumo] = useState(false)
+  const [showConsumoSuccess, setShowConsumoSuccess] = useState(false)
+  const [consumoSavedCount, setConsumoSavedCount] = useState(0)
 
   // Cargar fechas existentes
   useEffect(() => {
@@ -356,6 +369,103 @@ export default function EditDailyReadingsPage() {
     }
 
     return points
+  }
+
+  // === EDICIÓN MANUAL DE CONSUMO ===
+
+  // Cargar datos de consumo cuando se activa el modo o cambia el registro
+  useEffect(() => {
+    if (editConsumoMode && selectedRecordId) {
+      loadConsumoData(selectedRecordId)
+    }
+  }, [editConsumoMode, selectedRecordId])
+
+  // Cargar consumo global desde tabla lecturas_diarias
+  const loadConsumoData = async (recordId) => {
+    try {
+      setLoadingConsumo(true)
+
+      console.log('🔍 Cargando consumo diario desde lecturas_diarias, registro ID:', recordId)
+
+      const { data, error: fetchError } = await supabase
+        .from('lecturas_diarias')
+        .select('consumo')
+        .eq('id', recordId)
+        .single()
+
+      if (fetchError) {
+        console.warn('⚠️ No se encontraron datos de consumo para el registro', recordId)
+        setConsumoReadings({})
+        return
+      }
+
+      const loaded = {}
+      if (data.consumo !== null && data.consumo !== undefined) {
+        loaded.consumo = data.consumo.toString()
+      }
+
+      console.log('✅ Consumo diario cargado:', loaded)
+      setConsumoReadings(loaded)
+    } catch (err) {
+      console.error('❌ Error al cargar consumo diario:', err)
+    } finally {
+      setLoadingConsumo(false)
+    }
+  }
+
+  // Manejar cambio en input de consumo
+  const handleConsumoChange = (pointId, value) => {
+    setConsumoReadings(prev => ({
+      ...prev,
+      [pointId]: value
+    }))
+  }
+
+  // Guardar consumo global manual en lecturas_diarias
+  const saveConsumoData = async () => {
+    if (!selectedRecordId) return
+
+    try {
+      setSavingConsumo(true)
+
+      const value = consumoReadings.consumo
+      if (value === undefined || value === '' || value === null) {
+        console.warn('⚠️ No hay valor de consumo para guardar')
+        setSavingConsumo(false)
+        return
+      }
+
+      const updateData = { consumo: parseFloat(value) }
+
+      console.log('💾 Guardando consumo diario global en lecturas_diarias')
+
+      const { error: updateError } = await supabase
+        .from('lecturas_diarias')
+        .update(updateData)
+        .eq('id', selectedRecordId)
+
+      if (updateError) throw updateError
+
+      console.log('✅ Consumo diario actualizado exitosamente')
+      setConsumoSavedCount(1)
+      setShowConsumoConfirm(false)
+      setShowConsumoSuccess(true)
+    } catch (err) {
+      console.error('❌ Error guardando consumo diario:', err)
+      setError(`Error al guardar consumo: ${err.message}`)
+    } finally {
+      setSavingConsumo(false)
+    }
+  }
+
+  // Toggle del modo edición de consumo
+  const toggleConsumoMode = () => {
+    if (editConsumoMode) {
+      setEditConsumoMode(false)
+      setConsumoReadings({})
+    } else {
+      setEditConsumoMode(true)
+    }
   }
 
   const handleCloseSuccessModal = () => {
@@ -1056,6 +1166,124 @@ export default function EditDailyReadingsPage() {
                     </Card>
                   )
                 })}
+
+                {/* Edición Manual de Consumo */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <DropletIcon className="h-5 w-5 text-blue-500" />
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            Edición Manual de Consumo Global
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Edita manualmente el valor de consumo global del día seleccionado
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Switch Toggle */}
+                      <button
+                        onClick={toggleConsumoMode}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all hover:shadow-sm"
+                        style={{
+                          borderColor: editConsumoMode ? '#3b82f6' : undefined,
+                          backgroundColor: editConsumoMode ? 'rgba(59,130,246,0.08)' : undefined
+                        }}
+                      >
+                        {editConsumoMode ? (
+                          <ToggleRightIcon className="h-6 w-6 text-blue-500" />
+                        ) : (
+                          <ToggleLeftIcon className="h-6 w-6 text-muted-foreground" />
+                        )}
+                        <span className={`text-sm font-medium ${editConsumoMode ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'}`}>
+                          {editConsumoMode ? 'Activado' : 'Desactivado'}
+                        </span>
+                      </button>
+                    </div>
+                  </CardHeader>
+
+                  {editConsumoMode && (
+                    <CardContent>
+                      {loadingConsumo ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2Icon className="h-6 w-6 animate-spin text-blue-500 mr-3" />
+                          <span className="text-muted-foreground">Cargando consumo...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="space-y-3">
+                            {(() => {
+                              const value = consumoReadings.consumo || ''
+                              const hasValue = value !== '' && value !== undefined
+
+                              return (
+                                <div
+                                  className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${
+                                    hasValue
+                                      ? 'border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/10'
+                                      : 'border-muted hover:border-blue-300'
+                                  }`}
+                                >
+                                  <div className="flex-shrink-0">
+                                    {hasValue ? (
+                                      <CheckCircle2Icon className="h-5 w-5 text-blue-500" />
+                                    ) : (
+                                      <CircleIcon className="h-5 w-5 text-muted-foreground" />
+                                    )}
+                                  </div>
+
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm truncate">Consumo Total del Día</p>
+                                    <span className="text-xs text-muted-foreground">consumo</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground font-medium">Consumo:</span>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      placeholder="Consumo m³"
+                                      value={value}
+                                      onChange={(e) => handleConsumoChange('consumo', e.target.value)}
+                                      className={`w-40 px-3 py-2 border rounded-lg text-sm text-right font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                        hasValue
+                                          ? 'border-blue-300 bg-white dark:bg-gray-900'
+                                          : 'border-muted'
+                                      }`}
+                                    />
+                                    <span className="text-sm text-muted-foreground">m³</span>
+                                  </div>
+                                </div>
+                              )
+                            })()}
+                          </div>
+
+                          {/* Botón Guardar Consumo */}
+                          <div className="mt-6 flex items-center justify-between">
+                            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 flex items-start gap-2">
+                              <AlertTriangleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-xs text-amber-800 dark:text-amber-200">
+                                Los cambios manuales sobrescribirán el valor de consumo global para la fecha seleccionada.
+                              </p>
+                            </div>
+
+                            <Button
+                              size="sm"
+                              onClick={() => setShowConsumoConfirm(true)}
+                              disabled={savingConsumo || !consumoReadings.consumo}
+                              className="bg-blue-600 hover:bg-blue-700 ml-4"
+                            >
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Consumo
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  )}
+                </Card>
               </>
             )}
           </main>
@@ -1153,6 +1381,105 @@ export default function EditDailyReadingsPage() {
                 size="lg"
                 onClick={handleCloseSuccessModal}
                 className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Aceptar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Guardado de Consumo */}
+      {showConsumoConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+                  <AlertTriangleIcon className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Confirmar Cambio de Consumo</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Estás a punto de sobrescribir datos de consumo
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-foreground mb-4">
+                  ¿Estás seguro de que deseas guardar los valores de consumo manuales para la fecha <strong>{selectedDate}</strong>?
+                </p>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                  <p className="text-xs text-amber-800 dark:text-amber-200">
+                    <strong>Advertencia:</strong> Los valores de consumo serán reemplazados por los valores ingresados manualmente.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowConsumoConfirm(false)}
+                  disabled={savingConsumo}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={saveConsumoData}
+                  disabled={savingConsumo}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {savingConsumo ? (
+                    <>
+                      <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <SaveIcon className="h-4 w-4 mr-2" />
+                      Confirmar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Éxito de Consumo */}
+      {showConsumoSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                  <CheckCircle2Icon className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400">¡Consumo Actualizado!</h3>
+                  <p className="text-muted-foreground mt-2">
+                    El consumo diario se ha actualizado correctamente
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center mb-6">
+                <p className="text-lg font-semibold mb-2">
+                  {consumoSavedCount} puntos actualizados
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Fecha: {selectedDate} — {selectedMonth}
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={() => setShowConsumoSuccess(false)}
+                className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 Aceptar
               </Button>
