@@ -278,190 +278,175 @@ const AdvancedConsumptionChart = ({ data, puntoField = 'consumo', puntoLabel = '
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Gráfico Principal */}
-        <div className="lg:col-span-3">
-          <div className="bg-gray-50 rounded-lg p-4 mb-4">
-            <ResponsiveContainer width="100%" height={450}>
-              {renderizarGrafico()}
-            </ResponsiveContainer>
+      {/* Controles en fila horizontal arriba de la gráfica */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Período */}
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar className="w-5 h-5 text-gray-700" />
+            <h3 className="font-semibold text-gray-900">Período</h3>
           </div>
-
-          {/* Estadísticas rápidas debajo del gráfico */}
-          {estadisticas && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <p className="text-xs text-blue-600 font-medium mb-1">Promedio</p>
-                <p className="text-2xl font-bold text-blue-900">{estadisticas.promedio}</p>
-                <p className="text-xs text-blue-600">m³</p>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                <p className="text-xs text-green-600 font-medium mb-1">Máximo</p>
-                <p className="text-2xl font-bold text-green-900">{estadisticas.maximo}</p>
-                <p className="text-xs text-green-600">m³</p>
-              </div>
-              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                <p className="text-xs text-yellow-600 font-medium mb-1">Mínimo</p>
-                <p className="text-2xl font-bold text-yellow-900">{estadisticas.minimo}</p>
-                <p className="text-xs text-yellow-600">m³</p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                <p className="text-xs text-purple-600 font-medium mb-1">Total</p>
-                <p className="text-2xl font-bold text-purple-900">{estadisticas.total}</p>
-                <p className="text-xs text-purple-600">m³</p>
-              </div>
-            </div>
-          )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setVistaActual('semanal')}
+              className={`flex-1 px-3 py-2 rounded-lg text-center transition-colors ${
+                vistaActual === 'semanal'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              <div className="font-medium text-sm">Semanal</div>
+              <div className="text-xs opacity-80">7 puntos</div>
+            </button>
+            <button
+              onClick={() => setVistaActual('mensual')}
+              className={`flex-1 px-3 py-2 rounded-lg text-center transition-colors ${
+                vistaActual === 'mensual'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              <div className="font-medium text-sm">Mensual</div>
+              <div className="text-xs opacity-80">30 puntos</div>
+            </button>
+            <button
+              onClick={() => setVistaActual('anual')}
+              className={`flex-1 px-3 py-2 rounded-lg text-center transition-colors ${
+                vistaActual === 'anual'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              <div className="font-medium text-sm">Anual</div>
+              <div className="text-xs opacity-80">12 puntos</div>
+            </button>
+          </div>
         </div>
 
-        {/* Panel de Filtros Derecho */}
-        <div className="lg:col-span-1 space-y-4">
-          {/* Vista Temporal */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-5 h-5 text-gray-700" />
-              <h3 className="font-semibold text-gray-900">Período</h3>
-            </div>
-            <div className="space-y-2">
-              <button
-                onClick={() => setVistaActual('semanal')}
-                className={`w-full px-4 py-2 rounded-lg text-left transition-colors ${
-                  vistaActual === 'semanal'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                <div className="font-medium">Semanal</div>
-                <div className="text-xs opacity-80">7 puntos</div>
-              </button>
-              <button
-                onClick={() => setVistaActual('mensual')}
-                className={`w-full px-4 py-2 rounded-lg text-left transition-colors ${
-                  vistaActual === 'mensual'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                <div className="font-medium">Mensual</div>
-                <div className="text-xs opacity-80">30 puntos</div>
-              </button>
-              <button
-                onClick={() => setVistaActual('anual')}
-                className={`w-full px-4 py-2 rounded-lg text-left transition-colors ${
-                  vistaActual === 'anual'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                <div className="font-medium">Anual</div>
-                <div className="text-xs opacity-80">12 puntos</div>
-              </button>
-            </div>
+        {/* Tipo de Gráfico */}
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="w-5 h-5 text-gray-700" />
+            <h3 className="font-semibold text-gray-900">Tipo de Gráfico</h3>
           </div>
-
-          {/* Tipo de Gráfico */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <BarChart3 className="w-5 h-5 text-gray-700" />
-              <h3 className="font-semibold text-gray-900">Tipo de Gráfico</h3>
-            </div>
-            <div className="space-y-2">
-              <button
-                onClick={() => setTipoGrafico('line')}
-                className={`w-full px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  tipoGrafico === 'line'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                <LineChartIcon className="w-4 h-4" />
-                <span>Línea</span>
-              </button>
-              <button
-                onClick={() => setTipoGrafico('area')}
-                className={`w-full px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  tipoGrafico === 'area'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                <AreaChartIcon className="w-4 h-4" />
-                <span>Área</span>
-              </button>
-              <button
-                onClick={() => setTipoGrafico('bar')}
-                className={`w-full px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  tipoGrafico === 'bar'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span>Barras</span>
-              </button>
-            </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTipoGrafico('line')}
+              className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors ${
+                tipoGrafico === 'line'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              <LineChartIcon className="w-4 h-4" />
+              <span className="text-sm">Línea</span>
+            </button>
+            <button
+              onClick={() => setTipoGrafico('area')}
+              className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors ${
+                tipoGrafico === 'area'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              <AreaChartIcon className="w-4 h-4" />
+              <span className="text-sm">Área</span>
+            </button>
+            <button
+              onClick={() => setTipoGrafico('bar')}
+              className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors ${
+                tipoGrafico === 'bar'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="text-sm">Barras</span>
+            </button>
           </div>
+        </div>
 
-          {/* Opciones de Visualización */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className="w-5 h-5 text-gray-700" />
-              <h3 className="font-semibold text-gray-900">Opciones</h3>
-            </div>
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={mostrarPromedio}
-                  onChange={(e) => setMostrarPromedio(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">Mostrar promedio</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={mostrarTendencia}
-                  onChange={(e) => setMostrarTendencia(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">Mostrar tendencia</span>
-              </label>
-            </div>
+        {/* Opciones de Visualización */}
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="w-5 h-5 text-gray-700" />
+            <h3 className="font-semibold text-gray-900">Opciones</h3>
           </div>
-
-          {/* Tendencia */}
-          {estadisticas && (
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-200">
-              <div className="flex items-center gap-2 mb-2">
-                {parseFloat(estadisticas.tendencia) >= 0 ? (
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 text-red-600" />
-                )}
-                <h3 className="font-semibold text-gray-900">Tendencia</h3>
-              </div>
-              <div className="space-y-1">
-                <p className={`text-2xl font-bold ${
-                  parseFloat(estadisticas.tendencia) >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {estadisticas.tendencia > 0 ? '+' : ''}{estadisticas.tendencia} m³
-                </p>
-                <p className={`text-sm ${
-                  parseFloat(estadisticas.tendenciaPorcentaje) >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {estadisticas.tendenciaPorcentaje > 0 ? '+' : ''}{estadisticas.tendenciaPorcentaje}%
-                </p>
-                <p className="text-xs text-gray-600 mt-2">
-                  {parseFloat(estadisticas.tendencia) >= 0 
-                    ? 'Incremento en el período' 
-                    : 'Reducción en el período'}
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mostrarPromedio}
+                onChange={(e) => setMostrarPromedio(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Mostrar promedio</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mostrarTendencia}
+                onChange={(e) => setMostrarTendencia(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Mostrar tendencia</span>
+            </label>
+          </div>
         </div>
       </div>
+
+      {/* Gráfico Principal - ancho completo */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+        <ResponsiveContainer width="100%" height={450}>
+          {renderizarGrafico()}
+        </ResponsiveContainer>
+      </div>
+
+      {/* Estadísticas rápidas + Tendencia debajo del gráfico */}
+      {estadisticas && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <p className="text-xs text-blue-600 font-medium mb-1">Promedio</p>
+            <p className="text-2xl font-bold text-blue-900">{estadisticas.promedio}</p>
+            <p className="text-xs text-blue-600">m³</p>
+          </div>
+          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+            <p className="text-xs text-green-600 font-medium mb-1">Máximo</p>
+            <p className="text-2xl font-bold text-green-900">{estadisticas.maximo}</p>
+            <p className="text-xs text-green-600">m³</p>
+          </div>
+          <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+            <p className="text-xs text-yellow-600 font-medium mb-1">Mínimo</p>
+            <p className="text-2xl font-bold text-yellow-900">{estadisticas.minimo}</p>
+            <p className="text-xs text-yellow-600">m³</p>
+          </div>
+          <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+            <p className="text-xs text-purple-600 font-medium mb-1">Total</p>
+            <p className="text-2xl font-bold text-purple-900">{estadisticas.total}</p>
+            <p className="text-xs text-purple-600">m³</p>
+          </div>
+          <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-200">
+            <div className="flex items-center gap-2 mb-1">
+              {parseFloat(estadisticas.tendencia) >= 0 ? (
+                <TrendingUp className="w-4 h-4 text-green-600" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-red-600" />
+              )}
+              <p className="text-xs text-indigo-600 font-medium">Tendencia</p>
+            </div>
+            <p className={`text-2xl font-bold ${
+              parseFloat(estadisticas.tendencia) >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {estadisticas.tendencia > 0 ? '+' : ''}{estadisticas.tendencia} m³
+            </p>
+            <p className={`text-xs ${
+              parseFloat(estadisticas.tendenciaPorcentaje) >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {estadisticas.tendenciaPorcentaje > 0 ? '+' : ''}{estadisticas.tendenciaPorcentaje}%
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
