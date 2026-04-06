@@ -43,6 +43,7 @@ export default function WellDetailPage() {
   const [totalConsumption2023, setTotalConsumption2023] = useState(0)
   const [vsLastWeek, setVsLastWeek] = useState(0)
   const [vsLastYear, setVsLastYear] = useState(0)
+  const [currentWeekNum, setCurrentWeekNum] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [chartDataFromSupabase, setChartDataFromSupabase] = useState([])
@@ -95,8 +96,8 @@ export default function WellDetailPage() {
       setLoading(true)
       setError(null)
 
-      const year = 2026
-      const lastYear = 2025
+      const year = new Date().getFullYear()
+      const lastYear = year - 1
       const readingsTable = `lecturas_semana_agua_${year}`
       const consumptionTable = `lecturas_semana_agua_consumo_${year}`
       const lastYearConsumptionTable = `lecturas_semana_agua_consumo_${lastYear}`
@@ -137,6 +138,7 @@ export default function WellDetailPage() {
 
       // 3. GET: Consumo del año pasado (misma semana)
       const currentWeekNumber = readingsData?.[0]?.l_numero_semana || 1
+      setCurrentWeekNum(currentWeekNumber)
       const { data: lastYearData, error: lastYearError } = await supabase
         .from(lastYearConsumptionTable)
         .select('*')
@@ -176,7 +178,7 @@ export default function WellDetailPage() {
       })
 
       // Cargar datos para el gráfico desde Supabase (año actual)
-      const chartData = await fetchChartDataFromSupabase(2026)
+      const chartData = await fetchChartDataFromSupabase(year)
       setChartDataFromSupabase(chartData)
       setWeeklyReadings2026(chartData)
 
@@ -1096,7 +1098,7 @@ export default function WellDetailPage() {
                             {currentReading.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Última semana registrada 45</p>
+                        <p className="text-xs text-gray-500 mt-1">{`Última semana registrada ${currentWeekNum}`}</p>
                       </Card>
 
                       {/* Consumo de la Última Semana */}
@@ -1108,7 +1110,7 @@ export default function WellDetailPage() {
                             {currentConsumption.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Última semana 45</p>
+                        <p className="text-xs text-gray-500 mt-1">{`Última semana ${currentWeekNum}`}</p>
                       </Card>
 
                       {/* Consumo vs Semana Anterior */}
@@ -1146,7 +1148,7 @@ export default function WellDetailPage() {
                             {vsLastYear > 0 ? '+' : ''}{vsLastYear.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Misma semana 2024</p>
+                        <p className="text-xs text-gray-500 mt-1">{`Misma semana ${new Date().getFullYear() - 1}`}</p>
                       </Card>
                     </>
                   )}
