@@ -493,31 +493,8 @@ export default function WeeklyComparisonChart({
           </div>
 
           {/* Semana actual vs anterior */}
-          <div className={`p-3 rounded-lg border ${
-            comparisonStats.currentWeekVsLast > 0 
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200' 
-              : comparisonStats.currentWeekVsLast < 0
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200'
-              : 'bg-gray-50 dark:bg-gray-800 border-gray-200'
-          }`}>
-            <p className="text-xs text-muted-foreground">vs Sem Anterior</p>
-            <div className="flex items-center gap-1">
-              {comparisonStats.currentWeekVsLast > 0 ? (
-                <TrendingUpIcon className="h-4 w-4 text-red-600" />
-              ) : comparisonStats.currentWeekVsLast < 0 ? (
-                <TrendingDownIcon className="h-4 w-4 text-green-600" />
-              ) : (
-                <MinusIcon className="h-4 w-4 text-gray-600" />
-              )}
-              <p className={`text-lg font-bold ${
-                comparisonStats.currentWeekVsLast > 0 ? 'text-red-600' : 
-                comparisonStats.currentWeekVsLast < 0 ? 'text-green-600' : 
-                'text-gray-600'
-              }`}>
-                {comparisonStats.currentWeekVsLast > 0 ? '+' : ''}{comparisonStats.currentWeekVsLast.toFixed(1)}%
-              </p>
-            </div>
-          </div>
+
+
         </div>
 
       </CardHeader>
