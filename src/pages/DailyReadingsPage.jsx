@@ -4,11 +4,7 @@ import { DashboardHeader } from "../components/dashboard-header";
 import { DashboardSidebar } from "../components/dashboard-sidebar";
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
 import MetricCard from '../components/MetricCard';
-import AdvancedConsumptionChart from '../components/AdvancedConsumptionChart';
-import { 
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
-} from 'recharts';
+import DailyConsumptionChartJS from '../components/DailyConsumptionChartJS';
 import { 
   Droplet, TrendingUp, Calendar, Filter, Download, 
   RefreshCw, AlertCircle, Loader2, ChevronLeft, ChevronRight,
@@ -24,9 +20,6 @@ const DailyReadingsPage = () => {
   const [filtroPunto, setFiltroPunto] = useState('consumo');
   const [paginaActual, setPaginaActual] = useState(1);
   const registrosPorPagina = 20;
-
-  // Colores para gráficos
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7c7c'];
 
   // Configuración de puntos de medición
   const puntosDisponibles = [
@@ -152,68 +145,28 @@ const DailyReadingsPage = () => {
     };
   }, [lecturasFiltradas, filtroPunto, puntosDisponibles]);
 
-  // Datos para gráfico de consumo diario (últimos 30 registros)
-  const datosConsumo = useMemo(() => {
-    return lecturasFiltradas.slice(0, 30).reverse().map(lectura => ({
-      fecha: lectura.dia_hora,
-      consumo: parseFloat(lectura.consumo) || 0,
-      general_pozos: parseFloat(lectura.general_pozos) || 0
+  // Agrupar lecturas por año para comparación multi-año
+  const multiYearData = useMemo(() => {
+    if (lecturas.length === 0) return null;
+
+    const byYear = {};
+    lecturas.forEach(l => {
+      const match = l.mes_anio?.match(/(\d{4})/);
+      if (match) {
+        const year = match[1];
+        if (!byYear[year]) byYear[year] = [];
+        byYear[year].push(l);
+      }
+    });
+
+    const years = Object.keys(byYear).sort();
+    if (years.length <= 1) return null;
+
+    return years.map(year => ({
+      year,
+      data: byYear[year]
     }));
-  }, [lecturasFiltradas]);
-
-  // Datos para gráfico de pozos (promedio)
-  const datosPozos = useMemo(() => {
-    if (lecturasFiltradas.length === 0) return [];
-
-    const sumaPozos = lecturasFiltradas.reduce((acc, l) => ({
-      pozo3: acc.pozo3 + (parseFloat(l.pozo_3) || 0),
-      pozo8: acc.pozo8 + (parseFloat(l.pozo_8) || 0),
-      pozo15: acc.pozo15 + (parseFloat(l.pozo_15) || 0),
-      pozo4: acc.pozo4 + (parseFloat(l.pozo_4) || 0),
-      pozo7: acc.pozo7 + (parseFloat(l.pozo7) || 0),
-      pozo11: acc.pozo11 + (parseFloat(l.pozo11) || 0),
-      pozo12: acc.pozo12 + (parseFloat(l.pozo_12) || 0),
-      pozo14: acc.pozo14 + (parseFloat(l.pozo_14) || 0)
-    }), { pozo3: 0, pozo8: 0, pozo15: 0, pozo4: 0, pozo7: 0, pozo11: 0, pozo12: 0, pozo14: 0 });
-
-    const n = lecturasFiltradas.length;
-
-    return [
-      { nombre: 'Pozo 3', valor: (sumaPozos.pozo3 / n).toFixed(2) },
-      { nombre: 'Pozo 8', valor: (sumaPozos.pozo8 / n).toFixed(2) },
-      { nombre: 'Pozo 15', valor: (sumaPozos.pozo15 / n).toFixed(2) },
-      { nombre: 'Pozo 4', valor: (sumaPozos.pozo4 / n).toFixed(2) },
-      { nombre: 'Pozo 7', valor: (sumaPozos.pozo7 / n).toFixed(2) },
-      { nombre: 'Pozo 11', valor: (sumaPozos.pozo11 / n).toFixed(2) },
-      { nombre: 'Pozo 12', valor: (sumaPozos.pozo12 / n).toFixed(2) },
-      { nombre: 'Pozo 14', valor: (sumaPozos.pozo14 / n).toFixed(2) }
-    ].filter(p => parseFloat(p.valor) > 0);
-  }, [lecturasFiltradas]);
-
-  // Datos para gráfico de zonas (promedio)
-  const datosZonas = useMemo(() => {
-    if (lecturasFiltradas.length === 0) return [];
-
-    const sumaZonas = lecturasFiltradas.reduce((acc, l) => ({
-      campus8: acc.campus8 + (parseFloat(l.campus_8) || 0),
-      a7cc: acc.a7cc + (parseFloat(l.a7_cc) || 0),
-      megacentral: acc.megacentral + (parseFloat(l.megacentral) || 0),
-      plantaFisica: acc.plantaFisica + (parseFloat(l.planta_fisica) || 0),
-      residencias: acc.residencias + (parseFloat(l.residencias) || 0),
-      ayd: acc.ayd + (parseFloat(l.a_y_d) || 0)
-    }), { campus8: 0, a7cc: 0, megacentral: 0, plantaFisica: 0, residencias: 0, ayd: 0 });
-
-    const n = lecturasFiltradas.length;
-
-    return [
-      { nombre: 'Campus 8', valor: (sumaZonas.campus8 / n).toFixed(2) },
-      { nombre: 'A7-CC', valor: (sumaZonas.a7cc / n).toFixed(2) },
-      { nombre: 'Megacentral', valor: (sumaZonas.megacentral / n).toFixed(2) },
-      { nombre: 'Planta Física', valor: (sumaZonas.plantaFisica / n).toFixed(2) },
-      { nombre: 'Residencias', valor: (sumaZonas.residencias / n).toFixed(2) },
-      { nombre: 'A y D', valor: (sumaZonas.ayd / n).toFixed(2) }
-    ].filter(z => parseFloat(z.valor) > 0);
-  }, [lecturasFiltradas]);
+  }, [lecturas]);
 
   // Exportar a CSV
   const exportarCSV = () => {
@@ -386,10 +339,11 @@ const DailyReadingsPage = () => {
 
         {/* Gráfico Avanzado de Consumo Diario */}
         <div className="mb-6">
-          <AdvancedConsumptionChart 
+          <DailyConsumptionChartJS 
             data={lecturasFiltradas}
             puntoField={puntosDisponibles.find(p => p.value === filtroPunto)?.field || 'consumo'}
             puntoLabel={puntosDisponibles.find(p => p.value === filtroPunto)?.label || 'Consumo'}
+            multiYearData={multiYearData}
           />
         </div>
 
