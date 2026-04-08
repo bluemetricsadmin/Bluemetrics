@@ -301,8 +301,14 @@ export default function WeeklyComparisonChart({
             const dataIndex = context.dataIndex
             let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString()} ${unit}`
             
-            // Agregar información de cambio para año actual
-            if (context.datasetIndex === 0 && processedCurrent[dataIndex]) {
+            // Agregar información de cambio vs semana anterior para cada año
+            if (useMultiYear && processedMultiYear[context.datasetIndex]) {
+              const yearData = processedMultiYear[context.datasetIndex].processed[dataIndex]
+              if (yearData && yearData.vsLastWeekPercent !== 0) {
+                const change = yearData.vsLastWeekPercent
+                label += ` (${change > 0 ? '+' : ''}${change.toFixed(1)}% vs sem anterior)`
+              }
+            } else if (context.datasetIndex === 0 && processedCurrent[dataIndex]) {
               const change = processedCurrent[dataIndex].vsLastWeekPercent
               if (change !== 0) {
                 label += ` (${change > 0 ? '+' : ''}${change.toFixed(1)}% vs sem anterior)`
