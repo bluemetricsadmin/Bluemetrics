@@ -249,17 +249,15 @@ export default function MonthlyComparisonChart({
       },
       tooltip: {
         callbacks: {
-          label: function(context) {
-            const dataIndex = context.dataIndex
+          label: function (context) {
             let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString()} ${unit}`
-
-            if (context.datasetIndex === (chartData.datasets.length - 1) && processedCurrent[dataIndex]) {
-              const change = processedCurrent[dataIndex].vsLastMonthPercent
-              if (change !== 0) {
+            if (useMultiYear && processedMultiYear[context.datasetIndex]) {
+              const monthData = processedMultiYear[context.datasetIndex].processed[context.dataIndex]
+              if (monthData && monthData.vsLastMonthPercent !== 0) {
+                const change = monthData.vsLastMonthPercent
                 label += ` (${change > 0 ? '+' : ''}${change.toFixed(1)}% vs mes anterior)`
               }
             }
-
             return label
           }
         }

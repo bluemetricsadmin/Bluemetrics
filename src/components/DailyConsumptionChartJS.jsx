@@ -329,7 +329,17 @@ const DailyConsumptionChartJS = ({
         callbacks: {
           label: function (context) {
             let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString()} m³`
-            if (!useMultiYear && context.datasetIndex === 0 && context.dataIndex > 0) {
+            if (useMultiYear && processedMultiYear[context.datasetIndex]) {
+              const yearData = processedMultiYear[context.datasetIndex].processed
+              if (context.dataIndex > 0 && yearData[context.dataIndex]) {
+                const curr = yearData[context.dataIndex].valor
+                const prev = yearData[context.dataIndex - 1].valor
+                if (prev > 0) {
+                  const change = ((curr - prev) / prev * 100).toFixed(1)
+                  label += ` (${change > 0 ? '+' : ''}${change}% vs anterior)`
+                }
+              }
+            } else if (!useMultiYear && context.datasetIndex === 0 && context.dataIndex > 0) {
               const curr = context.parsed.y
               const prev = context.dataset.data[context.dataIndex - 1]
               if (prev > 0) {
