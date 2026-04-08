@@ -21,15 +21,25 @@ export function DashboardSidebar() {
   }, [user])
   
   // Estado para secciones colapsables
-  const [expandedSections, setExpandedSections] = useState({
-    general: true,
-    water: true,
-    gas: true,
-    data: true,
-    analysis: true,
-    imports: true,
-    admin: true
+  const [expandedSections, setExpandedSections] = useState(() => {
+    const saved = localStorage.getItem('sidebar-expanded-sections')
+    if (saved) {
+      try { return JSON.parse(saved) } catch { /* ignore */ }
+    }
+    return {
+      general: true,
+      water: true,
+      gas: true,
+      data: true,
+      analysis: true,
+      imports: true,
+      admin: true
+    }
   })
+
+  useEffect(() => {
+    localStorage.setItem('sidebar-expanded-sections', JSON.stringify(expandedSections))
+  }, [expandedSections])
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
