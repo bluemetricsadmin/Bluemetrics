@@ -10,12 +10,31 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  AreaChart,
-  Area
+  ResponsiveContainer
 } from 'recharts'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title as ChartTitle,
+  Tooltip as ChartTooltipPlugin,
+  Legend as ChartLegendPlugin,
+  Filler,
+} from 'chart.js'
+import { Line } from 'react-chartjs-2'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ChartTitle,
+  ChartTooltipPlugin,
+  ChartLegendPlugin,
+  Filler
+)
 import { 
   Loader2Icon, 
   AlertTriangleIcon, 
@@ -23,7 +42,6 @@ import {
   TrendingUp,
   Droplet,
   LineChart as LineChartIcon,
-  AreaChart as AreaChartIcon,
   Calendar,
   CalendarDays
 } from 'lucide-react'
@@ -241,109 +259,104 @@ export default function WellsGeneralCharts() {
 
     const xAxisLabel = viewType === 'anual' ? 'Año' : viewType === 'mensual' ? 'Mes' : 'Semana'
 
+    if (chartType === 'line') {
+      const chartJSData = {
+        labels: data.map(d => d.label),
+        datasets: [{
+          label: 'Consumo Total',
+          data: data.map(d => d.consumo),
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: 'rgb(59, 130, 246)',
+        }]
+      }
+
+      const chartJSOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 15,
+              font: { size: 12 }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.dataset.label}: ${context.parsed.y.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³`
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              maxRotation: viewType === 'semanal' ? 45 : 0,
+              minRotation: 0,
+              font: { size: 11 }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: {
+              callback: function(value) {
+                return value.toLocaleString() + ' m³'
+              }
+            }
+          }
+        }
+      }
+
+      return (
+        <div style={{ height: 400 }}>
+          <Line data={chartJSData} options={chartJSOptions} />
+        </div>
+      )
+    }
+
     return (
       <ResponsiveContainer width="100%" height={400}>
-        {chartType === 'bar' ? (
-          <BarChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis 
-              dataKey="label" 
-              tick={{ fill: '#6b7280', fontSize: 12 }}
-              angle={viewType === 'semanal' ? -45 : 0}
-              textAnchor={viewType === 'semanal' ? 'end' : 'middle'}
-              height={viewType === 'semanal' ? 80 : 60}
-              label={{ value: xAxisLabel, position: 'insideBottom', offset: viewType === 'semanal' ? -15 : -10, fill: '#374151' }}
-            />
-            <YAxis 
-              tick={{ fill: '#6b7280', fontSize: 14 }}
-              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151', offset: 10 }}
-              width={80}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              wrapperStyle={{ paddingTop: '20px' }}
-              iconType="circle"
-            />
-            <Bar 
-              dataKey="consumo" 
-              fill="#3b82f6" 
-              name="Consumo Total"
-              radius={[8, 8, 0, 0]}
-            />
-          </BarChart>
-        ) : chartType === 'line' ? (
-          <LineChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis 
-              dataKey="label" 
-              tick={{ fill: '#6b7280', fontSize: 12 }}
-              angle={viewType === 'semanal' ? -45 : 0}
-              textAnchor={viewType === 'semanal' ? 'end' : 'middle'}
-              height={viewType === 'semanal' ? 80 : 60}
-              label={{ value: xAxisLabel, position: 'insideBottom', offset: viewType === 'semanal' ? -15 : -10, fill: '#374151' }}
-            />
-            <YAxis 
-              tick={{ fill: '#6b7280', fontSize: 14 }}
-              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151', offset: 10 }}
-              width={80}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              wrapperStyle={{ paddingTop: '20px' }}
-              iconType="circle"
-            />
-            <Line 
-              type="monotone"
-              dataKey="consumo" 
-              stroke="#3b82f6" 
-              strokeWidth={2}
-              name="Consumo Total"
-              dot={{ fill: '#3b82f6', r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        ) : (
-          <AreaChart {...commonProps}>
-            <defs>
-              <linearGradient id="colorConsumo" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-              </linearGradient>
-              <linearGradient id="colorPromedio" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis 
-              dataKey="label" 
-              tick={{ fill: '#6b7280', fontSize: 12 }}
-              angle={viewType === 'semanal' ? -45 : 0}
-              textAnchor={viewType === 'semanal' ? 'end' : 'middle'}
-              height={viewType === 'semanal' ? 80 : 60}
-              label={{ value: xAxisLabel, position: 'insideBottom', offset: viewType === 'semanal' ? -15 : -10, fill: '#374151' }}
-            />
-            <YAxis 
-              tick={{ fill: '#6b7280', fontSize: 14 }}
-              label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151', offset: 10 }}
-              width={80}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              wrapperStyle={{ paddingTop: '20px' }}
-              iconType="circle"
-            />
-            <Area 
-              type="monotone"
-              dataKey="consumo" 
-              stroke="#3b82f6" 
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#colorConsumo)"
-              name="Consumo Total"
-            />
-          </AreaChart>
-        )}
+        <BarChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis 
+            dataKey="label" 
+            tick={{ fill: '#6b7280', fontSize: 12 }}
+            angle={viewType === 'semanal' ? -45 : 0}
+            textAnchor={viewType === 'semanal' ? 'end' : 'middle'}
+            height={viewType === 'semanal' ? 80 : 60}
+            label={{ value: xAxisLabel, position: 'insideBottom', offset: viewType === 'semanal' ? -15 : -10, fill: '#374151' }}
+          />
+          <YAxis 
+            tick={{ fill: '#6b7280', fontSize: 14 }}
+            label={{ value: 'Consumo (m³)', angle: -90, position: 'insideLeft', fill: '#374151', offset: 10 }}
+            width={80}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend 
+            wrapperStyle={{ paddingTop: '20px' }}
+            iconType="circle"
+          />
+          <Bar 
+            dataKey="consumo" 
+            fill="#3b82f6" 
+            name="Consumo Total"
+            radius={[8, 8, 0, 0]}
+          />
+        </BarChart>
       </ResponsiveContainer>
     )
   }
@@ -518,20 +531,15 @@ export default function WellsGeneralCharts() {
                 <LineChartIcon className="h-3 w-3" />
                 Líneas
               </Button>
-              <Button
-                size="sm"
-                variant={chartType === 'area' ? 'default' : 'outline'}
-                onClick={() => setChartType('area')}
-                className="flex items-center gap-1"
-              >
-                <AreaChartIcon className="h-3 w-3" />
-                Área
-              </Button>
+
             </div>
           </div>
         </div>
 
         {/* Filtros de Fecha */}
+        
+        {/* 
+        
         <div className="flex flex-wrap gap-4 mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-blue-600" />
@@ -599,6 +607,9 @@ export default function WellsGeneralCharts() {
             </div>
           )}
         </div>
+        
+        */}
+        
 
         {/* Estadísticas */}
         {stats && (
@@ -609,7 +620,9 @@ export default function WellsGeneralCharts() {
                 {stats.totalConsumo.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} m³
               </p>
             </div>
-            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+
+
+              {/*<div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
               <p className="text-sm text-purple-700 font-medium mb-1">Año con Mayor Consumo</p>
               <p className="text-2xl font-bold text-purple-900">{stats.maxYear.year}</p>
               <p className="text-xs text-purple-600">
@@ -622,7 +635,8 @@ export default function WellsGeneralCharts() {
               <p className="text-xs text-orange-600">
                 {stats.minYear.consumo.toLocaleString('es-MX', { minimumFractionDigits: 0 })} m³
               </p>
-            </div>
+            </div> */}
+            
           </div>
         )}
 
