@@ -402,8 +402,11 @@ export default function MonthlyComparisonChart({
             </div>
           </div>
 
-          {/* Mes actual vs anterior */}
-          <div className={`p-3 rounded-lg border ${
+
+
+            {/*    
+            
+             <div className={`p-3 rounded-lg border ${
             comparisonStats.currentMonthVsLast > 0
               ? 'bg-red-50 dark:bg-red-900/20 border-red-200'
               : comparisonStats.currentMonthVsLast < 0
@@ -428,6 +431,11 @@ export default function MonthlyComparisonChart({
               </p>
             </div>
           </div>
+            
+            
+            */}
+          {/* Mes actual vs anterior */}
+         
         </div>
 
       </CardHeader>
