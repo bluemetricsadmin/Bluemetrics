@@ -413,33 +413,160 @@ export default function MonthlyWaterConsumptionPage() {
                           onChange={(e) => setSelectedPoint(e.target.value)}
                           className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors min-w-[200px]"
                         >
-                          <option value="todos">📊 Total (Todos los puntos)</option>
-                          <optgroup label="Pozos de Servicios">
-                            <option value="medidor_general_pozos">Medidor General de Pozos</option>
-                            <option value="pozo_11">Pozo 11</option>
-                            <option value="pozo_12">Pozo 12</option>
-                            <option value="pozo_14">Pozo 14</option>
-                            <option value="pozo_7">Pozo 7</option>
-                            <option value="pozo_3">Pozo 3</option>
-                          </optgroup>
-                          <optgroup label="Pozos de Riego">
-                            <option value="pozo_4_riego">Pozo 4 Riego</option>
-                            <option value="pozo_8_riego">Pozo 8 Riego</option>
-                            <option value="pozo_15_riego">Pozo 15 Riego</option>
-                          </optgroup>
-                          <optgroup label="Residencias">
-                            <option value="residencias_10_15">Residencias 10 y 15</option>
-                            <option value="residencias_3">Residencias 3</option>
-                            <option value="residencias_5">Residencias 5</option>
-                          </optgroup>
-                          <optgroup label="Edificios Principales">
-                            <option value="wellness_edificio">Wellness Edificio</option>
-                            <option value="biblioteca">Biblioteca</option>
-                            <option value="cetec">CETEC</option>
-                            <option value="biotecnologia">Biotecnología</option>
-                            <option value="arena_borrego">Arena Borrego</option>
-                            <option value="centro_congresos">Centro de Congresos</option>
-                          </optgroup>
+                          <optgroup label="Pozos de Agua Potable (Servicios)">
+                        <option value="medidor_general_pozos">Medidor General de los pozos 7,12,11 y 14 / TOTAL POZOS</option>
+                        <option value="pozo_11">Pozo de agua potable 11</option>
+                        <option value="pozo_14">Pozo de agua potable 14</option>
+                        <option value="pozo_12">Pozo de agua potable 12</option>
+                        <option value="pozo_7">Pozo de agua potable 7</option>
+                        <option value="pozo_3">Pozo de agua potable 3</option>
+                      </optgroup>
+                      <optgroup label="Pozos de Riego">
+                        <option value="pozo_4_riego">Pozo de riego 4</option>
+                        <option value="pozo_8_riego">Pozo de riego 8</option>
+                        <option value="pozo_15_riego">Pozo de riego 15</option>
+                      </optgroup>
+                      <optgroup label="Circuito 8 Campus">
+                        <option value="circuito_8_campus">Circuito 8 Campus</option>
+                        <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
+                        <option value="cdb2">CDB2</option>
+                        <option value="cdb2_banos_nuevos_2025">CDB2 Baños nuevos 2025</option>
+                        <option value="arena_borrego">Arena Borrego</option>
+                        <option value="farnville">Farnville</option>
+                        <option value="em_box">Em Box</option>
+                        <option value="edificio_negocios_daf">Edificio de Negocios (DAF)</option>
+                        <option value="aulas_6">Aulas 6</option>
+                        <option value="domo_cultural">Domo Cultural</option>
+                        <option value="wellness_parque_central_tunel">Wellness Parque Central (Parque Central Tunel Instalaciones)</option>
+                        <option value="wellness_registro">WELLNESS REGISTRO (Wellness-Parque Central)</option>
+                        <option value="parque_central_registro">Parque Central Registro</option>
+                        <option value="wellness_edificio">Wellness-edificio</option>
+                        <option value="wellness_super_salads">Wellness-Super Salads</option>
+                        <option value="wellness_torre_enfriamiento">Wellness Torre de Enfriamiento</option>
+                        <option value="wellness_alberca">Wellness Alberca</option>
+                        <option value="centrales_comedor_1_principal">Centrales Comedor 1 (Puertas Giratorias) (Concesiones)</option>
+                        <option value="centrales_dona_tota">Centrales Comedor 1-Doña Tota</option>
+                        <option value="centrales_subway">Centrales Comedor 1-Subway</option>
+                        <option value="centrales_carls_jr">Centrales Comedor 1-Carls Jr.</option>
+                        <option value="centrales_little_cesars">Centrales Comedor 1-Pizza Little Cesars</option>
+                        <option value="centrales_grill_team">Centrales Comedor 1- Grill Team (Davila´s, GRILL)</option>
+                        <option value="centrales_chilaquiles">Centrales Comedor 1 Chilaquiles</option>
+                        <option value="centrales_tec_food">Centrales Comedor 1 Tec Food</option>
+                        <option value="centrales_oxxo">Centrales Comedor 1-oxxo</option>
+                        <option value="comedor_central_tunel">Comedor Central (Comedor Comedor 1 tunel)</option>
+                        <option value="administrativo">Administrativo</option>
+                        <option value="biotecnologia">Biotecnología</option>
+                        <option value="escuela_arte_caldera_1">Escuela de Arte y Caldera 1</option>
+                        <option value="ciap_oriente">Ciap-Oriente</option>
+                        <option value="ciap_centro">Ciap-Centro</option>
+                        <option value="ciap_poniente">Ciap-Poniente</option>
+                        <option value="ciap_green_shake">Ciap-Green Shake</option>
+                        <option value="ciap_andatti">Ciap-Andatti (Tim Horton)</option>
+                        <option value="ciap_dc_jochos">Ciap DC Jochos</option>
+                        <option value="crepaso">Crepaso</option>
+                        <option value="el_negro">El Negro</option>
+                        <option value="aulas_5">Aulas 5</option>
+                        <option value="ciap_starbucks">Ciap-Starbucks</option>
+                        <option value="ciap_super_salads">Ciap-Super Salads</option>
+                        <option value="ciap_sotano">Ciap-sótano</option>
+                        <option value="reflexion">Reflexión</option>
+                        <option value="residencias_10_15">Residencias 10 y 15</option>
+                        <option value="residencias_10_15_llenado">Residencias 10 y 15 llenado</option>
+                        <option value="cedes_cisterna">Cedes (Cisterna)</option>
+                        <option value="cedes_site">Cedes Site</option>
+                        <option value="nucleo">Nucleo</option>
+                        <option value="expedition">Expedition</option>
+                        <option value="expedition_bread">Expedition Bread</option>
+                        <option value="expedition_matthew">Expedition Matthew</option>
+                        <option value="caffenio">Caffenio</option>
+                        <option value="cedes_e2">Cedes-E2</option>
+                        <option value="e2_beiker">E2-Beiker</option>
+                        <option value="e2_evobike">E2-Evobike</option>
+                        <option value="e2_pancho_de_rigo">E2-Pancho de Rigo</option>
+                        <option value="e2_bebedero_nube">E2 bebedero Nube</option>
+                        <option value="aulas_1">Aulas 1</option>
+                        <option value="rectoria_norte">Rectoría Norte</option>
+                        <option value="pabellon_la_carreta">Pabellon La Carreta</option>
+                        <option value="rectoria_sur">Rectoría Sur  (NO TOMAR LECTURA)</option>
+                        <option value="aulas_2">Aulas 2</option>
+                        <option value="cetec">Cetec</option>
+                        <option value="biblioteca">Biblioteca</option>
+                        <option value="biblioteca_nikkori">Biblioteca-Nikkori</option>
+                        <option value="biblioteca_nectar_works">Biblioteca-Nectar Works</option>
+                        <option value="biblioteca_tim_horton">Biblioteca-Tim Horton</option>
+                        <option value="aulas_3">Aulas 3</option>
+                        <option value="basanti">Basanti</option>
+                        <option value="aulas_3_sr_latino">Aulas 3 - Sr. Latino</option>
+                        <option value="centrales_sur">Centrales Sur</option>
+                        <option value="aulas_4_norte">Aulas 4 Norte</option>
+                      </optgroup>
+                      <optgroup label="Circuito 6 Residencias">
+                        <option value="circuito_6_residencias">Circuito 6 Residencias</option>
+                        <option value="residencias_2_ote">Residencias 2 ote</option>
+                        <option value="residencias_2_pte">Residencias 2 pte  (YA NO HAY MEDIDOR desde 29-Sep-25)</option>
+                        <option value="residencias_3">Residencias 3</option>
+                        <option value="residencias_5">Residencias 5</option>
+                        <option value="correos">Correos Mr Heppy</option>
+                        <option value="residencias_abc">Residencias ABC (Residencias 1 Nuevas)</option>
+                        <option value="residencias_abc_lavanderia">Residencias ABC (Lavandería)</option>
+                      </optgroup>
+                      <optgroup label="Circuito 4 A7-CE">
+                        <option value="circuito_4_a7_ce">Circuito 4 A7-CE</option>
+                        <option value="aulas_7">Aulas 7</option>
+                        <option value="cah3_torre_enfriamiento">CAH 3 Torre de Enfriamiento</option>
+                        <option value="caldera_3">Caldera 3 (NO TOMAR LECTURA)</option>
+                        <option value="la_dia">La Dia</option>
+                        <option value="aulas_4_sur">Aulas 4 sur</option>
+                        <option value="aulas_4_maestros">Aulas 4 maestros</option>
+                        <option value="centro_congresos">Centro Congresos</option>
+                        <option value="jubileo">Jubileo</option>
+                        <option value="aulas_4_oxxo">Aulas 4 OXXO</option>
+                      </optgroup>
+                      <optgroup label="Circuito Planta Física">
+                        <option value="circuito_planta_fisica">Circuito Planta Física</option>
+                        <option value="estacionamiento_e1">Estacionamiento E1</option>
+                        <option value="megacentral_te_2">Megacentral Torres de Enfriamiento 2</option>
+                        <option value="escamilla_banos_trabajadores">Escamilla baños trabajadores  (revisar medidor, cambio)</option>
+                        <option value="estadio_banorte">Estadio Banorte (Estadio Borrego)</option>
+                        <option value="estadio_banorte_te">Estadio Banorte Torre Enfriamiento</option>
+                        <option value="campus_norte_edificios_ciudad">Campus Norte Edificios (agua de la ciudad) (NO TOMAR LECTURA)</option>
+                        <option value="estadio_azul">Estadio Azul</option>
+                      </optgroup>
+                      <optgroup label="Circuito Megacentral">
+                        <option value="circuito_megacentral">Circuito Megacentral</option>
+                        <option value="megacentral_te_4">Megacentral Torre Enfriamiento 4</option>
+                      </optgroup>
+                      <optgroup label="Sistemas de Riego y PTAR">
+                        <option value="pozo_4_riego_alt">Pozo 4 (Riego)</option>
+                        <option value="pozo_8_riego_alt">Pozo 8 (Riego)</option>
+                        <option value="pozo_15_riego_alt">Pozo 15 (Riego)</option>
+                        <option value="campus_norte_ciudad_riego">Campus Norte (Ciudad riego)</option>
+                        <option value="comedor_d_ciudad">Comedor D (agua de la ciudad)</option>
+                      </optgroup>
+                      <optgroup label="Purgas y Evaporación">
+                        <option value="estadio_banorte_purgas">Estadio Banorte purgas (Estadio Borrego Torre Enfriamiento purgas  (importante))</option>
+                        <option value="wellness_cisterna_pluvial_purgas">Wellnes Cisterna Pluvial purgas  (medidor dañado)</option>
+                        <option value="wellness_suavizador_purga">Wellness Suavizador purga  (importante)</option>
+                        <option value="wellness_te_rebosadero">Wellness T.E. rebosadero</option>
+                        <option value="wellness_te_purga">Wellness T.E. purga (importante)</option>
+                        <option value="megacentral_te_purgas">Megacentral Torres Enfriamiento purgas</option>
+                        <option value="megacentral_suavizador_purga">Megacentral Suavizador (purga) (fuera de servcicio provisional)</option>
+                        <option value="cah3_te_purgas">CAH3 Torre Enfriamiento purgas</option>
+                        <option value="residencias_10_15_te_purga">Residencias 10 y 15 T.E. purga</option>
+                        <option value="ciap_cisterna_pluvial">Ciap Cisterna Pluvial-Riego al sanitario 2</option>
+                      </optgroup>
+                      <optgroup label="Agua de la Ciudad">
+                        <option value="mil_mascaras">Mil Mascaras(Antes Estacionamiento E3(Ciudad) Quitaron Medidor 23-Marzo-26)</option>
+                        <option value="guarderia">Guardería (Ciudad)</option>
+                        <option value="naranjos">Naranjos (Ciudad-Guardería)</option>
+                        <option value="casa_solar">Casa Solar (Ciudad)</option>
+                        <option value="residencias_11_ciudad">Estudiantes Residencias 11 (Ciudad)</option>
+                        <option value="residencias_12_ciudad">Estudiantes Residencias 12 (Ciudad)</option>
+                        <option value="residencias_13_1_ciudad">Estudiantes Residencias 13(Ciudad)</option>
+                        <option value="residencias_13_2_ciudad">Estudiantes Residencias 13-2 (Ciudad) (ESTE NO JAVIER GZA)</option>
+                        <option value="residencias_13_3_ciudad">Estudiantes Residencias 13-3 (Ciudad) (ESTE NO JAVIER GZA)</option>
+                        <option value="residencias_15_sotano">Residencias 15 sótano (ESTE NO JAVIER GZA)</option>
+                      </optgroup>
                         </select>
                       </div>
 

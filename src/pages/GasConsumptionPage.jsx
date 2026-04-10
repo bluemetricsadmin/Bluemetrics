@@ -887,46 +887,72 @@ export default function GasConsumptionPage() {
                         className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
                       >
                         <option value="todos">TODOS LOS MEDIDORES</option>
-                        <optgroup label="Acometidas Principales Campus">
+                        <optgroup label="Todos los Puntos de Gas">
                           <option value="campus_acometida_principal_digital">Campus Acometida Ppal digital</option>
                           <option value="campus_acometida_principal_analogica">Campus Acometida Ppal analógica</option>
-                        </optgroup>
-                        <optgroup label="Edificios Culturales">
                           <option value="domo_cultural">Domo Cultural</option>
-                        </optgroup>
-                        <optgroup label="Comedores y Restaurantes">
-                          <option value="comedor_centrales_tec_food">Comedor Centrales Tec Food</option>
-                          <option value="dona_tota">Doña Tota</option>
-                          <option value="chilaquiles_tec">Chilaquiles Tec</option>
-                          <option value="carls_junior">Carl´s Junior</option>
-                          <option value="wellness_supersalads">Wellness SuperSalads</option>
-                        </optgroup>
-                        <optgroup label="Calderas y Calefacción">
-                          <option value="caldera_3">Caldera 3</option>
-                          <option value="mega_calefaccion_1">Mega Calefacción 1</option>
-                          <option value="wellness_general_calefaccion">Wellness General (Calefacción)</option>
-                          <option value="residencias_abc_calefaccion">Residencias ABC calefacción</option>
-                        </optgroup>
-                        <optgroup label="Edificios Académicos">
+                          <option value="centrales_local">1. Centrales Local</option>
+                          <option value="dona_tota">1.1 Doña Tota</option>
+                          <option value="chilaquiles_tec">1.2 Chilaquiles Tec</option>
+                          <option value="carls_junior">1.3 Carl´s Junior</option>
+                          <option value="comedor_centrales_tec_food">1.4 Comedor Centrales Tec Food</option>
+                          <option value="davilas_grill_team">1.5 Davila´s ( Grill Team )</option>
+                          <option value="pizza_little_caesars">1.6 Pizza Little Caesars</option>
                           <option value="biotecnologia">Biotecnología</option>
-                          <option value="biblioteca">Biblioteca</option>
+                          <option value="mega_calefaccion_1">Mega Calefacción 1 MISMA LECTURA DESDE SEM 8 2025</option>
+                          <option value="mega_calefaccion_2">Mega Calefacción 2 MISMA LECTURA DESDE SEM 8 2025</option>
+                          <option value="mega_calefaccion_3">Mega Calefacción 3 MISMA LECTURA DESDE SEM 8 2025</option>
+                          <option value="mega_calefaccion_4">Mega Calefacción 4 MISMA LECTURA DESDE SEM 8 2025</option>
+                          <option value="mega_calefaccion_5">Mega Calefacción 5 MISMA LECTURA DESDE SEM 8 2025</option>
+                          <option value="ciap_super_salads">Ciap-Super Salads</option>
                           <option value="aulas_1">Aulas 1</option>
-                          <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
-                        </optgroup>
-                        <optgroup label="Instalaciones Deportivas">
+                          <option value="biblioteca">2. Biblioteca</option>
+                          <option value="nikkori">2.1 Nikkori</option>
+                          <option value="nectar_works">2.2 Nectar Works</option>
+                          <option value="sr_latino">Sr. Latino</option>
                           <option value="arena_borrego">Arena Borrego</option>
-                          <option value="wellness_acometida_digital">Wellness Acometida digital</option>
-                          <option value="wellness_alberca">Wellness Alberca</option>
-                        </optgroup>
-                        <optgroup label="Residencias Estudiantiles">
+                          <option value="calefaccion_1_bryan">Calefacción 1 Bryan MISMA LECTURA DESDE SEM 8 2025</option>
+                          <option value="calefaccion_2_aerco">Calefacción 2 Aerco MISMA LECTURA DESDE 29-Dic-21</option>
+                          <option value="caldera_3">Caldera 3 MISMA LECTURA DESDE 29-Dic-21</option>
+                          <option value="aulas_7">Aulas 7 MISMA LECTURA DESDE 29-Dic-21</option>
+                          <option value="la_dia">La Dia</option>
+                          <option value="aulas_4">Aulas 4 MISMA LECTURA DESDE LA LECTURA DESDE 17-Nov</option>
+                          <option value="centro_congresos_vestidores">Centro Congresos. Vestidores</option>
+                          <option value="jubileo">Jubileo</option>
+                          <option value="expedition">Expedition</option>
+                          <option value="bread_expedition">Bread Expedition</option>
+                          <option value="matthew_expedition">Matthew Expedition</option>
                           <option value="estudiantes_acometida_principal_digital">Estudiantes Acometida Ppal digital</option>
-                          <option value="residencias_2">Residencias 2</option>
-                          <option value="residencias_3">Residencias 3</option>
+                          <option value="estudiantes_acometida_principal_analogico">Estudientes Acometida Ppal analógico</option>
+                          <option value="cedes">Cedes</option>
+                          <option value="residencias_2">Residencias 2 MISMA LECTURA DESDE 8-Nov-22-23 NO EXISTE</option>
                           <option value="residencias_5">Residencias 5</option>
-                        </optgroup>
-                        <optgroup label="Campus Norte">
+                          <option value="residencias_3">Residencias 3</option>
+                          <option value="residencias_abc_calefaccion">Residencias ABC calefacción</option>
+                          <option value="residencias_abc_regaderas">Residencias ABC regaderas</option>
+                          <option value="residencias_abc_locales_comida">Residencias ABC locales comida</option>
                           <option value="campus_norte_acometida_externa">Campus Norte Acometida externa</option>
                           <option value="campus_norte_acometida_interna">Campus Norte Acometida interna</option>
+                          <option value="campus_norte_comedor_d">Campus Norte-Edificio D Calefacción</option>
+                          <option value="campus_norte_edificio_d_calefaccion">Campus Norte-Comedor D</option>
+                          <option value="estadio_borrego_acometida_digital">Estadio Borrego Acometida digital</option>
+                          <option value="estadio_borrego_acometida_analogica">Estadio Borrego Acometida analógica</option>
+                          <option value="estadio_yarda">Estadio Yarda</option>
+                          <option value="wellness_acometida_digital">Wellness Acometida digital</option>
+                          <option value="wellness_acometida_analogica">Wellness Acometida analógica</option>
+                          <option value="wellness_supersalads">Wellness SuperSalads</option>
+                          <option value="wellness_general_calefaccion">Wellness General (Calefacción)</option>
+                          <option value="wellness_calentador_sotano_regaderas">Wellness Calentador Sotano (Regaderas)</option>
+                          <option value="wellness_alberca">Wellness Alberca</option>
+                          <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
+                          <option value="pabellon_tec_cocina_estudiantes_2do_piso">Pabellon Tec Cocina Estudiantes 2do. Piso</option>
+                          <option value="guarderia">Guardería</option>
+                          <option value="escamilla">Escamilla (CDB1)</option>
+                          <option value="casa_solar">Casa solar</option>
+                          <option value="estudiantes_11">Estudiantes 11</option>
+                          <option value="estudiantes_12">Estudiantes 12</option>
+                          <option value="estudiantes_13">Estudiantes 13</option>
+                          <option value="estudiantes_15_y_10">Estudiantes 15 y 10</option>
                         </optgroup>
                       </select>
                     </div>

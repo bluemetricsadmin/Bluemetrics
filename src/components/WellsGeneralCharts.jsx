@@ -55,8 +55,8 @@ export default function WellsGeneralCharts() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedChart, setSelectedChart] = useState('total') // 'riego', 'servicios', 'total'
-  const [viewType, setViewType] = useState('anual') // 'semanal', 'mensual', 'anual'
-  const [chartType, setChartType] = useState('bar') // 'bar', 'line', 'area'
+  const [viewType, setViewType] = useState('mensual') // 'semanal', 'mensual', 'anual'
+  const [chartType, setChartType] = useState('line') // 'bar', 'line', 'area'
   const [rawData, setRawData] = useState({
     riego: [],
     servicios: [],
