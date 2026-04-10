@@ -609,6 +609,8 @@ const DailyConsumptionChartJS = ({
       )}
 
       {/* Statistics */}
+
+      {/*   
       {estadisticas && (
         <div className="p-6 pt-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -655,6 +657,10 @@ const DailyConsumptionChartJS = ({
           </div>
         </div>
       )}
+      
+      
+      */}
+      
     </div>
   )
 }

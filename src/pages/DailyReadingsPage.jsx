@@ -14,6 +14,7 @@ import {
 const DailyReadingsPage = () => {
   // Estados
   const [lecturas, setLecturas] = useState([]);
+  const [semanasInfo, setSemanasInfo] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filtroMes, setFiltroMes] = useState('todos');
@@ -58,7 +59,15 @@ const DailyReadingsPage = () => {
 
       if (supabaseError) throw supabaseError;
 
+      // Obtener las últimas 2 semanas de la tabla semanal para los números de semana
+      const { data: semanasData } = await supabase
+        .from('lecturas_semana_agua_consumo_2026')
+        .select('l_numero_semana, l_fecha_inicio, l_fecha_fin')
+        .order('l_numero_semana', { ascending: false })
+        .limit(2);
+
       setLecturas(data || []);
+      setSemanasInfo(semanasData || []);
     } catch (err) {
       console.error('Error fetching lecturas:', err);
       setError(err.message);
@@ -119,11 +128,24 @@ const DailyReadingsPage = () => {
     const ultimos7Dias = lecturasFiltradas.slice(0, 7);
     const consumoActual = ultimos7Dias.reduce((sum, l) => sum + (parseFloat(l[field]) || 0), 0) / ultimos7Dias.length;
     
+    // Etiquetas de semanas desde tabla lecturas_semana_agua_consumo_2026
+    const semanaActualInfo = semanasInfo[0];
+    const semanaAnteriorInfo = semanasInfo[1];
+    const numSemanaActual = semanaActualInfo?.l_numero_semana || '';
+    const semanaActualLabel = semanaActualInfo
+      ? `${semanaActualInfo.l_fecha_inicio} a ${semanaActualInfo.l_fecha_fin}`
+      : (ultimos7Dias.length > 0 ? `${ultimos7Dias[ultimos7Dias.length - 1]?.dia_hora || ''} - ${ultimos7Dias[0]?.dia_hora || ''}` : '');
+    
     // Consumo semana anterior (días 8-14)
     const semanaAnterior = lecturasFiltradas.slice(7, 14);
     const consumoSemanaAnterior = semanaAnterior.length > 0 
       ? semanaAnterior.reduce((sum, l) => sum + (parseFloat(l[field]) || 0), 0) / semanaAnterior.length 
       : consumoActual;
+    
+    const numSemanaAnterior = semanaAnteriorInfo?.l_numero_semana || '';
+    const semanaAnteriorLabel = semanaAnteriorInfo
+      ? `${semanaAnteriorInfo.l_fecha_inicio} a ${semanaAnteriorInfo.l_fecha_fin}`
+      : (semanaAnterior.length > 0 ? `${semanaAnterior[semanaAnterior.length - 1]?.dia_hora || ''} - ${semanaAnterior[0]?.dia_hora || ''}` : '');
     
     // Comparación vs semana anterior
     const vsSemanaPorcentaje = consumoSemanaAnterior > 0 
@@ -141,9 +163,13 @@ const DailyReadingsPage = () => {
       consumoActual: consumoActual.toFixed(1),
       vsSemanaPorcentaje: vsSemanaPorcentaje.toFixed(0),
       ahorroPorcentaje: ahorroPorcentaje.toFixed(0),
-      puntoLabel: puntoConfig.label
+      puntoLabel: puntoConfig.label,
+      numSemanaActual,
+      numSemanaAnterior,
+      semanaActualLabel,
+      semanaAnteriorLabel
     };
-  }, [lecturasFiltradas, filtroPunto, puntosDisponibles]);
+  }, [lecturasFiltradas, filtroPunto, puntosDisponibles, semanasInfo]);
 
   // Agrupar lecturas por año para comparación multi-año
   const multiYearData = useMemo(() => {
@@ -300,33 +326,23 @@ const DailyReadingsPage = () => {
           <div className="mb-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <MetricCard
-                title="Lectura Actual"
+                title="Consumo Actual"
                 value={metricasPunto.lecturaActual}
                 unit="m³"
                 icon={Droplet}
                 iconColor="text-blue-600"
               />
               <MetricCard
-                title="Consumo Actual"
-                value={metricasPunto.consumoActual}
-                unit="m³"
-                icon={Activity}
-                iconColor="text-indigo-600"
-              />
-              <MetricCard
                 title="Vs Semana Anterior"
-                value={metricasPunto.vsSemanaPorcentaje > 0 ? `+${metricasPunto.vsSemanaPorcentaje}` : metricasPunto.vsSemanaPorcentaje}
-                unit="%"
                 comparison={parseFloat(metricasPunto.vsSemanaPorcentaje)}
-                comparisonLabel="vs semana anterior"
+                comparisonLabel={`Sem ${metricasPunto.numSemanaActual} vs Sem ${metricasPunto.numSemanaAnterior}`}
+                comparisonTooltip={`Semana actual: ${metricasPunto.semanaActualLabel} | Semana anterior: ${metricasPunto.semanaAnteriorLabel}`}
                 trend={parseFloat(metricasPunto.vsSemanaPorcentaje) > 0 ? 'up' : 'down'}
                 icon={ArrowUpDown}
                 iconColor="text-green-600"
               />
               <MetricCard
-                title="% de Ahorro"
-                value={metricasPunto.ahorroPorcentaje > 0 ? `+${metricasPunto.ahorroPorcentaje}` : metricasPunto.ahorroPorcentaje}
-                unit="%"
+                title="de Ahorro"
                 comparison={parseFloat(metricasPunto.ahorroPorcentaje)}
                 comparisonLabel="vs promedio total"
                 trend={parseFloat(metricasPunto.ahorroPorcentaje) < 0 ? 'up' : 'down'}
