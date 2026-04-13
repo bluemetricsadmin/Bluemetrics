@@ -63,6 +63,12 @@ const extraerAnio = (mesAnio) => {
   return match ? match[1] : null
 }
 
+const MESES_ES = {
+  'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+  'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+  'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+}
+
 const YEAR_COLORS = [
   { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.6)', bgFill: 'rgba(59, 130, 246, 0.1)' },
   { border: 'rgb(34, 197, 94)', bg: 'rgba(34, 197, 94, 0.6)', bgFill: 'rgba(34, 197, 94, 0.1)' },
@@ -134,17 +140,31 @@ const DailyConsumptionChartJS = ({
       }))
     } else {
       const datosPorMes = {}
+      let anio = null
       yearData.forEach(item => {
         const mes = item.mes_anio || extraerMes(item.dia_hora)
         if (mes) {
-          if (!datosPorMes[mes]) datosPorMes[mes] = { total: 0, count: 0 }
-          datosPorMes[mes].total += parseFloat(item[puntoField]) || 0
-          datosPorMes[mes].count += 1
+          const mesKey = mes.toLowerCase()
+          if (!datosPorMes[mesKey]) datosPorMes[mesKey] = { total: 0, count: 0 }
+          datosPorMes[mesKey].total += parseFloat(item[puntoField]) || 0
+          datosPorMes[mesKey].count += 1
+          if (!anio) {
+            const match = mes.match(/(\d{4})/)
+            if (match) anio = match[1]
+          }
         }
       })
-      return Object.keys(datosPorMes).slice(0, limite).map(mes => ({
+
+      if (!anio) anio = new Date().getFullYear().toString()
+
+      // Generar los 12 meses del año en orden ascendente
+      const todosMeses = Object.keys(MESES_ES).map(nombreMes => `${nombreMes} ${anio}`)
+
+      return todosMeses.map(mes => ({
         fecha: mes,
-        valor: parseFloat((datosPorMes[mes].total / datosPorMes[mes].count).toFixed(2)),
+        valor: datosPorMes[mes]
+          ? parseFloat((datosPorMes[mes].total / datosPorMes[mes].count).toFixed(2))
+          : 0,
         fechaCorta: mes
       }))
     }

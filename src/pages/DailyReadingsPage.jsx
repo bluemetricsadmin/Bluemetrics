@@ -124,52 +124,34 @@ const DailyReadingsPage = () => {
     // Lectura actual (más reciente)
     const lecturaActual = parseFloat(lecturasFiltradas[0]?.[field]) || 0;
     
-    // Consumo actual (promedio de últimos 7 días)
-    const ultimos7Dias = lecturasFiltradas.slice(0, 7);
-    const consumoActual = ultimos7Dias.reduce((sum, l) => sum + (parseFloat(l[field]) || 0), 0) / ultimos7Dias.length;
+    // Lectura anterior (segunda más reciente)
+    const lecturaAnterior = parseFloat(lecturasFiltradas[1]?.[field]) || 0;
     
-    // Etiquetas de semanas desde tabla lecturas_semana_agua_consumo_2026
-    const semanaActualInfo = semanasInfo[0];
-    const semanaAnteriorInfo = semanasInfo[1];
-    const numSemanaActual = semanaActualInfo?.l_numero_semana || '';
-    const semanaActualLabel = semanaActualInfo
-      ? `${semanaActualInfo.l_fecha_inicio} a ${semanaActualInfo.l_fecha_fin}`
-      : (ultimos7Dias.length > 0 ? `${ultimos7Dias[ultimos7Dias.length - 1]?.dia_hora || ''} - ${ultimos7Dias[0]?.dia_hora || ''}` : '');
+    // Etiquetas de las lecturas
+    const lecturaActualLabel = lecturasFiltradas[0]?.dia_hora || '';
+    const lecturaAnteriorLabel = lecturasFiltradas[1]?.dia_hora || '';
     
-    // Consumo semana anterior (días 8-14)
-    const semanaAnterior = lecturasFiltradas.slice(7, 14);
-    const consumoSemanaAnterior = semanaAnterior.length > 0 
-      ? semanaAnterior.reduce((sum, l) => sum + (parseFloat(l[field]) || 0), 0) / semanaAnterior.length 
-      : consumoActual;
-    
-    const numSemanaAnterior = semanaAnteriorInfo?.l_numero_semana || '';
-    const semanaAnteriorLabel = semanaAnteriorInfo
-      ? `${semanaAnteriorInfo.l_fecha_inicio} a ${semanaAnteriorInfo.l_fecha_fin}`
-      : (semanaAnterior.length > 0 ? `${semanaAnterior[semanaAnterior.length - 1]?.dia_hora || ''} - ${semanaAnterior[0]?.dia_hora || ''}` : '');
-    
-    // Comparación vs semana anterior
-    const vsSemanaPorcentaje = consumoSemanaAnterior > 0 
-      ? ((consumoActual - consumoSemanaAnterior) / consumoSemanaAnterior * 100)
+    // Comparación vs lectura anterior
+    const vsAnteriorPorcentaje = lecturaAnterior > 0 
+      ? ((lecturaActual - lecturaAnterior) / lecturaAnterior * 100)
       : 0;
     
     // Ahorro/Incremento respecto al promedio total
     const promedioTotal = lecturasFiltradas.reduce((sum, l) => sum + (parseFloat(l[field]) || 0), 0) / lecturasFiltradas.length;
     const ahorroPorcentaje = promedioTotal > 0 
-      ? ((consumoActual - promedioTotal) / promedioTotal * 100)
+      ? ((lecturaActual - promedioTotal) / promedioTotal * 100)
       : 0;
 
     return {
       lecturaActual: lecturaActual.toFixed(1),
-      consumoActual: consumoActual.toFixed(1),
-      vsSemanaPorcentaje: vsSemanaPorcentaje.toFixed(0),
+      lecturaAnterior: lecturaAnterior.toFixed(1),
+      vsAnteriorPorcentaje: vsAnteriorPorcentaje.toFixed(0),
       ahorroPorcentaje: ahorroPorcentaje.toFixed(0),
       puntoLabel: puntoConfig.label,
-      numSemanaActual,
-      numSemanaAnterior,
-      semanaActualLabel,
-      semanaAnteriorLabel
+      lecturaActualLabel,
+      lecturaAnteriorLabel
     };
-  }, [lecturasFiltradas, filtroPunto, puntosDisponibles, semanasInfo]);
+  }, [lecturasFiltradas, filtroPunto, puntosDisponibles]);
 
   // Agrupar lecturas por año para comparación multi-año
   const multiYearData = useMemo(() => {
@@ -333,11 +315,11 @@ const DailyReadingsPage = () => {
                 iconColor="text-blue-600"
               />
               <MetricCard
-                title="Vs Semana Anterior"
-                comparison={parseFloat(metricasPunto.vsSemanaPorcentaje)}
-                comparisonLabel={`Sem ${metricasPunto.numSemanaActual} vs Sem ${metricasPunto.numSemanaAnterior}`}
-                comparisonTooltip={`Semana actual: ${metricasPunto.semanaActualLabel} | Semana anterior: ${metricasPunto.semanaAnteriorLabel}`}
-                trend={parseFloat(metricasPunto.vsSemanaPorcentaje) > 0 ? 'up' : 'down'}
+                title="Vs Lectura Anterior"
+                comparison={parseFloat(metricasPunto.vsAnteriorPorcentaje)}
+                comparisonLabel={`${metricasPunto.lecturaActualLabel} vs ${metricasPunto.lecturaAnteriorLabel}`}
+                comparisonTooltip={`Actual: ${metricasPunto.lecturaActual} m³ (${metricasPunto.lecturaActualLabel}) | Anterior: ${metricasPunto.lecturaAnterior} m³ (${metricasPunto.lecturaAnteriorLabel})`}
+                trend={parseFloat(metricasPunto.vsAnteriorPorcentaje) > 0 ? 'up' : 'down'}
                 icon={ArrowUpDown}
                 iconColor="text-green-600"
               />

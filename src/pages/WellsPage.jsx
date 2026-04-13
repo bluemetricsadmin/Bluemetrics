@@ -42,7 +42,7 @@ export default function WellsPage() {
   const [eventsModalOpen, setEventsModalOpen] = useState(false)
   const [selectedWell, setSelectedWell] = useState(null)
   const [wellEvents, setWellEvents] = useState([])
-  const [chartMode, setChartMode] = useState('analysis') // 'timeline' o 'analysis'
+  const [chartMode, setChartMode] = useState('timeline') // 'timeline' o 'analysis'
   const [kpiData, setKpiData] = useState({
     totalGeneral: 0,
     promedioAnual: 0,
