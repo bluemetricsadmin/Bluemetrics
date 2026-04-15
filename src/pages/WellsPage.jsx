@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from "react-router"
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog"
 import { supabase } from '../supabaseClient'
 import WellsGeneralCharts from '../components/WellsGeneralCharts'
 import WellEventsHistory from '../components/WellEventsHistory'
@@ -42,6 +41,7 @@ export default function WellsPage() {
   const [eventsModalOpen, setEventsModalOpen] = useState(false)
   const [selectedWell, setSelectedWell] = useState(null)
   const [wellEvents, setWellEvents] = useState([])
+  const [recentAlerts, setRecentAlerts] = useState([])
   const [chartMode, setChartMode] = useState('timeline') // 'timeline' o 'analysis'
   const [kpiData, setKpiData] = useState({
     totalGeneral: 0,
@@ -225,6 +225,77 @@ export default function WellsPage() {
     fetchWellsData()
   }, [])
 
+  // ========================================
+  // Suscripción Realtime a well_events
+  // Actualiza recentAlerts y alertCount en vivo
+  // ========================================
+  useEffect(() => {
+    const channel = supabase
+      .channel('well-events-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'well_events' },
+        (payload) => {
+          console.log('🔔 Realtime well_events:', payload.eventType, payload)
+
+          if (payload.eventType === 'INSERT') {
+            const newEvent = payload.new
+            // Solo agregar a recientes si está activo
+            if (newEvent.event_status === 'activo') {
+              setRecentAlerts(prev => [newEvent, ...prev].slice(0, 5))
+              setWellsData(prev => prev.map(well =>
+                well.id === newEvent.well_id
+                  ? { ...well, alertCount: (well.alertCount || 0) + 1 }
+                  : well
+              ))
+            }
+          }
+
+          if (payload.eventType === 'UPDATE') {
+            const updated = payload.new
+            const old = payload.old
+            // Si pasó de activo → completado/cancelado
+            if (old.event_status === 'activo' && updated.event_status !== 'activo') {
+              setRecentAlerts(prev => prev.filter(a => a.id !== updated.id))
+              setWellsData(prev => prev.map(well =>
+                well.id === updated.well_id
+                  ? { ...well, alertCount: Math.max((well.alertCount || 1) - 1, 0) }
+                  : well
+              ))
+            }
+            // Si se re-activó
+            if (old.event_status !== 'activo' && updated.event_status === 'activo') {
+              setRecentAlerts(prev => [updated, ...prev.filter(a => a.id !== updated.id)].slice(0, 5))
+              setWellsData(prev => prev.map(well =>
+                well.id === updated.well_id
+                  ? { ...well, alertCount: (well.alertCount || 0) + 1 }
+                  : well
+              ))
+            }
+          }
+
+          if (payload.eventType === 'DELETE') {
+            const deleted = payload.old
+            setRecentAlerts(prev => prev.filter(a => a.id !== deleted.id))
+            if (deleted.event_status === 'activo') {
+              setWellsData(prev => prev.map(well =>
+                well.id === deleted.well_id
+                  ? { ...well, alertCount: Math.max((well.alertCount || 1) - 1, 0) }
+                  : well
+              ))
+            }
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Realtime well_events status:', status)
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   const fetchWellsData = async () => {
     try {
       setLoading(true)
@@ -259,8 +330,12 @@ export default function WellsPage() {
       // Cargar eventos activos para todos los pozos
       const { data: eventsData } = await supabase
         .from('well_events')
-        .select('well_id, event_status')
+        .select('*')
         .eq('event_status', 'activo')
+        .order('start_date', { ascending: false })
+
+      // Guardar alertas recientes para la sección inferior (máx 5)
+      setRecentAlerts((eventsData || []).slice(0, 5))
 
       // Contar alertas por pozo
       const alertsByWell = {}
@@ -269,6 +344,8 @@ export default function WellsPage() {
       })
 
       // Procesar datos para cada pozo
+      const currentWeek = readingsData?.[0]?.l_numero_semana || 0
+
       const processedWells = wellsConfig.map(well => {
         const staticInfo = wellsStaticInfo[well.id] || {}
         const lastWeekReading = readingsData?.[0]?.[well.column] || 0
@@ -308,7 +385,7 @@ export default function WellsPage() {
           consumptionPercent: parseFloat(consumptionPercent.toFixed(2)) || 0,
           aguaDisponibleUltimaSemana: aguaDisponibleUltimaSemana,
           vsLastWeek: parseFloat(vsLastWeek) || 0,
-          weekNumber: readingsData?.[0]?.l_numero_semana || 0,
+          weekNumber: currentWeek,
           alertCount: alertCount
         }
       })
@@ -726,32 +803,81 @@ export default function WellsPage() {
             {/* Sección de detalles adicionales */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Alertas de pozos */}
-              <Card>
+              <Card>ii
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Alertas Recientes</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <BellIcon className="h-5 w-5 text-orange-500" />
+                    Alertas Recientes
+                    {recentAlerts.length > 0 && (
+                      <Badge className="bg-red-100 text-red-700 border-red-200 ml-2">{recentAlerts.length} activa{recentAlerts.length !== 1 ? 's' : ''}</Badge>
+                    )}
+                  </h3>
                   <div className="space-y-3">
-                    <div className="flex items-center p-3 bg-green-50 border-l-4 border-green-400">
-                      <CheckCircleIcon className="h-5 w-5 text-green-400" />
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-green-800">
-                          Todos los pozos operando normalmente
-                        </p>
-                        <p className="text-sm text-green-700">
-                          Sistema funcionando correctamente
-                        </p>
+                    {recentAlerts.length === 0 ? (
+                      <div className="flex items-center p-3 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
+                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-green-800">
+                            Todos los pozos operando normalmente
+                          </p>
+                          <p className="text-sm text-green-600">
+                            No hay alertas activas en el sistema
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center p-3 bg-blue-50 border-l-4 border-blue-400">
-                      <DropletIcon className="h-5 w-5 text-blue-400" />
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-blue-800">
-                          Pozos de servicios - Rendimiento óptimo
-                        </p>
-                        <p className="text-sm text-blue-700">
-                          5 pozos activos cumpliendo con los estándares
-                        </p>
-                      </div>
-                    </div>
+                    ) : (
+                      recentAlerts.map((alert) => {
+                        const wellName = wellsConfig.find(w => w.id === alert.well_id)?.name || `Pozo ${alert.well_id}`
+                        const isCritical = alert.severity === 'critica'
+                        const isPreventive = alert.severity === 'preventiva'
+                        const isConsumo = alert.event_type === 'alerta_consumo'
+                        const isSobreconsumo = alert.event_type === 'sobreconsumo'
+
+                        const borderColor = isCritical ? 'border-red-400' : isPreventive ? 'border-yellow-400' : 'border-blue-400'
+                        const bgColor = isCritical ? 'bg-red-50' : isPreventive ? 'bg-yellow-50' : 'bg-blue-50'
+                        const iconColor = isCritical ? 'text-red-500' : isPreventive ? 'text-yellow-500' : 'text-blue-500'
+                        const titleColor = isCritical ? 'text-red-800' : isPreventive ? 'text-yellow-800' : 'text-blue-800'
+                        const descColor = isCritical ? 'text-red-600' : isPreventive ? 'text-yellow-600' : 'text-blue-600'
+
+                        return (
+                          <div key={alert.id} className={`flex items-start p-3 ${bgColor} border-l-4 ${borderColor} rounded-r-lg`}>
+                            <div className="flex-shrink-0 mt-0.5">
+                              {isCritical ? (
+                                <AlertTriangleIcon className={`h-5 w-5 ${iconColor}`} />
+                              ) : isPreventive ? (
+                                <AlertTriangleIcon className={`h-5 w-5 ${iconColor}`} />
+                              ) : (
+                                <DropletIcon className={`h-5 w-5 ${iconColor}`} />
+                              )}
+                            </div>
+                            <div className="ml-3 flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className={`text-sm font-medium ${titleColor}`}>
+                                  {wellName}
+                                </p>
+                                <Badge className={`text-[10px] px-1.5 py-0 ${
+                                  isCritical ? 'bg-red-200 text-red-800 border-red-300' :
+                                  'bg-yellow-200 text-yellow-800 border-yellow-300'
+                                }`}>
+                                  {isCritical ? 'Crítica' : 'Preventiva'}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {isConsumo ? 'Consumo' : isSobreconsumo ? 'Sobreconsumo' : alert.event_type}
+                                </Badge>
+                              </div>
+                              <p className={`text-xs ${descColor} mt-1 line-clamp-2`}>
+                                {alert.title || alert.description}
+                              </p>
+                              {alert.recommendation && (
+                                <p className="text-xs text-gray-500 mt-1 italic truncate">
+                                  💡 {alert.recommendation}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
                   </div>
                 </div>
               </Card>
@@ -812,19 +938,28 @@ export default function WellsPage() {
       </Button>
 
       {/* Modal de Eventos/Alertas */}
-      <Dialog open={eventsModalOpen} onOpenChange={setEventsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BellIcon className="h-5 w-5 text-orange-600" />
-              Eventos y Alertas - {selectedWell?.name}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="mt-4">
-            {selectedWell && <WellEventsHistory wellId={selectedWell.id} />}
+      {eventsModalOpen && selectedWell && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <BellIcon className="h-5 w-5 text-orange-600" />
+                  Eventos y Alertas - {selectedWell.name}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEventsModalOpen(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <WellEventsHistory wellId={selectedWell.id} />
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Modal de Configuración */}
       {configModalOpen && selectedWell && (

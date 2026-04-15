@@ -4,6 +4,7 @@ import { Card, CardHeader, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
+import { updateAlertStatus } from '../utils/wellAlertSync'
 import {
   CalendarIcon,
   PlusIcon,
@@ -14,7 +15,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  WrenchIcon
+  WrenchIcon,
+  ZapIcon
 } from 'lucide-react'
 
 export default function WellEventsHistory({ wellId }) {
@@ -39,7 +41,9 @@ export default function WellEventsHistory({ wellId }) {
     { value: 'parado', label: 'Parado', color: 'red' },
     { value: 'reparacion', label: 'Reparación', color: 'orange' },
     { value: 'inspeccion', label: 'Inspección', color: 'blue' },
-    { value: 'otro', label: 'Otro', color: 'gray' }
+    { value: 'otro', label: 'Otro', color: 'gray' },
+    { value: 'alerta_consumo', label: 'Alerta de Consumo', color: 'red' },
+    { value: 'sobreconsumo', label: 'Sobreconsumo', color: 'purple' }
   ]
 
   const eventStatuses = [
@@ -51,6 +55,41 @@ export default function WellEventsHistory({ wellId }) {
   // Cargar eventos al montar el componente
   useEffect(() => {
     fetchEvents()
+  }, [wellId])
+
+  // Suscripción Realtime: auto-refresh cuando cambian eventos de este pozo
+  useEffect(() => {
+    const channel = supabase
+      .channel(`well-events-${wellId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'well_events',
+          filter: `well_id=eq.${wellId}`
+        },
+        (payload) => {
+          console.log(`🔔 Realtime well_events (pozo ${wellId}):`, payload.eventType)
+
+          if (payload.eventType === 'INSERT') {
+            setEvents(prev => [payload.new, ...prev])
+          }
+
+          if (payload.eventType === 'UPDATE') {
+            setEvents(prev => prev.map(e => e.id === payload.new.id ? payload.new : e))
+          }
+
+          if (payload.eventType === 'DELETE') {
+            setEvents(prev => prev.filter(e => e.id !== payload.old.id))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [wellId])
 
   // Función para cargar eventos desde Supabase
@@ -214,6 +253,24 @@ export default function WellEventsHistory({ wellId }) {
     resetForm()
   }
 
+  // Función para cambiar estado rápido de alertas automáticas
+  const handleQuickStatus = async (eventId, newStatus) => {
+    try {
+      setLoading(true)
+      const success = await updateAlertStatus(eventId, newStatus)
+      if (success) {
+        await fetchEvents()
+      } else {
+        alert('Error al actualizar el estado de la alerta')
+      }
+    } catch (err) {
+      console.error('Error en cambio rápido de estado:', err)
+      alert('Error al actualizar: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Función para obtener el color del tipo de evento
   const getEventTypeColor = (type) => {
     const eventType = eventTypes.find(t => t.value === type)
@@ -282,6 +339,7 @@ export default function WellEventsHistory({ wellId }) {
                 <div
                   key={event.id}
                   className={`p-4 rounded-lg border-l-4 ${
+                    typeColor === 'purple' ? 'bg-purple-50 border-purple-400' :
                     typeColor === 'red' ? 'bg-red-50 border-red-400' :
                     typeColor === 'yellow' ? 'bg-yellow-50 border-yellow-400' :
                     typeColor === 'orange' ? 'bg-orange-50 border-orange-400' :
@@ -289,9 +347,10 @@ export default function WellEventsHistory({ wellId }) {
                     'bg-gray-50 border-gray-400'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start justify-between mb-3 gap-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge className={`${
+                        typeColor === 'purple' ? 'bg-purple-100 text-purple-800 border-purple-200' :
                         typeColor === 'red' ? 'bg-red-100 text-red-800 border-red-200' :
                         typeColor === 'yellow' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
                         typeColor === 'orange' ? 'bg-orange-100 text-orange-800 border-orange-200' :
@@ -304,26 +363,75 @@ export default function WellEventsHistory({ wellId }) {
                         <StatusIcon className="h-3 w-3 mr-1" />
                         {statusInfo?.label}
                       </Badge>
+                      {event.is_automatic && (
+                        <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200 text-xs">
+                          <ZapIcon className="h-3 w-3 mr-1" />
+                          Auto
+                        </Badge>
+                      )}
+                      {event.severity && (
+                        <Badge className={`text-xs ${
+                          event.severity === 'critica'
+                            ? 'bg-red-100 text-red-800 border-red-200'
+                            : 'bg-amber-100 text-amber-800 border-amber-200'
+                        }`}>
+                            {event.severity === 'critica' ? 'Critica' : 'Preventiva'}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => startEdit(event)}
-                        className="h-7 w-7 p-0"
-                        title="Editar"
-                      >
-                        <EditIcon className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteEvent(event.id)}
-                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        title="Eliminar"
-                      >
-                        <Trash2Icon className="h-3 w-3" />
-                      </Button>
+                      <div className="flex gap-2 items-center shrink-0">
+                      {/* Botones rápidos para alertas automáticas activas */}
+                      {event.is_automatic && event.event_status === 'activo' ? (
+                        <>
+                          <Button
+                            size="sm"
+                              variant="outline"
+                            onClick={() => handleQuickStatus(event.id, 'completado')}
+                              className="h-8 px-3 border-green-300 bg-green-100 text-green-900 hover:bg-green-200 text-xs font-medium"
+                            title="Marcar como atendida"
+                            disabled={loading}
+                          >
+                            <CheckCircleIcon className="h-3 w-3 mr-1" />
+                            Atendida
+                          </Button>
+                          <Button
+                            size="sm"
+                              variant="outline"
+                            onClick={() => handleQuickStatus(event.id, 'cancelado')}
+                              className="h-8 px-3 border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200 text-xs font-medium"
+                            title="Descartar alerta"
+                            disabled={loading}
+                          >
+                            <XCircleIcon className="h-3 w-3 mr-1" />
+                            Descartar
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                              variant="outline"
+                            onClick={() => startEdit(event)}
+                              className="h-8 px-3 border-blue-300 bg-blue-100 text-blue-900 hover:bg-blue-200 text-xs font-medium"
+                            title="Editar"
+                          >
+                              <EditIcon className="h-3 w-3 mr-1" />
+                              Editar
+                          </Button>
+                          {!event.is_automatic && (
+                            <Button
+                              size="sm"
+                                variant="outline"
+                              onClick={() => handleDeleteEvent(event.id)}
+                                className="h-8 px-3 border-red-300 bg-red-100 text-red-900 hover:bg-red-200 text-xs font-medium"
+                              title="Eliminar"
+                            >
+                                <Trash2Icon className="h-3 w-3 mr-1" />
+                                Eliminar
+                            </Button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -331,10 +439,29 @@ export default function WellEventsHistory({ wellId }) {
                     {event.title}
                   </h4>
 
+                  {/* Recomendación destacada para alertas automáticas */}
+                  {event.is_automatic && event.recommendation && (
+                    <div className={`p-2 rounded text-xs mb-2 ${
+                      event.severity === 'critica'
+                        ? 'bg-red-100 border border-red-200 text-red-800'
+                        : 'bg-amber-100 border border-amber-200 text-amber-800'
+                    }`}>
+                      <strong>Recomendación:</strong> {event.recommendation}
+                    </div>
+                  )}
+
                   {event.description && (
                     <p className="text-sm text-gray-700 mb-2 whitespace-pre-wrap">
                       {event.description}
                     </p>
+                  )}
+
+                  {/* Métricas para alertas automáticas */}
+                  {event.is_automatic && event.metric_value != null && (
+                    <div className="flex gap-3 text-xs text-gray-600 mb-2">
+                      <span><strong>Valor detectado:</strong> {event.metric_value}%</span>
+                      <span><strong>Umbral:</strong> {event.threshold_value}%</span>
+                    </div>
                   )}
 
                   <div className="space-y-1 text-xs text-gray-600">
