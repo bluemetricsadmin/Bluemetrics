@@ -1,256 +1,181 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
+import { updateAlertStatus } from '../utils/wellAlertSync'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
-import { Card, CardContent, CardHeader } from "../components/ui/card"
+import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { 
   AlertTriangle, 
   AlertCircle, 
-  Info, 
   CheckCircle, 
-  X, 
   Bell, 
-  MapPin, 
   Clock, 
   Activity,
-  Filter,
   Search,
-  Eye,
-  Settings,
-  Archive,
-  Zap
+  Droplets,
+  TrendingUp,
+  TrendingDown,
+  Gauge,
+  ShieldAlert,
+  Loader2,
+  RefreshCw
 } from "lucide-react"
 
-// Datos fake de alertas más extensos
-const alertsData = [
-  {
-    id: 1,
-    type: "critical",
-    title: "Límite Diario Excedido",
-    message: "El Pozo 11 superó el límite diario permitido en 15%",
-    timestamp: "Hace 5 min",
-    action: "Reducir flujo",
-    status: "active",
-    location: "Sector Norte",
-    affectedSystems: ["Riego", "Torres de enfriamiento"],
-    priority: "alta",
-    estimatedImpact: "Alto",
-    responsibleTeam: "Operaciones",
-    category: "consumo"
-  },
-  {
-    id: 2,
-    type: "warning",
-    title: "Posible Fuga Detectada",
-    message: "Pozo 7 muestra patrones anómalos de consumo",
-    timestamp: "Hace 12 min",
-    action: "Inspeccionar",
-    status: "active",
-    location: "Sector Centro",
-    affectedSystems: ["Distribución principal"],
-    priority: "media",
-    estimatedImpact: "Medio",
-    responsibleTeam: "Mantenimiento",
-    category: "fuga"
-  },
-  {
-    id: 3,
-    type: "info",
-    title: "Mantenimiento Programado",
-    message: "Torre de enfriamiento 3 requiere mantenimiento en 2 días",
-    timestamp: "Hace 1 hora",
-    action: "Programar",
-    status: "pending",
-    location: "Edificio Industrial",
-    affectedSystems: ["Climatización"],
-    priority: "baja",
-    estimatedImpact: "Bajo",
-    responsibleTeam: "Mantenimiento",
-    category: "mantenimiento"
-  },
-  {
-    id: 4,
-    type: "critical",
-    title: "Presión Baja Sistema Principal",
-    message: "Presión en línea principal descendió a 2.1 bar (mín: 2.5 bar)",
-    timestamp: "Hace 8 min",
-    action: "Activar bomba de respaldo",
-    status: "active",
-    location: "Red principal",
-    affectedSystems: ["Distribución", "Torres", "Riego"],
-    priority: "alta",
-    estimatedImpact: "Crítico",
-    responsibleTeam: "Operaciones",
-    category: "presion"
-  },
-  {
-    id: 5,
-    type: "warning",
-    title: "Calidad del Agua Comprometida",
-    message: "Niveles de cloro residual por debajo del mínimo en Pozo 3",
-    timestamp: "Hace 25 min",
-    action: "Ajustar dosificación",
-    status: "active",
-    location: "Sector Sur",
-    affectedSystems: ["Agua potable"],
-    priority: "alta",
-    estimatedImpact: "Alto",
-    responsibleTeam: "Calidad",
-    category: "calidad"
-  },
-  {
-    id: 6,
-    type: "success",
-    title: "Eficiencia Meta Alcanzada",
-    message: "Sistema superó meta mensual de eficiencia (96% vs 90%)",
-    timestamp: "Hace 2 horas",
-    action: "Ver reporte",
-    status: "resolved",
-    location: "Sistema completo",
-    affectedSystems: ["Todos"],
-    priority: "baja",
-    estimatedImpact: "Positivo",
-    responsibleTeam: "Operaciones",
-    category: "eficiencia"
-  },
-  {
-    id: 7,
-    type: "warning",
-    title: "Nivel Tanque de Reserva Bajo",
-    message: "Tanque de reserva Norte al 25% de capacidad",
-    timestamp: "Hace 1h 15min",
-    action: "Activar llenado",
-    status: "acknowledged",
-    location: "Sector Norte",
-    affectedSystems: ["Almacenamiento", "Reserva"],
-    priority: "media",
-    estimatedImpact: "Medio",
-    responsibleTeam: "Operaciones",
-    category: "almacenamiento"
-  },
-  {
-    id: 8,
-    type: "critical",
-    title: "Falla de Sensor Primario",
-    message: "Sensor de caudal principal sin señal desde hace 30 minutos",
-    timestamp: "Hace 30 min",
-    action: "Verificar conexiones",
-    status: "active",
-    location: "Pozo 8",
-    affectedSystems: ["Monitoreo", "Control automático"],
-    priority: "alta",
-    estimatedImpact: "Alto",
-    responsibleTeam: "Técnico",
-    category: "sensor"
-  },
-  {
-    id: 9,
-    type: "info",
-    title: "Optimización Energética Disponible",
-    message: "Se detectó oportunidad de ahorro del 8% en horario nocturno",
-    timestamp: "Hace 45 min",
-    action: "Implementar programa",
-    status: "pending",
-    location: "Sistema completo",
-    affectedSystems: ["Bombeo", "Distribución"],
-    priority: "baja",
-    estimatedImpact: "Positivo",
-    responsibleTeam: "Eficiencia",
-    category: "optimizacion"
-  },
-  {
-    id: 10,
-    type: "warning",
-    title: "Temperatura Agua Elevada",
-    message: "Temperatura en Pozo 5 superior a 28°C (límite: 25°C)",
-    timestamp: "Hace 1h 30min",
-    action: "Revisar sistema de enfriamiento",
-    status: "active",
-    location: "Sector Este",
-    affectedSystems: ["Refrigeración"],
-    priority: "media",
-    estimatedImpact: "Medio",
-    responsibleTeam: "Mantenimiento",
-    category: "temperatura"
-  }
-]
+// Mapeo de well_id → nombre del pozo
+const WELL_NAMES = {
+  11: 'Pozo 11', 12: 'Pozo 12', 3: 'Pozo 3', 7: 'Pozo 7',
+  14: 'Pozo 14', 4: 'Pozo 4 (Riego)', 8: 'Pozo 8 (Riego)', 15: 'Pozo 15 (Riego)'
+}
 
-function getAlertIcon(type) {
-  switch (type) {
-    case "critical":
-      return <AlertTriangle className="w-4 h-4" />
-    case "warning":
-      return <AlertCircle className="w-4 h-4" />
-    case "info":
-      return <Info className="w-4 h-4" />
-    case "success":
-      return <CheckCircle className="w-4 h-4" />
-    default:
-      return <Bell className="w-4 h-4" />
+function getAlertVisual(event) {
+  const isCritical = event.severity === 'critica'
+  const isOverconsumption = event.event_type === 'sobreconsumo'
+  const isDropAlert = event.title?.includes('Caída')
+
+  if (isCritical && isDropAlert) {
+    return {
+      icon: <TrendingDown className="w-5 h-5" />,
+      colors: 'text-orange-600 bg-orange-50 border-orange-200',
+      badgeClass: 'bg-orange-100 text-orange-800'
+    }
+  }
+  if (isCritical) {
+    return {
+      icon: isOverconsumption ? <Gauge className="w-5 h-5" /> : <TrendingUp className="w-5 h-5" />,
+      colors: 'text-red-600 bg-red-50 border-red-200',
+      badgeClass: 'bg-red-100 text-red-800'
+    }
+  }
+  return {
+    icon: <ShieldAlert className="w-5 h-5" />,
+    colors: 'text-yellow-600 bg-yellow-50 border-yellow-200',
+    badgeClass: 'bg-yellow-100 text-yellow-800'
   }
 }
 
-function getAlertColor(type) {
-  switch (type) {
-    case "critical":
-      return "text-red-600 bg-red-50 border-red-200"
-    case "warning":
-      return "text-orange-600 bg-orange-50 border-orange-200"
-    case "info":
-      return "text-blue-600 bg-blue-50 border-blue-200"
-    case "success":
-      return "text-green-600 bg-green-50 border-green-200"
-    default:
-      return "text-gray-600 bg-gray-50 border-gray-200"
+function getStatusBadge(status) {
+  switch (status) {
+    case 'activo': return { label: 'Activa', variant: 'destructive' }
+    case 'completado': return { label: 'Atendida', variant: 'default' }
+    case 'cancelado': return { label: 'Descartada', variant: 'secondary' }
+    default: return { label: status, variant: 'outline' }
   }
 }
 
-function getPriorityBadge(priority) {
-  const colors = {
-    alta: "bg-red-100 text-red-800",
-    media: "bg-yellow-100 text-yellow-800",
-    baja: "bg-blue-100 text-blue-800"
-  }
-  return colors[priority] || "bg-gray-100 text-gray-800"
+function timeAgo(dateStr) {
+  const now = new Date()
+  const date = new Date(dateStr)
+  const diffMs = now - date
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return 'Ahora mismo'
+  if (diffMin < 60) return `Hace ${diffMin} min`
+  const diffHours = Math.floor(diffMin / 60)
+  if (diffHours < 24) return `Hace ${diffHours}h`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `Hace ${diffDays}d`
+  return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
 }
 
 export default function AlertsPage() {
+  const [alerts, setAlerts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterType, setFilterType] = useState("all")
+  const [filterSeverity, setFilterSeverity] = useState("all")
   const [filterStatus, setFilterStatus] = useState("all")
-  const [filterPriority, setFilterPriority] = useState("all")
-  const [selectedAlert, setSelectedAlert] = useState(null)
+  const [filterType, setFilterType] = useState("all")
+  const [filterWell, setFilterWell] = useState("all")
 
-  // Filtrar alertas
-  const filteredAlerts = alertsData.filter(alert => {
-    const matchesSearch = alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         alert.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         alert.location.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch inicial de alertas desde Supabase
+  const fetchAlerts = async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('well_events')
+      .select('*')
+      .in('event_type', ['alerta_consumo', 'sobreconsumo'])
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+    if (error) {
+      console.error('Error cargando alertas:', error)
+    } else {
+      setAlerts(data || [])
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchAlerts()
+  }, [])
+
+  // Suscripción Realtime a well_events
+  useEffect(() => {
+    const channel = supabase
+      .channel('alerts-page-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'well_events' },
+        (payload) => {
+          console.log('🔔 AlertsPage Realtime:', payload.eventType, payload)
+
+          if (payload.eventType === 'INSERT') {
+            const newEvent = payload.new
+            if (newEvent.event_type === 'alerta_consumo' || newEvent.event_type === 'sobreconsumo') {
+              setAlerts(prev => [newEvent, ...prev])
+            }
+          }
+
+          if (payload.eventType === 'UPDATE') {
+            setAlerts(prev => prev.map(a => a.id === payload.new.id ? payload.new : a))
+          }
+
+          if (payload.eventType === 'DELETE') {
+            setAlerts(prev => prev.filter(a => a.id !== payload.old.id))
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 AlertsPage Realtime status:', status)
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  // Acciones sobre alertas
+  const handleStatusChange = async (alertId, newStatus) => {
+    setActionLoading(alertId)
+    const success = await updateAlertStatus(alertId, newStatus)
+    if (!success) {
+      alert('Error al actualizar la alerta')
+    }
+    setActionLoading(null)
+  }
+
+  // Filtrado
+  const filteredAlerts = alerts.filter(a => {
+    const matchesSearch = !searchTerm || 
+      a.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      WELL_NAMES[a.well_id]?.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesType = filterType === "all" || alert.type === filterType
-    const matchesStatus = filterStatus === "all" || alert.status === filterStatus
-    const matchesPriority = filterPriority === "all" || alert.priority === filterPriority
-    
-    return matchesSearch && matchesType && matchesStatus && matchesPriority
+    const matchesSeverity = filterSeverity === "all" || a.severity === filterSeverity
+    const matchesStatus = filterStatus === "all" || a.event_status === filterStatus
+    const matchesType = filterType === "all" || a.event_type === filterType
+    const matchesWell = filterWell === "all" || String(a.well_id) === filterWell
+
+    return matchesSearch && matchesSeverity && matchesStatus && matchesType && matchesWell
   })
 
-  // Estadísticas de alertas
-  const alertStats = {
-    total: alertsData.length,
-    active: alertsData.filter(a => a.status === "active").length,
-    critical: alertsData.filter(a => a.type === "critical").length,
-    resolved: alertsData.filter(a => a.status === "resolved").length
-  }
-
-  const handleResolveAlert = (alertId) => {
-    console.log("Resolviendo alerta:", alertId)
-    // Aquí iría la lógica para resolver la alerta
-  }
-
-  const handleAcknowledgeAlert = (alertId) => {
-    console.log("Reconociendo alerta:", alertId)
-    // Aquí iría la lógica para reconocer la alerta
+  // Estadísticas
+  const stats = {
+    total: alerts.length,
+    active: alerts.filter(a => a.event_status === 'activo').length,
+    critical: alerts.filter(a => a.severity === 'critica' && a.event_status === 'activo').length,
+    resolved: alerts.filter(a => a.event_status === 'completado').length
   }
 
   return (
@@ -265,22 +190,16 @@ export default function AlertsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Centro de Alertas</h1>
                 <p className="text-muted-foreground">
-                  Monitoreo y gestión de alertas del sistema
+                  Alertas automáticas de consumo generadas en tiempo real
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configurar
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Archive className="w-4 h-4 mr-2" />
-                  Historial
-                </Button>
-              </div>
+              <Button variant="outline" size="sm" onClick={fetchAlerts} disabled={loading}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Actualizar
+              </Button>
             </div>
 
-            {/* Estadísticas de alertas */}
+            {/* Estadísticas */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardContent className="p-4">
@@ -289,7 +208,7 @@ export default function AlertsPage() {
                       <Bell className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{alertStats.total}</div>
+                      <div className="text-2xl font-bold">{stats.total}</div>
                       <div className="text-sm text-muted-foreground">Total Alertas</div>
                     </div>
                   </div>
@@ -303,7 +222,7 @@ export default function AlertsPage() {
                       <Activity className="w-5 h-5 text-orange-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{alertStats.active}</div>
+                      <div className="text-2xl font-bold">{stats.active}</div>
                       <div className="text-sm text-muted-foreground">Activas</div>
                     </div>
                   </div>
@@ -317,8 +236,8 @@ export default function AlertsPage() {
                       <AlertTriangle className="w-5 h-5 text-red-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{alertStats.critical}</div>
-                      <div className="text-sm text-muted-foreground">Críticas</div>
+                      <div className="text-2xl font-bold">{stats.critical}</div>
+                      <div className="text-sm text-muted-foreground">Críticas Activas</div>
                     </div>
                   </div>
                 </CardContent>
@@ -331,8 +250,8 @@ export default function AlertsPage() {
                       <CheckCircle className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{alertStats.resolved}</div>
-                      <div className="text-sm text-muted-foreground">Resueltas</div>
+                      <div className="text-2xl font-bold">{stats.resolved}</div>
+                      <div className="text-sm text-muted-foreground">Atendidas</div>
                     </div>
                   </div>
                 </CardContent>
@@ -348,8 +267,8 @@ export default function AlertsPage() {
                       <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
                       <input
                         type="text"
-                        placeholder="Buscar alertas..."
-                        className="w-full pl-10 pr-4 py-2 border border-border rounded-md"
+                        placeholder="Buscar por título, descripción o pozo..."
+                        className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
@@ -357,129 +276,154 @@ export default function AlertsPage() {
                   </div>
                   
                   <select 
-                    className="px-3 py-2 border border-border rounded-md"
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
+                    className="px-3 py-2 border border-border rounded-md bg-background"
+                    value={filterSeverity}
+                    onChange={(e) => setFilterSeverity(e.target.value)}
                   >
-                    <option value="all">Todos los tipos</option>
-                    <option value="critical">Críticas</option>
-                    <option value="warning">Advertencias</option>
-                    <option value="info">Información</option>
-                    <option value="success">Exitosas</option>
+                    <option value="all">Toda severidad</option>
+                    <option value="critica">Crítica</option>
+                    <option value="preventiva">Preventiva</option>
                   </select>
 
                   <select 
-                    className="px-3 py-2 border border-border rounded-md"
+                    className="px-3 py-2 border border-border rounded-md bg-background"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
-                    <option value="all">Todos los estados</option>
-                    <option value="active">Activas</option>
-                    <option value="acknowledged">Reconocidas</option>
-                    <option value="resolved">Resueltas</option>
-                    <option value="pending">Pendientes</option>
+                    <option value="all">Todo estado</option>
+                    <option value="activo">Activas</option>
+                    <option value="completado">Atendidas</option>
+                    <option value="cancelado">Descartadas</option>
                   </select>
 
                   <select 
-                    className="px-3 py-2 border border-border rounded-md"
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
+                    className="px-3 py-2 border border-border rounded-md bg-background"
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
                   >
-                    <option value="all">Todas las prioridades</option>
-                    <option value="alta">Alta</option>
-                    <option value="media">Media</option>
-                    <option value="baja">Baja</option>
+                    <option value="all">Todo tipo</option>
+                    <option value="alerta_consumo">Alerta consumo</option>
+                    <option value="sobreconsumo">Sobreconsumo</option>
+                  </select>
+
+                  <select 
+                    className="px-3 py-2 border border-border rounded-md bg-background"
+                    value={filterWell}
+                    onChange={(e) => setFilterWell(e.target.value)}
+                  >
+                    <option value="all">Todos los pozos</option>
+                    {Object.entries(WELL_NAMES).map(([id, name]) => (
+                      <option key={id} value={id}>{name}</option>
+                    ))}
                   </select>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Lista de alertas */}
-          <div className="grid gap-4">
-            {filteredAlerts.map((alert) => (
-              <Card key={alert.id} className={`border ${getAlertColor(alert.type)}`}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="flex-shrink-0">
-                        {getAlertIcon(alert.type)}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg">{alert.title}</h3>
-                          <Badge className={getPriorityBadge(alert.priority)}>
-                            {alert.priority}
-                          </Badge>
-                          <Badge variant={alert.status === "active" ? "destructive" : 
-                                         alert.status === "resolved" ? "default" : "secondary"}>
-                            {alert.status}
-                          </Badge>
-                        </div>
-                        
-                        <p className="text-muted-foreground mb-3">{alert.message}</p>
-                        
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>{alert.location}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{alert.timestamp}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Zap className="w-3 h-3" />
-                            <span>Impacto: {alert.estimatedImpact}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {alert.affectedSystems.map((system) => (
-                            <Badge key={system} variant="outline" className="text-xs">
-                              {system}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2 ml-4">
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      {alert.status === "active" && (
-                        <>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleAcknowledgeAlert(alert.id)}
-                          >
-                            Reconocer
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleResolveAlert(alert.id)}
-                          >
-                            Resolver
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {/* Loading state */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              <span className="ml-3 text-muted-foreground">Cargando alertas...</span>
+            </div>
+          )}
 
-          {filteredAlerts.length === 0 && (
+          {/* Lista de alertas */}
+          {!loading && (
+            <div className="grid gap-4">
+              {filteredAlerts.map((evt) => {
+                const visual = getAlertVisual(evt)
+                const statusBadge = getStatusBadge(evt.event_status)
+                const isLoadingAction = actionLoading === evt.id
+
+                return (
+                  <Card key={evt.id} className={`border ${visual.colors}`}>
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="flex-shrink-0 mt-1">
+                            {visual.icon}
+                          </div>
+                          
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <h3 className="font-semibold text-base">{evt.title}</h3>
+                              <Badge className={visual.badgeClass}>
+                                {evt.severity === 'critica' ? 'Crítica' : 'Preventiva'}
+                              </Badge>
+                              <Badge variant={statusBadge.variant}>
+                                {statusBadge.label}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                <Droplets className="w-3 h-3 mr-1" />
+                                {WELL_NAMES[evt.well_id] || `Pozo ${evt.well_id}`}
+                              </Badge>
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground mb-2">{evt.description}</p>
+                            
+                            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                <span>{timeAgo(evt.created_at)}</span>
+                              </div>
+                              {evt.event_type && (
+                                <div className="flex items-center gap-1">
+                                  <Activity className="w-3 h-3" />
+                                  <span>{evt.event_type === 'alerta_consumo' ? 'Alerta de consumo' : 'Sobreconsumo'}</span>
+                                </div>
+                              )}
+                              {evt.end_date && (
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span>Cerrada: {new Date(evt.end_date).toLocaleDateString('es-MX')}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {evt.event_status === 'activo' && (
+                          <div className="flex gap-2 ml-4 flex-shrink-0">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="border-green-300 text-green-700 hover:bg-green-50"
+                              disabled={isLoadingAction}
+                              onClick={() => handleStatusChange(evt.id, 'completado')}
+                            >
+                              {isLoadingAction ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
+                              Atender
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="border-gray-300 text-gray-600 hover:bg-gray-50"
+                              disabled={isLoadingAction}
+                              onClick={() => handleStatusChange(evt.id, 'cancelado')}
+                            >
+                              Descartar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+
+          {!loading && filteredAlerts.length === 0 && (
             <Card>
               <CardContent className="p-12 text-center">
                 <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No hay alertas</h3>
                 <p className="text-muted-foreground">
-                  No se encontraron alertas que coincidan con los filtros seleccionados.
+                  {alerts.length === 0
+                    ? 'Aún no se han generado alertas automáticas. Las alertas aparecerán aquí cuando el sistema detecte anomalías de consumo.'
+                    : 'No se encontraron alertas que coincidan con los filtros seleccionados.'}
                 </p>
               </CardContent>
             </Card>

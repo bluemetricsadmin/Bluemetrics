@@ -12,6 +12,60 @@
 -- ============================================================
 
 -- ============================================================
+-- 0. LIMPIEZA: Eliminar versión anterior (si existe)
+-- Esto permite re-ejecutar la migración desde cero sin conflictos.
+-- ============================================================
+
+-- 0a. Desprogramar job de pg_cron
+DO $$
+BEGIN
+  PERFORM cron.unschedule('scan_consumption_alerts');
+EXCEPTION WHEN OTHERS THEN
+  -- pg_cron no existe o el job no existe, ignorar
+  NULL;
+END;
+$$;
+
+-- 0b. Eliminar event trigger DDL
+DROP EVENT TRIGGER IF EXISTS evt_auto_attach_consumption_alert;
+
+-- 0c. Eliminar triggers de alertas en TODAS las tablas de consumo
+DO $$
+DECLARE
+  v_table RECORD;
+  v_year_suffix TEXT;
+  v_trigger_name TEXT;
+BEGIN
+  FOR v_table IN
+    SELECT t.table_name AS tname
+    FROM information_schema.tables t
+    WHERE t.table_schema = 'public'
+      AND t.table_name LIKE 'lecturas_semana_agua_consumo_%'
+      AND t.table_type = 'BASE TABLE'
+  LOOP
+    v_year_suffix := RIGHT(v_table.tname, 4);
+    v_trigger_name := 'trg_alert_consumo_' || v_year_suffix;
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', v_trigger_name, v_table.tname);
+  END LOOP;
+END;
+$$;
+
+-- 0d. Eliminar funciones (en orden inverso de dependencia)
+DROP FUNCTION IF EXISTS fn_scan_all_consumption_alerts();
+DROP FUNCTION IF EXISTS fn_auto_attach_consumption_trigger();
+DROP FUNCTION IF EXISTS fn_attach_alert_triggers();
+DROP FUNCTION IF EXISTS fn_consumption_alert_trigger();
+DROP FUNCTION IF EXISTS fn_evaluate_well_alerts(INTEGER, TEXT, INTEGER, INTEGER);
+
+-- 0e. Eliminar tabla de estado de escaneo
+DROP TABLE IF EXISTS alert_scan_state;
+
+-- 0f. Eliminar tabla well_config (CUIDADO: esto borra la configuración de pozos)
+-- Si prefieres conservar los datos, comenta esta línea y usa CREATE TABLE IF NOT EXISTS + ALTER
+DROP TABLE IF EXISTS well_config CASCADE;
+
+
+-- ============================================================
 -- 1. TABLA well_config
 -- Almacena la configuración de cada pozo para que los triggers
 -- puedan acceder a los límites anuales sin depender del frontend.
@@ -71,14 +125,12 @@ ON CONFLICT (well_id) DO UPDATE SET
 
 -- ============================================================
 -- 2. FUNCIÓN fn_evaluate_well_alerts()
--- Evalúa las 4 reglas de negocio para un pozo específico
+-- Evalúa las reglas de sobreconsumo para un pozo específico
 -- y crea alertas automáticas en well_events.
---3HGBNJuQV63Azvj
+--
 -- Reglas:
---   R1: Incremento anormal (+30% vs promedio últimas 3 semanas)
---   R2: Caída fuerte (<-40% vs promedio últimas 3 semanas)
---   R3: Sobreconsumo crítico (% real > % esperado + 20%)
---   R4: Sobreconsumo preventivo (% real > % esperado + 10%)
+--   R1: Sobreconsumo crítico (% real > % esperado + 20%)
+--   R2: Sobreconsumo preventivo (% real > % esperado + 10%)
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION fn_evaluate_well_alerts(
@@ -92,107 +144,18 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
   v_table_name TEXT;
-  v_consumptions DECIMAL[];
-  v_current_consumption DECIMAL;
-  v_avg3 DECIMAL;
-  v_change_pct DECIMAL;
   v_annual_limit DECIMAL;
   v_total_consumption DECIMAL;
   v_day_of_year INTEGER;
   v_expected_pct DECIMAL;
   v_real_pct DECIMAL;
   v_now TIMESTAMP WITH TIME ZONE := NOW();
-  v_rec RECORD;
 BEGIN
   -- Nombre de la tabla de consumo del año
   v_table_name := 'lecturas_semana_agua_consumo_' || p_year;
 
   -- ========================================
-  -- REGLA 1 y 2: Pico / Caída de consumo
-  -- ========================================
-
-  -- Obtener últimos 4 consumos (semana actual + 3 previas) ordenados desc
-  EXECUTE format(
-    'SELECT COALESCE(ARRAY_AGG(val ORDER BY week DESC), ARRAY[]::DECIMAL[])
-     FROM (
-       SELECT l_numero_semana AS week, COALESCE(%I, 0) AS val
-       FROM %I
-       ORDER BY l_numero_semana DESC
-       LIMIT 4
-     ) sub',
-    p_column_name, v_table_name
-  ) INTO v_consumptions;
-
-  -- Necesitamos al menos 4 valores (1 actual + 3 previas)
-  IF array_length(v_consumptions, 1) >= 4 THEN
-    v_current_consumption := v_consumptions[1];
-
-    -- Si consumo actual es 0, no alertar (es normal no usar un pozo)
-    IF v_current_consumption > 0 THEN
-      -- Promedio de las 3 semanas previas
-      v_avg3 := (v_consumptions[2] + v_consumptions[3] + v_consumptions[4]) / 3.0;
-
-      IF v_avg3 > 0 THEN
-        v_change_pct := ((v_current_consumption - v_avg3) / v_avg3) * 100;
-
-        -- R1: Incremento anormal (+30%)
-        IF v_change_pct >= 30 THEN
-          INSERT INTO well_events (
-            well_id, event_type, severity, is_automatic, title, description,
-            recommendation, metric_value, threshold_value,
-            alert_week, alert_year, start_date, event_status, author_name
-          ) VALUES (
-            p_well_id, 'alerta_consumo', 'critica', true,
-            format('Incremento anormal de consumo (+%s%%)', round(v_change_pct, 1)),
-            format('El consumo de la semana %s (%s m³) supera en %s%% al promedio de las últimas 3 semanas (%s m³).',
-              p_week, round(v_current_consumption, 2), round(v_change_pct, 1), round(v_avg3, 2)),
-            'Revisar posibles fugas en líneas cercanas o válvulas abiertas.',
-            round(v_change_pct, 2), 30,
-            p_week, p_year, v_now, 'activo', 'Sistema Automático'
-          )
-          ON CONFLICT DO NOTHING;
-        END IF;
-
-        -- R2: Caída fuerte (<-40%)
-        IF v_change_pct <= -40 THEN
-          INSERT INTO well_events (
-            well_id, event_type, severity, is_automatic, title, description,
-            recommendation, metric_value, threshold_value,
-            alert_week, alert_year, start_date, event_status, author_name
-          ) VALUES (
-            p_well_id, 'alerta_consumo', 'critica', true,
-            format('Caída fuerte de consumo (%s%%)', round(v_change_pct, 1)),
-            format('El consumo de la semana %s (%s m³) cayó %s%% respecto al promedio de las últimas 3 semanas (%s m³).',
-              p_week, round(v_current_consumption, 2), round(abs(v_change_pct), 1), round(v_avg3, 2)),
-            'Validar operación del pozo o funcionamiento del medidor.',
-            round(v_change_pct, 2), -40,
-            p_week, p_year, v_now, 'activo', 'Sistema Automático'
-          )
-          ON CONFLICT DO NOTHING;
-        END IF;
-
-      ELSIF v_avg3 = 0 AND v_current_consumption > 0 THEN
-        -- Promedio era 0 pero ahora hay consumo → incremento significativo
-        INSERT INTO well_events (
-          well_id, event_type, severity, is_automatic, title, description,
-          recommendation, metric_value, threshold_value,
-          alert_week, alert_year, start_date, event_status, author_name
-        ) VALUES (
-          p_well_id, 'alerta_consumo', 'critica', true,
-          'Incremento anormal de consumo',
-          format('El consumo de la semana %s (%s m³) es significativo cuando el promedio de las últimas 3 semanas era 0 m³.',
-            p_week, round(v_current_consumption, 2)),
-          'Revisar posibles fugas en líneas cercanas o válvulas abiertas.',
-          100, 30,
-          p_week, p_year, v_now, 'activo', 'Sistema Automático'
-        )
-        ON CONFLICT DO NOTHING;
-      END IF;
-    END IF;
-  END IF;
-
-  -- ========================================
-  -- REGLA 3 y 4: Sobreconsumo
+  -- REGLA 1 y 2: Sobreconsumo
   -- ========================================
 
   -- Obtener límite anual del pozo
@@ -213,7 +176,7 @@ BEGIN
       v_expected_pct := v_day_of_year::DECIMAL / 365.0;
       v_real_pct := v_total_consumption / v_annual_limit;
 
-      -- R3: Sobreconsumo crítico (% real > % esperado + 20%)
+      -- R1: Sobreconsumo crítico (% real > % esperado + 20%)
       IF v_real_pct > v_expected_pct + 0.20 THEN
         INSERT INTO well_events (
           well_id, event_type, severity, is_automatic, title, description,
@@ -234,7 +197,7 @@ BEGIN
         )
         ON CONFLICT DO NOTHING;
 
-      -- R4: Sobreconsumo preventivo (% real > % esperado + 10%)
+      -- R2: Sobreconsumo preventivo (% real > % esperado + 10%)
       ELSIF v_real_pct > v_expected_pct + 0.10 THEN
         INSERT INTO well_events (
           well_id, event_type, severity, is_automatic, title, description,
@@ -449,69 +412,116 @@ $$;
 
 -- ============================================================
 -- 6. ESCANEO AUTOMÁTICO PROGRAMADO (pg_cron)
--- Evalúa TODOS los registros existentes periódicamente
--- para detectar anomalías sin depender de INSERT/UPDATE.
+-- Evalúa SOLO el año actual y SOLO si hay lecturas nuevas
+-- desde el último escaneo. Usa alert_scan_state para tracking.
 -- Cualquier alerta generada → well_events → Realtime → WebSocket → UI
 -- No genera duplicados gracias a idx_well_events_auto_unique + ON CONFLICT DO NOTHING
 -- ============================================================
 
--- 6a. Función scanner: recorre todos los pozos × todas las tablas de consumo
+-- 6a. Tabla de estado: registra la última semana escaneada por tabla
+CREATE TABLE IF NOT EXISTS alert_scan_state (
+  table_name TEXT PRIMARY KEY,
+  last_scanned_week INTEGER NOT NULL DEFAULT 0,
+  last_scanned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 6b. Función scanner: solo año actual, solo si hay datos nuevos
 CREATE OR REPLACE FUNCTION fn_scan_all_consumption_alerts()
 RETURNS TABLE(well_name TEXT, year_scanned INTEGER, week_scanned INTEGER, result TEXT)
 LANGUAGE plpgsql
 AS $$
 DECLARE
   v_well RECORD;
-  v_table RECORD;
-  v_year INTEGER;
+  v_current_year INTEGER;
+  v_table_name TEXT;
   v_max_week INTEGER;
+  v_last_week INTEGER;
 BEGIN
-  -- Iterar sobre cada tabla de consumo existente
-  FOR v_table IN
-    SELECT t.table_name AS tname
-    FROM information_schema.tables t
-    WHERE t.table_schema = 'public'
-      AND t.table_name LIKE 'lecturas_semana_agua_consumo_%'
-      AND t.table_type = 'BASE TABLE'
-    ORDER BY t.table_name
-  LOOP
-    v_year := CAST(RIGHT(v_table.tname, 4) AS INTEGER);
+  -- Solo el año actual
+  v_current_year := EXTRACT(YEAR FROM NOW());
+  v_table_name := 'lecturas_semana_agua_consumo_' || v_current_year;
 
-    -- Obtener la semana más reciente con datos
-    EXECUTE format(
-      'SELECT MAX(l_numero_semana) FROM %I WHERE l_numero_semana IS NOT NULL',
-      v_table.tname
-    ) INTO v_max_week;
+  -- Verificar que la tabla existe
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = v_table_name
+      AND table_type = 'BASE TABLE'
+  ) THEN
+    well_name := 'N/A';
+    year_scanned := v_current_year;
+    week_scanned := 0;
+    result := 'tabla ' || v_table_name || ' no existe';
+    RETURN NEXT;
+    RETURN;
+  END IF;
 
-    IF v_max_week IS NULL THEN
-      CONTINUE;
-    END IF;
+  -- Obtener la semana más reciente con datos
+  EXECUTE format(
+    'SELECT MAX(l_numero_semana) FROM %I WHERE l_numero_semana IS NOT NULL',
+    v_table_name
+  ) INTO v_max_week;
 
-    -- Evaluar cada pozo en la semana más reciente
-    FOR v_well IN SELECT w.well_id, w.name, w.column_name FROM well_config w LOOP
-      BEGIN
-        PERFORM fn_evaluate_well_alerts(v_well.well_id, v_well.column_name, v_year, v_max_week);
-        well_name := v_well.name;
-        year_scanned := v_year;
-        week_scanned := v_max_week;
-        result := 'evaluado';
-        RETURN NEXT;
-      EXCEPTION WHEN OTHERS THEN
-        well_name := v_well.name;
-        year_scanned := v_year;
-        week_scanned := v_max_week;
-        result := 'error: ' || SQLERRM;
-        RETURN NEXT;
-      END;
-    END LOOP;
+  IF v_max_week IS NULL THEN
+    well_name := 'N/A';
+    year_scanned := v_current_year;
+    week_scanned := 0;
+    result := 'sin datos en ' || v_table_name;
+    RETURN NEXT;
+    RETURN;
+  END IF;
+
+  -- Obtener última semana escaneada para esta tabla
+  SELECT last_scanned_week INTO v_last_week
+  FROM alert_scan_state
+  WHERE alert_scan_state.table_name = v_table_name;
+
+  -- Si no hay registro, es primera vez (iniciar en 0)
+  IF v_last_week IS NULL THEN
+    v_last_week := 0;
+  END IF;
+
+  -- Si no hay datos nuevos desde el último escaneo, salir
+  IF v_max_week <= v_last_week THEN
+    well_name := 'N/A';
+    year_scanned := v_current_year;
+    week_scanned := v_max_week;
+    result := 'sin cambios (última semana escaneada: ' || v_last_week || ')';
+    RETURN NEXT;
+    RETURN;
+  END IF;
+
+  -- Hay datos nuevos → evaluar cada pozo en la semana más reciente
+  FOR v_well IN SELECT w.well_id, w.name, w.column_name FROM well_config w LOOP
+    BEGIN
+      PERFORM fn_evaluate_well_alerts(v_well.well_id, v_well.column_name, v_current_year, v_max_week);
+      well_name := v_well.name;
+      year_scanned := v_current_year;
+      week_scanned := v_max_week;
+      result := 'evaluado';
+      RETURN NEXT;
+    EXCEPTION WHEN OTHERS THEN
+      well_name := v_well.name;
+      year_scanned := v_current_year;
+      week_scanned := v_max_week;
+      result := 'error: ' || SQLERRM;
+      RETURN NEXT;
+    END;
   END LOOP;
+
+  -- Actualizar estado del último escaneo
+  INSERT INTO alert_scan_state (table_name, last_scanned_week, last_scanned_at)
+  VALUES (v_table_name, v_max_week, NOW())
+  ON CONFLICT (table_name) DO UPDATE SET
+    last_scanned_week = EXCLUDED.last_scanned_week,
+    last_scanned_at = EXCLUDED.last_scanned_at;
 END;
 $$;
 
--- 6b. Habilitar pg_cron (solo necesario una vez, ya incluido en Supabase)
+-- 6c. Habilitar pg_cron (solo necesario una vez, ya incluido en Supabase)
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
--- 6c. Programar escaneo automático cada 6 horas
+-- 6d. Programar escaneo automático cada 6 horas
 -- Limpiar job previo si existe (idempotente)
 SELECT cron.unschedule('scan_consumption_alerts')
 WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'scan_consumption_alerts');
