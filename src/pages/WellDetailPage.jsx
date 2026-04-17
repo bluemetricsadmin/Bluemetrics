@@ -1228,82 +1228,17 @@ export default function WellDetailPage() {
             </div>
 
               {/* Sección de Comentarios e Historial de Eventos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="w-full">
               {/* Componente de Comentarios */}
-              <WellComments wellId={parseInt(id)} />
+              
+              {/*<WellComments wellId={parseInt(id)} */}
 
               {/* Componente de Historial de Eventos */}
               <WellEventsHistory wellId={parseInt(id)} />
             </div>
          
 
-            {/* Alertas y recomendaciones específicas */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <AlertTriangleIcon className="h-5 w-5 text-red-500" />
-                    Alertas Críticas
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start p-3 bg-red-50 border-l-4 border-red-400 rounded">
-                      <AlertTriangleIcon className="h-5 w-5 text-red-400 mt-0.5" />
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-red-800">
-                          Consumo excesivo en 2025
-                        </p>
-                        <p className="text-sm text-red-700">
-                          El consumo hasta mayo (84,493 m³) excede significativamente el volumen disponible (70,885 m³)
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                      <AlertTriangleIcon className="h-5 w-5 text-yellow-400 mt-0.5" />
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-yellow-800">
-                          Incremento abrupto de consumo
-                        </p>
-                        <p className="text-sm text-yellow-700">
-                          El consumo aumentó drasticamente de 36,152 m³ en 2024 a 84,493 m³ en solo 5 meses de 2025
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              <Card>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Recomendaciones
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                      <InfoIcon className="h-5 w-5 text-blue-400 mt-0.5" />
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-blue-800">
-                          Revisión de permisos
-                        </p>
-                        <p className="text-sm text-blue-700">
-                          Solicitar ampliación de derechos de agua o revisar la distribución actual
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start p-3 bg-green-50 border-l-4 border-green-400 rounded">
-                      <InfoIcon className="h-5 w-5 text-green-400 mt-0.5" />
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-green-800">
-                          Implementar medidas de control
-                        </p>
-                        <p className="text-sm text-green-700">
-                          Instalar sistemas de monitoreo en tiempo real para controlar el consumo
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </div>
+            
 
           </div>
         </main>

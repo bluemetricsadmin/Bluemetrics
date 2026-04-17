@@ -288,7 +288,7 @@ export default function WellEventsHistory({ wellId }) {
 
   return (
     <>
-      <Card>
+      <Card className="w-full max-w-10xl">
         <CardHeader>
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -329,7 +329,7 @@ export default function WellEventsHistory({ wellId }) {
             <p className="text-xs text-gray-400 mt-1">El pozo ha estado operando normalmente</p>
           </div>
         ) : (
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
             {events.map((event) => {
               const typeColor = getEventTypeColor(event.event_type)
               const statusInfo = eventStatuses.find(s => s.value === event.event_status)
@@ -473,7 +473,7 @@ export default function WellEventsHistory({ wellId }) {
                         day: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
-                      })}
+                      })}Comentarios
                     </p>
                     {event.end_date && (
                       <p>

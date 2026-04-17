@@ -801,9 +801,9 @@ export default function WellsPage() {
 
             
             {/* Sección de detalles adicionales */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="flex justify-center">
               {/* Alertas de pozos */}
-              <Card>ii
+              <Card className="w-full max-w-8xl">
                 <div className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <BellIcon className="h-5 w-5 text-orange-500" />
@@ -882,47 +882,6 @@ export default function WellsPage() {
                 </div>
               </Card>
 
-              {/* Recomendaciones */}
-              <Card>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recomendaciones</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <div className="flex-shrink-0">
-                        <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-                          <span className="text-purple-600 font-bold text-sm">💡</span>
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-purple-900">Monitoreo continuo</p>
-                        <p className="text-sm text-purple-700">Mantener vigilancia en niveles de agua de todos los pozos</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex-shrink-0">
-                        <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-bold text-sm">📊</span>
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-blue-900">Optimización de recursos</p>
-                        <p className="text-sm text-blue-700">Revisar distribución de carga entre pozos de servicios y riego</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start p-3 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex-shrink-0">
-                        <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <span className="text-green-600 font-bold text-sm">🔧</span>
-                        </div>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-green-900">Mantenimiento preventivo</p>
-                        <p className="text-sm text-green-700">Programar revisiones periódicas para garantizar eficiencia</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
             </div>
           </div>
         </main>
