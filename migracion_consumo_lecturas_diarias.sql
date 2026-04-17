@@ -10,10 +10,13 @@
 -- Ejecutar este script UNA SOLA VEZ en el editor SQL de Supabase
 -- ====================================================================
 
--- Paso 1: Verificar que la tabla destino existe y está vacía
+-- Paso 1: Verificar que la tabla destino existe
 -- SELECT COUNT(*) FROM public.lecturas_diarias_consumo;
 
--- Paso 2: Insertar los consumos calculados
+-- Paso 2: Limpiar datos anteriores (si existen)
+TRUNCATE public.lecturas_diarias_consumo;
+
+-- Paso 3: Insertar los consumos calculados
 INSERT INTO public.lecturas_diarias_consumo (
     mes_anio,
     mes,
@@ -43,8 +46,23 @@ SELECT
     curr.mes,
     curr.anio,
     curr.dia_hora,
-    -- Consumo original ya calculado en lecturas_diarias
-    curr.consumo,
+    -- Consumo total = suma de todos los consumos individuales por punto
+    COALESCE(CASE WHEN curr.general_pozos IS NOT NULL AND prev.general_pozos IS NOT NULL THEN curr.general_pozos - prev.general_pozos ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.pozo_3 IS NOT NULL AND prev.pozo_3 IS NOT NULL THEN curr.pozo_3 - prev.pozo_3 ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.pozo_8 IS NOT NULL AND prev.pozo_8 IS NOT NULL THEN curr.pozo_8 - prev.pozo_8 ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.pozo_15 IS NOT NULL AND prev.pozo_15 IS NOT NULL THEN curr.pozo_15 - prev.pozo_15 ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.pozo_4 IS NOT NULL AND prev.pozo_4 IS NOT NULL THEN curr.pozo_4 - prev.pozo_4 ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.a_y_d IS NOT NULL AND prev.a_y_d IS NOT NULL THEN curr.a_y_d - prev.a_y_d ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.campus_8 IS NOT NULL AND prev.campus_8 IS NOT NULL THEN curr.campus_8 - prev.campus_8 ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.a7_cc IS NOT NULL AND prev.a7_cc IS NOT NULL THEN curr.a7_cc - prev.a7_cc ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.megacentral IS NOT NULL AND prev.megacentral IS NOT NULL THEN curr.megacentral - prev.megacentral ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.planta_fisica IS NOT NULL AND prev.planta_fisica IS NOT NULL THEN curr.planta_fisica - prev.planta_fisica ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.residencias IS NOT NULL AND prev.residencias IS NOT NULL THEN curr.residencias - prev.residencias ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.pozo7 IS NOT NULL AND prev.pozo7 IS NOT NULL THEN curr.pozo7 - prev.pozo7 ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.pozo11 IS NOT NULL AND prev.pozo11 IS NOT NULL THEN curr.pozo11 - prev.pozo11 ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.pozo_12 IS NOT NULL AND prev.pozo_12 IS NOT NULL THEN curr.pozo_12 - prev.pozo_12 ELSE 0 END, 0) +
+    COALESCE(CASE WHEN curr.pozo_14 IS NOT NULL AND prev.pozo_14 IS NOT NULL THEN curr.pozo_14 - prev.pozo_14 ELSE 0 END, 0)
+    AS consumo,
     -- Consumo por punto = lectura actual - lectura anterior
     CASE WHEN curr.general_pozos IS NOT NULL AND prev.general_pozos IS NOT NULL
          THEN curr.general_pozos - prev.general_pozos ELSE NULL END AS general_pozos,
@@ -132,6 +150,23 @@ ORDER BY curr.id;
 -- FROM public.lecturas_diarias_consumo
 -- ORDER BY id
 -- LIMIT 20;
+
+-- Verificar que consumo = suma de todos los consumos individuales:
+-- SELECT id, consumo,
+--     COALESCE(general_pozos,0) + COALESCE(pozo_3,0) + COALESCE(pozo_8,0) +
+--     COALESCE(pozo_15,0) + COALESCE(pozo_4,0) + COALESCE(a_y_d,0) +
+--     COALESCE(campus_8,0) + COALESCE(a7_cc,0) + COALESCE(megacentral,0) +
+--     COALESCE(planta_fisica,0) + COALESCE(residencias,0) + COALESCE(pozo7,0) +
+--     COALESCE(pozo11,0) + COALESCE(pozo_12,0) + COALESCE(pozo_14,0) AS suma_individual
+-- FROM public.lecturas_diarias_consumo
+-- WHERE consumo != (
+--     COALESCE(general_pozos,0) + COALESCE(pozo_3,0) + COALESCE(pozo_8,0) +
+--     COALESCE(pozo_15,0) + COALESCE(pozo_4,0) + COALESCE(a_y_d,0) +
+--     COALESCE(campus_8,0) + COALESCE(a7_cc,0) + COALESCE(megacentral,0) +
+--     COALESCE(planta_fisica,0) + COALESCE(residencias,0) + COALESCE(pozo7,0) +
+--     COALESCE(pozo11,0) + COALESCE(pozo_12,0) + COALESCE(pozo_14,0)
+-- );
+-- Si esta consulta devuelve 0 filas, la migración es correcta.
 
 -- Comparar con lecturas_diarias originales:
 -- SELECT 

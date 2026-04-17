@@ -43,17 +43,14 @@ const DailyReadingsPage = () => {
   ];
 
   // Obtener datos de Supabase
-  useEffect(() => {
-    fetchLecturas();
-  }, []);
-
-  const fetchLecturas = async () => {
+  const fetchLecturas = async (punto = filtroPunto) => {
+    const tabla = punto === 'consumo' ? 'lecturas_diarias' : 'lecturas_diarias_consumo';
     try {
       setLoading(true);
       setError(null);
 
       const { data, error: supabaseError } = await supabase
-        .from('lecturas_diarias')
+        .from(tabla)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -75,6 +72,11 @@ const DailyReadingsPage = () => {
       setLoading(false);
     }
   };
+
+  // Re-fetch cuando cambia el punto de medición
+  useEffect(() => {
+    fetchLecturas(filtroPunto);
+  }, [filtroPunto]);
 
   // Obtener meses únicos para filtro
   const mesesUnicos = useMemo(() => {

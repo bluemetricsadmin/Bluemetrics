@@ -101,6 +101,16 @@ export default function EditDailyReadingsPage() {
   const [showConsumoSuccess, setShowConsumoSuccess] = useState(false)
   const [consumoSavedCount, setConsumoSavedCount] = useState(0)
 
+  // === Estados para edición de consumo por pozo (lecturas_diarias_consumo) ===
+  const [editConsumoPozoMode, setEditConsumoPozoMode] = useState(false)
+  const [consumoPozoReadings, setConsumoPozoReadings] = useState({})
+  const [loadingConsumoPozo, setLoadingConsumoPozo] = useState(false)
+  const [consumoPozoRecordId, setConsumoPozoRecordId] = useState(null)
+  const [showConsumoPozoConfirm, setShowConsumoPozoConfirm] = useState(false)
+  const [savingConsumoPozo, setSavingConsumoPozo] = useState(false)
+  const [showConsumoPozoSuccess, setShowConsumoPozoSuccess] = useState(false)
+  const [consumoPozoSavedCount, setConsumoPozoSavedCount] = useState(0)
+
   // Cargar fechas existentes
   useEffect(() => {
     fetchExistingDates(0)
@@ -465,6 +475,112 @@ export default function EditDailyReadingsPage() {
       setConsumoReadings({})
     } else {
       setEditConsumoMode(true)
+    }
+  }
+
+  // === EDICIÓN DE CONSUMO POR POZO (lecturas_diarias_consumo) ===
+
+  // Cargar datos de consumo por pozo cuando se activa el modo o cambia la fecha
+  useEffect(() => {
+    if (editConsumoPozoMode && selectedDate && selectedMonth) {
+      loadConsumoPozoData(selectedDate, selectedMonth)
+    }
+  }, [editConsumoPozoMode, selectedDate, selectedMonth])
+
+  const loadConsumoPozoData = async (dateStr, monthStr) => {
+    try {
+      setLoadingConsumoPozo(true)
+
+      const { data, error: fetchError } = await supabase
+        .from('lecturas_diarias_consumo')
+        .select('*')
+        .eq('dia_hora', dateStr)
+        .eq('mes_anio', monthStr)
+        .order('id', { ascending: false })
+        .limit(1)
+
+      if (fetchError) throw fetchError
+
+      if (!data || data.length === 0) {
+        console.warn('⚠️ No se encontraron datos de consumo por pozo para', dateStr, monthStr)
+        setConsumoPozoReadings({})
+        setConsumoPozoRecordId(null)
+        return
+      }
+
+      const record = data[0]
+      setConsumoPozoRecordId(record.id)
+
+      const loaded = {}
+      dailyReadingPointsData.categories.forEach(category => {
+        category.points.forEach(point => {
+          if (record[point.id] !== null && record[point.id] !== undefined) {
+            loaded[point.id] = record[point.id].toString()
+          }
+        })
+      })
+
+      console.log('✅ Consumo por pozo cargado:', loaded)
+      setConsumoPozoReadings(loaded)
+    } catch (err) {
+      console.error('❌ Error al cargar consumo por pozo:', err)
+    } finally {
+      setLoadingConsumoPozo(false)
+    }
+  }
+
+  const handleConsumoPozoChange = (pointId, value) => {
+    setConsumoPozoReadings(prev => ({
+      ...prev,
+      [pointId]: value
+    }))
+  }
+
+  const saveConsumoPozoData = async () => {
+    if (!consumoPozoRecordId) return
+
+    try {
+      setSavingConsumoPozo(true)
+
+      const updateData = {}
+      let count = 0
+
+      dailyReadingPointsData.categories.forEach(category => {
+        category.points.forEach(point => {
+          const value = consumoPozoReadings[point.id]
+          if (value !== undefined && value !== '' && value !== null) {
+            updateData[point.id] = parseFloat(value)
+            count++
+          }
+        })
+      })
+
+      const { error: updateError } = await supabase
+        .from('lecturas_diarias_consumo')
+        .update(updateData)
+        .eq('id', consumoPozoRecordId)
+
+      if (updateError) throw updateError
+
+      console.log('✅ Consumo por pozo actualizado exitosamente')
+      setConsumoPozoSavedCount(count)
+      setShowConsumoPozoConfirm(false)
+      setShowConsumoPozoSuccess(true)
+    } catch (err) {
+      console.error('❌ Error guardando consumo por pozo:', err)
+      setError(`Error al guardar consumo por pozo: ${err.message}`)
+    } finally {
+      setSavingConsumoPozo(false)
+    }
+  }
+
+  const toggleConsumoPozoMode = () => {
+    if (editConsumoPozoMode) {
+      setEditConsumoPozoMode(false)
+      setConsumoPozoReadings({})
+      setConsumoPozoRecordId(null)
+    } else {
+      setEditConsumoPozoMode(true)
     }
   }
 
@@ -1284,6 +1400,142 @@ export default function EditDailyReadingsPage() {
                     </CardContent>
                   )}
                 </Card>
+
+                {/* Edición de Consumo por Pozo (lecturas_diarias_consumo) */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <DropletIcon className="h-5 w-5 text-emerald-500" />
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            Edición de Consumo por Pozo
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Edita los valores de consumo por punto de medición (tabla lecturas_diarias_consumo)
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={toggleConsumoPozoMode}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all hover:shadow-sm"
+                        style={{
+                          borderColor: editConsumoPozoMode ? '#10b981' : undefined,
+                          backgroundColor: editConsumoPozoMode ? 'rgba(16,185,129,0.08)' : undefined
+                        }}
+                      >
+                        {editConsumoPozoMode ? (
+                          <ToggleRightIcon className="h-6 w-6 text-emerald-500" />
+                        ) : (
+                          <ToggleLeftIcon className="h-6 w-6 text-muted-foreground" />
+                        )}
+                        <span className={`text-sm font-medium ${editConsumoPozoMode ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                          {editConsumoPozoMode ? 'Activado' : 'Desactivado'}
+                        </span>
+                      </button>
+                    </div>
+                  </CardHeader>
+
+                  {editConsumoPozoMode && (
+                    <CardContent>
+                      {loadingConsumoPozo ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2Icon className="h-6 w-6 animate-spin text-emerald-500 mr-3" />
+                          <span className="text-muted-foreground">Cargando consumo por pozo...</span>
+                        </div>
+                      ) : consumoPozoRecordId === null ? (
+                        <div className="text-center py-8">
+                          <AlertCircleIcon className="h-10 w-10 text-amber-500 mx-auto mb-3" />
+                          <p className="text-sm text-muted-foreground">
+                            No se encontró un registro de consumo en <strong>lecturas_diarias_consumo</strong> para la fecha seleccionada.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="space-y-4">
+                            {dailyReadingPointsData.categories.map(category => {
+                              const points = category.points
+                              return (
+                                <div key={category.id}>
+                                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-2">
+                                    {category.name}
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {points.map(point => {
+                                      const value = consumoPozoReadings[point.id] || ''
+                                      const hasValue = value !== '' && value !== undefined
+
+                                      return (
+                                        <div
+                                          key={point.id}
+                                          className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-all ${
+                                            hasValue
+                                              ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-900/10'
+                                              : 'border-muted hover:border-emerald-300'
+                                          }`}
+                                        >
+                                          <div className="flex-shrink-0">
+                                            {hasValue ? (
+                                              <CheckCircle2Icon className="h-5 w-5 text-emerald-500" />
+                                            ) : (
+                                              <CircleIcon className="h-5 w-5 text-muted-foreground" />
+                                            )}
+                                          </div>
+
+                                          <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">{point.name}</p>
+                                            <span className="text-xs text-muted-foreground">{point.id}</span>
+                                          </div>
+
+                                          <div className="flex items-center gap-2">
+                                            <input
+                                              type="number"
+                                              step="0.01"
+                                              placeholder="Consumo m³"
+                                              value={value}
+                                              onChange={(e) => handleConsumoPozoChange(point.id, e.target.value)}
+                                              className={`w-40 px-3 py-2 border rounded-lg text-sm text-right font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+                                                hasValue
+                                                  ? 'border-emerald-300 bg-white dark:bg-gray-900'
+                                                  : 'border-muted'
+                                              }`}
+                                            />
+                                            <span className="text-sm text-muted-foreground">m³</span>
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          {/* Botón Guardar Consumo por Pozo */}
+                          <div className="mt-6 flex items-center justify-between">
+                            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 flex items-start gap-2">
+                              <AlertTriangleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-xs text-amber-800 dark:text-amber-200">
+                                Los cambios manuales sobrescribirán los valores de consumo por pozo para la fecha seleccionada.
+                              </p>
+                            </div>
+
+                            <Button
+                              size="sm"
+                              onClick={() => setShowConsumoPozoConfirm(true)}
+                              disabled={savingConsumoPozo || Object.keys(consumoPozoReadings).length === 0}
+                              className="bg-emerald-600 hover:bg-emerald-700 ml-4"
+                            >
+                              <SaveIcon className="h-4 w-4 mr-2" />
+                              Guardar Consumo por Pozo
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  )}
+                </Card>
               </>
             )}
           </main>
@@ -1480,6 +1732,105 @@ export default function EditDailyReadingsPage() {
                 size="lg"
                 onClick={() => setShowConsumoSuccess(false)}
                 className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                Aceptar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Consumo por Pozo */}
+      {showConsumoPozoConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+                  <AlertTriangleIcon className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Confirmar Cambio de Consumo por Pozo</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Estás a punto de sobrescribir datos de consumo por pozo
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <p className="text-sm text-foreground mb-4">
+                  ¿Estás seguro de que deseas guardar los valores de consumo por pozo para la fecha <strong>{selectedDate}</strong>?
+                </p>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                  <p className="text-xs text-amber-800 dark:text-amber-200">
+                    <strong>Advertencia:</strong> Los valores de consumo por pozo serán reemplazados por los valores ingresados manualmente.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowConsumoPozoConfirm(false)}
+                  disabled={savingConsumoPozo}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={saveConsumoPozoData}
+                  disabled={savingConsumoPozo}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  {savingConsumoPozo ? (
+                    <>
+                      <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <SaveIcon className="h-4 w-4 mr-2" />
+                      Confirmar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Éxito de Consumo por Pozo */}
+      {showConsumoPozoSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
+                  <CheckCircle2Icon className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">¡Consumo por Pozo Actualizado!</h3>
+                  <p className="text-muted-foreground mt-2">
+                    El consumo por pozo se ha actualizado correctamente
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center mb-6">
+                <p className="text-lg font-semibold mb-2">
+                  {consumoPozoSavedCount} puntos actualizados
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Fecha: {selectedDate} — {selectedMonth}
+                </p>
+              </div>
+
+              <Button
+                size="lg"
+                onClick={() => setShowConsumoPozoSuccess(false)}
+                className="w-full bg-emerald-600 hover:bg-emerald-700"
               >
                 Aceptar
               </Button>
