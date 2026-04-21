@@ -923,6 +923,7 @@ export default function ConsumptionPage() {
               title={selectedPoint === 'todos' ? 'Todos los Puntos (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Punto de Medición")}
               unit="m³"
               chartType={comparisonChartType}
+              selectedYearsToShow={comparisonYearsToShow}
               showControls={false}
               multiYearData={multiYearData}
             />

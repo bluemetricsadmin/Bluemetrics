@@ -1017,6 +1017,7 @@ export default function GasConsumptionPage() {
                 title={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
                 unit="m³"
                 chartType={comparisonChartType}
+                selectedYearsToShow={comparisonYearsToShow}
                 showControls={false}
                 multiYearData={multiYearData}
               />

@@ -23,6 +23,7 @@ export default function WeeklyComparisonChart({
   unit = "m³",
   chartType: externalChartType = null,
   comparisonMode: externalComparisonMode = null,
+  selectedYearsToShow = null,
   showControls = true,
   multiYearData = null, // Nueva prop: array de { year: '2023', data: [...] }
   multiYearDataRiego = null, // Datos de pozos de riego
@@ -52,10 +53,14 @@ export default function WeeklyComparisonChart({
   }
   
   const activeMultiYearData = getFilteredData()
+
+  const activeYears = Array.isArray(selectedYearsToShow) && selectedYearsToShow.length > 0
+    ? selectedYearsToShow
+    : selectedYears
   
   // Filtrar datos por años seleccionados
   const filteredMultiYearData = activeMultiYearData !== null && Array.isArray(activeMultiYearData)
-    ? activeMultiYearData.filter(yearItem => selectedYears.includes(yearItem.year))
+    ? activeMultiYearData.filter(yearItem => activeYears.includes(yearItem.year))
     : []
   
   // Determinar si usar modo multi-año
