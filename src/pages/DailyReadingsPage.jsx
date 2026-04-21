@@ -42,16 +42,40 @@ const DailyReadingsPage = () => {
     { value: 'a_y_d', label: 'A y D', field: 'a_y_d' }
   ];
 
+  const obtenerMesAnioDesdeTexto = (mesAnio) => {
+    if (!mesAnio || typeof mesAnio !== 'string') return { mes: null, anio: null };
+    const [mes, anio] = mesAnio.trim().split(/\s+/);
+    return {
+      mes: mes || null,
+      anio: anio || null
+    };
+  };
+
+  const construirEtiquetaFecha = (lectura) => {
+    if (!lectura) return '';
+    const mesAnio = lectura.mes && lectura.anio
+      ? `${lectura.mes} ${lectura.anio}`
+      : lectura.mes_anio || '';
+    const diaHora = lectura.dia_hora || '';
+
+    if (mesAnio && diaHora) return `${mesAnio} - ${diaHora}`;
+    return mesAnio || diaHora;
+  };
+
   // Obtener datos de Supabase
   const fetchLecturas = async (punto = filtroPunto) => {
     const tabla = punto === 'consumo' ? 'lecturas_diarias' : 'lecturas_diarias_consumo';
+    const selectColumns = tabla === 'lecturas_diarias'
+      ? 'id, created_at, mes, anio, mes_anio, dia_hora, consumo, general_pozos, pozo_3, pozo_8, pozo_15, pozo_4, pozo7, pozo11, pozo_12, pozo_14, campus_8, a7_cc, megacentral, planta_fisica, residencias, a_y_d'
+      : 'id, created_at, mes_anio, dia_hora, consumo, general_pozos, pozo_3, pozo_8, pozo_15, pozo_4, pozo7, pozo11, pozo_12, pozo_14, campus_8, a7_cc, megacentral, planta_fisica, residencias, a_y_d';
+
     try {
       setLoading(true);
       setError(null);
 
       const { data, error: supabaseError } = await supabase
         .from(tabla)
-        .select('*')
+        .select(selectColumns)
         .order('created_at', { ascending: false });
 
       if (supabaseError) throw supabaseError;
@@ -63,7 +87,17 @@ const DailyReadingsPage = () => {
         .order('l_numero_semana', { ascending: false })
         .limit(2);
 
-      setLecturas(data || []);
+      const lecturasNormalizadas = (data || []).map((lectura) => {
+        const { mes, anio } = obtenerMesAnioDesdeTexto(lectura.mes_anio);
+        return {
+          ...lectura,
+          mes: lectura.mes || mes,
+          anio: lectura.anio || anio,
+          dia_hora: lectura.dia_hora || ''
+        };
+      });
+
+      setLecturas(lecturasNormalizadas);
       setSemanasInfo(semanasData || []);
     } catch (err) {
       console.error('Error fetching lecturas:', err);
@@ -80,14 +114,14 @@ const DailyReadingsPage = () => {
 
   // Obtener meses únicos para filtro
   const mesesUnicos = useMemo(() => {
-    const meses = [...new Set(lecturas.map(l => l.mes_anio))];
+    const meses = [...new Set(lecturas.map(l => l.mes_anio || (l.mes && l.anio ? `${l.mes} ${l.anio}` : null)))];
     return meses.filter(Boolean);
   }, [lecturas]);
 
   // Filtrar lecturas por mes
   const lecturasFiltradas = useMemo(() => {
     if (filtroMes === 'todos') return lecturas;
-    return lecturas.filter(l => l.mes_anio === filtroMes);
+    return lecturas.filter(l => (l.mes_anio || `${l.mes || ''} ${l.anio || ''}`.trim()) === filtroMes);
   }, [lecturas, filtroMes]);
 
   // Paginación
@@ -130,8 +164,8 @@ const DailyReadingsPage = () => {
     const lecturaAnterior = parseFloat(lecturasFiltradas[1]?.[field]) || 0;
     
     // Etiquetas de las lecturas
-    const lecturaActualLabel = lecturasFiltradas[0]?.dia_hora || '';
-    const lecturaAnteriorLabel = lecturasFiltradas[1]?.dia_hora || '';
+    const lecturaActualLabel = construirEtiquetaFecha(lecturasFiltradas[0]);
+    const lecturaAnteriorLabel = construirEtiquetaFecha(lecturasFiltradas[1]);
     
     // Comparación vs lectura anterior
     const vsAnteriorPorcentaje = lecturaAnterior > 0 
@@ -161,7 +195,8 @@ const DailyReadingsPage = () => {
 
     const byYear = {};
     lecturas.forEach(l => {
-      const match = l.mes_anio?.match(/(\d{4})/);
+      const fuenteAnio = l.anio || l.mes_anio || '';
+      const match = fuenteAnio.match(/(\d{4})/);
       if (match) {
         const year = match[1];
         if (!byYear[year]) byYear[year] = [];

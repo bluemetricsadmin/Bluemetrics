@@ -48,6 +48,39 @@ const formatearFecha = (fecha, vista) => {
   }
 }
 
+const formatearFechaTooltip = (fecha, vista) => {
+  if (!fecha) return 'N/A'
+  if (vista === 'anual') return fecha
+
+  const fechaStr = String(fecha)
+  const soloFecha = fechaStr.split(' ')[0] || fechaStr
+
+  // Convertir formato ISO (YYYY-MM-DD) a DD/MM/YYYY para consistencia visual
+  if (/^\d{4}-\d{2}-\d{2}$/.test(soloFecha)) {
+    const [anio, mes, dia] = soloFecha.split('-')
+    return `${dia}/${mes}/${anio}`
+  }
+
+  return soloFecha
+}
+
+const construirFechaTooltip = (point, vista) => {
+  if (!point) return 'N/A'
+
+  const mesAnio = (point.mes && point.anio)
+    ? `${point.mes} ${point.anio}`
+    : (point.mesAnio || '')
+
+  if (vista === 'anual') {
+    return mesAnio || point.fecha || 'N/A'
+  }
+
+  const dia = formatearFechaTooltip(point.diaHora || point.fecha, vista)
+
+  if (mesAnio && dia) return `${mesAnio} - ${dia}`
+  return dia || mesAnio || 'N/A'
+}
+
 const extraerMes = (fecha) => {
   if (!fecha) return null
   const partes = fecha.split(' ')[0]?.split('/')
@@ -135,6 +168,10 @@ const DailyConsumptionChartJS = ({
     if (agrupacion === 'dia') {
       return yearData.slice(0, limite).reverse().map(item => ({
         fecha: item.dia_hora || item.fecha || 'N/A',
+        diaHora: item.dia_hora || item.fecha || 'N/A',
+        mes: item.mes || null,
+        anio: item.anio || null,
+        mesAnio: item.mes_anio || null,
         valor: parseFloat(item[puntoField]) || 0,
         fechaCorta: formatearFecha(item.dia_hora || item.fecha, vista)
       }))
@@ -162,6 +199,10 @@ const DailyConsumptionChartJS = ({
 
       return todosMeses.map(mes => ({
         fecha: mes,
+        diaHora: '',
+        mes: mes.split(' ')[0] || null,
+        anio: mes.split(' ')[1] || anio,
+        mesAnio: mes,
         valor: datosPorMes[mes]
           ? parseFloat((datosPorMes[mes].total / datosPorMes[mes].count).toFixed(2))
           : 0,
@@ -347,6 +388,20 @@ const DailyConsumptionChartJS = ({
       },
       tooltip: {
         callbacks: {
+          title: function (contextItems) {
+            if (!contextItems || contextItems.length === 0) return ''
+
+            const firstItem = contextItems[0]
+            const { datasetIndex, dataIndex } = firstItem
+
+            if (useMultiYear && processedMultiYear[datasetIndex]) {
+              const point = processedMultiYear[datasetIndex].processed[dataIndex]
+              return point ? `Fecha: ${construirFechaTooltip(point, vistaActual)}` : firstItem.label
+            }
+
+            const point = datosProcessados[dataIndex]
+            return point ? `Fecha: ${construirFechaTooltip(point, vistaActual)}` : firstItem.label
+          },
           label: function (context) {
             let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString()} m³`
             if (useMultiYear && processedMultiYear[context.datasetIndex]) {
