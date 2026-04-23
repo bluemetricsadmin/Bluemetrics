@@ -30,6 +30,11 @@ const DataRoute = ({ children }) => {
   if (user.role === 'datos') {
     return children;
   }
+  // Si el usuario tiene rol 'datos', permitir acceso solo a secciones de datos
+  if (user.role === 'water') {
+    return children;
+    
+  }
 
   // Para otros roles, denegar acceso
   return <Navigate to="/dashboard" replace />;

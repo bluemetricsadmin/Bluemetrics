@@ -86,9 +86,9 @@ export function DashboardSidebar() {
     {
       id: 'general',
       label: 'General',
-      allowedRoles: ['admin', 'datos', 'ejecutivo', 'user'],
+      allowedRoles: ['admin', 'datos', 'ejecutivo', 'gas', 'ptar', 'user'],
       items: [
-        { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", icon: LayoutDashboard, allowedRoles: ['admin', 'datos', 'ejecutivo', 'user'] }
+        { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", icon: LayoutDashboard, allowedRoles: ['admin', 'datos', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] }
       ]
     },
     {
@@ -126,32 +126,32 @@ export function DashboardSidebar() {
     {
       id: 'water',
       label: 'Gestión Hídrica',
-      allowedRoles: ['admin', 'ejecutivo'],
+      allowedRoles: ['admin', 'ejecutivo', 'water', 'user'],
       items: [
-        { id: "wells", label: "Pozos", path: "/pozos", icon: Drill, allowedRoles: ['admin', 'ejecutivo'] },
-        { id: "consumption", label: "Consumo Semanal Agua", path: "/consumo", icon: Droplets, allowedRoles: ['admin', 'ejecutivo'] },
-        { id: "monthly-consumption", label: "Consumo Mensual Agua", path: "/consumo-mensual-agua", icon: Calendar, allowedRoles: ['admin', 'ejecutivo'] },
-        { id: "daily-readings", label: "Lecturas Diarias", path: "/lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'ejecutivo'] },
-        { id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle, allowedRoles: ['admin', 'ejecutivo'] },
-        { id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale, allowedRoles: ['admin', 'ejecutivo'] }
+        { id: "wells", label: "Pozos", path: "/pozos", icon: Drill, allowedRoles: ['admin', 'ejecutivo', 'water', 'user'] },
+        { id: "consumption", label: "Consumo Semanal Agua", path: "/consumo", icon: Droplets, allowedRoles: ['admin', 'ejecutivo', 'water', 'user'] },
+        { id: "monthly-consumption", label: "Consumo Mensual Agua", path: "/consumo-mensual-agua", icon: Calendar, allowedRoles: ['admin', 'ejecutivo', 'water', 'user'] },
+        { id: "daily-readings", label: "Lecturas Diarias", path: "/lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'ejecutivo', 'water', 'user'] },
+        //{ id: "ptar", label: "PTAR", path: "/ptar", icon: Recycle, allowedRoles: ['admin', 'ejecutivo', 'ptar', 'user'] },
+        //{ id: "balance", label: "Balance Hídrico", path: "/balance", icon: Scale, allowedRoles: ['admin', 'ejecutivo', 'user'] }
       ]
     },
     {
       id: 'gas',
       label: 'Gestión de Gas',
-      allowedRoles: ['admin', 'ejecutivo'],
+      allowedRoles: ['admin', 'ejecutivo','water','gas', 'user'],
       items: [
-        { id: "gas-consumption", label: "Consumo Gas", path: "/consumo-gas", icon: Flame, allowedRoles: ['admin', 'ejecutivo'] }
+        { id: "gas-consumption", label: "Consumo Gas", path: "/consumo-gas", icon: Flame, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'user'] }
       ]
     },
     {
       id: 'analysis',
       label: 'Análisis',
-      allowedRoles: ['admin', 'ejecutivo'],
+      allowedRoles: ['admin', 'ejecutivo', 'gas', 'ptar', 'user'],
       items: [
-        { id: "analysis-section", label: "Centro de Análisis", path: "/analisis", icon: BarChart3, allowedRoles: ['admin', 'ejecutivo'] },
-        { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp, allowedRoles: ['admin', 'ejecutivo'] },
-        { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell, allowedRoles: ['admin', 'ejecutivo'] }
+        { id: "analysis-section", label: "Centro de Análisis", path: "/analisis", icon: BarChart3, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] },
+        { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'user'] },
+        { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] }
       ]
     },
     {

@@ -59,7 +59,7 @@ export const PERMISSIONS = {
   // Water solo gestión hídrica específica
   water: {
     water: true,        // Consumo de agua, pozos, lecturas diarias
-    gas: false,
+    gas: true,
     ptar: true,         // Puede ver PTAR
     alerts: false,      // NO puede ver alertas
     predictions: false, // NO puede ver predicciones
