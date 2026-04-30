@@ -724,7 +724,7 @@ export default function GasConsumptionPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">Análisis de Consumo de Gas</h1>
+                <h1 className="text-3xl font-bold text-foreground mb-2">Análisis de Consumo de Gas Semanal</h1>
                 <p className="text-muted-foreground">Monitoreo detallado del consumo de gas del sistema</p>
               </div>
               <div className="flex items-center gap-3">

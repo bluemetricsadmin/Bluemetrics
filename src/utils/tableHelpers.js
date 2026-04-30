@@ -62,6 +62,24 @@ export const getMonthlyWaterTableName = () => {
 }
 
 /**
+ * Utilidad para obtener el nombre de la tabla de lecturas MENSUALES de gas
+ * Nota: Esta es una tabla única multi-año (no separada por año)
+ * @returns {string} - Nombre de la tabla: 'lecturas_mensuales_agua'
+ */
+export const getMonthlyGasTableName = () => {
+  return 'lecturas_mensuales_gas'
+}
+
+/**
+ * Utilidad para obtener el nombre de la tabla de CONSUMO mensual de gas
+ * Nota: Esta es una tabla única multi-año (no separada por año)
+ * @returns {string} - Nombre de la tabla: 'lecturas_mensuales_gas_consumo'
+ */
+export const getMonthlyGasConsumptionTableName = () => {
+  return 'lecturas_mensuales_gas_consumo'
+}
+
+/**
  * Utilidad para obtener el nombre de la tabla de CONSUMO mensual de agua
  * Nota: Esta es una tabla única multi-año (no separada por año)
  * @returns {string} - Nombre de la tabla: 'lecturas_mensuales_agua_consumo'
