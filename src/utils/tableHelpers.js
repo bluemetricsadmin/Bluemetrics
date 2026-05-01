@@ -45,7 +45,7 @@ export const getWeeklyConsumptionTableNameByYear = (year) => {
 /**
  * Lista de años disponibles en el sistema
  */
-export const AVAILABLE_YEARS = ['2023', '2024', '2025', '2026']
+export const AVAILABLE_YEARS = ['2022', '2023', '2024', '2025', '2026']
 
 /**
  * Año por defecto (el más reciente)

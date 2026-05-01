@@ -37,6 +37,7 @@ export default function GasComsumptionMonthlyPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const [monthlyData2022, setMonthlyData2022] = useState([])
   const [monthlyData2023, setMonthlyData2023] = useState([])
   const [monthlyData2024, setMonthlyData2024] = useState([])
   const [monthlyData2025, setMonthlyData2025] = useState([])
@@ -44,9 +45,9 @@ export default function GasComsumptionMonthlyPage() {
 
   const [comparisonChartType, setComparisonChartType] = useState('line')
   const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2025', '2026'])
-  const [availableYears] = useState(['2023', '2024', '2025', '2026'])
+  const [availableYears] = useState(['2022','2023', '2024', '2025', '2026'])
   
-  const [selectedPoint, setSelectedPoint] = useState('medidor_general_pozos')
+  const [selectedPoint, setSelectedPoint] = useState('campus_acometida_principal_digital')
   
   const [activeTab, setActiveTab] = useState('todos_los_puntos')
 
@@ -89,20 +90,8 @@ export default function GasComsumptionMonthlyPage() {
   const fetchYearMonthlyData = async (year, setStateFunction) => {
     try {
       const shouldSumAll = selectedPoint === 'todos'
-      const readingsTableName = getMonthlyGasTableName()
       const consumptionTableName = getMonthlyGasConsumptionTableName()
-
-      const { data: readingsData, error: readingsError } = await supabase
-        .from(readingsTableName)
-        .select('*')
-        .eq('anio', parseInt(year))
-        .order('mes', { ascending: true })
-
-      if (readingsError) {
-        console.error(`Error cargando lecturas de ${year}:`, readingsError)
-        setStateFunction([])
-        return
-      }
+      const excludedKeys = ['id', 'anio', 'mes', 'fecha_inicio', 'fecha_fin', 'created_at', 'updated_at']
 
       const { data: consumptionData, error: consumptionError } = await supabase
         .from(consumptionTableName)
@@ -116,41 +105,31 @@ export default function GasComsumptionMonthlyPage() {
         return
       }
 
-      if (!readingsData || readingsData.length === 0) {
+      if (!consumptionData || consumptionData.length === 0) {
         setStateFunction([])
         return
       }
 
       let formattedData
       if (shouldSumAll) {
-        formattedData = (consumptionData || []).map(row => {
-          let totalConsumption = 0
+        formattedData = consumptionData.map(row => {
+          let total = 0
           Object.keys(row).forEach(key => {
-            if (key.startsWith('l_') && key !== 'l_id' && row[key] !== null) {
+            if (!excludedKeys.includes(key) && row[key] !== null) {
               const value = parseFloat(row[key])
-              if (!isNaN(value)) {
-                totalConsumption += value
-              }
+              if (!isNaN(value)) total += value
             }
           })
-          return {
-            month: row.mes,
-            monthName: getMonthName(row.mes),
-            reading: totalConsumption,
-            consumption: totalConsumption
-          }
+          return { month: row.mes, monthName: getMonthName(row.mes), reading: total, consumption: total }
         })
       } else {
-        const columnName = `l_${selectedPoint}`
-        formattedData = readingsData.map(reading => {
-          const consumption = (consumptionData || []).find(c => c.mes === reading.mes)
-          return {
-            month: reading.mes,
-            monthName: getMonthName(reading.mes),
-            reading: parseFloat(reading[columnName]) || 0,
-            consumption: parseFloat(consumption?.[columnName]) || 0
-          }
-        })
+        const columnName = selectedPoint
+        formattedData = consumptionData.map(row => ({
+          month: row.mes,
+          monthName: getMonthName(row.mes),
+          reading: parseFloat(row[columnName]) || 0,
+          consumption: parseFloat(row[columnName]) || 0
+        }))
       }
 
       setStateFunction(formattedData)
@@ -162,6 +141,7 @@ export default function GasComsumptionMonthlyPage() {
 
   const fetchAllYearsMonthlyData = async () => {
     await Promise.all([
+      fetchYearMonthlyData('2022', setMonthlyData2022),
       fetchYearMonthlyData('2023', setMonthlyData2023),
       fetchYearMonthlyData('2024', setMonthlyData2024),
       fetchYearMonthlyData('2025', setMonthlyData2025),
@@ -171,6 +151,7 @@ export default function GasComsumptionMonthlyPage() {
 
   const getMultiYearChartData = () => {
     const yearDataMap = {
+      '2022': monthlyData2022,
       '2023': monthlyData2023,
       '2024': monthlyData2024,
       '2025': monthlyData2025,
@@ -187,49 +168,39 @@ export default function GasComsumptionMonthlyPage() {
   const multiYearData = getMultiYearChartData()
 
   const calculateMetrics = () => {
-    if (!monthlyConsumption || monthlyConsumption.length === 0) {
-      return { calderas: 0, comedores: 0, residencial: 0, calderasPrev: 0, comedoresPrev: 0, residencialPrev: 0 }
-    }
+    const empty = { total: 0, totalPrev: 0, calderas: 0, comedores: 0, residencial: 0, calderasPrev: 0, comedoresPrev: 0, residencialPrev: 0 }
+    if (!monthlyConsumption || monthlyConsumption.length === 0) return empty
 
-    const calderasCols = [
-      'mega_calefaccion_1', 'mega_calefaccion_2', 'mega_calefaccion_3', 'mega_calefaccion_4', 'mega_calefaccion_5',
-      'calefaccion_1_bryan', 'calefaccion_2_aerco', 'caldera_3', 'wellness_general_calefaccion',
-      'residencias_abc_calefaccion'
-    ]
-    
-    const comedoresCols = [
-      'comedor_centrales_tec_food', 'dona_tota', 'chilaquiles_tec', 'carls_junior',
-      'centrales_local', 'davilas_grill_team', 'pizza_little_caesars', 'ciap_super_salads',
-      'wellness_supersalads', 'nikkori', 'nectar_works', 'sr_latino', 'la_dia'
-    ]
-    
-    const residenciasCols = [
-      'residencias_1', 'residencias_2', 'residencias_3', 'residencias_4', 'residencias_5',
-      'residencias_7', 'residencias_8', 'residencias_abc_calefaccion', 'residencias_abc_regaderas',
-      'residencias_abc_locales_comida', 'estudiantes_11', 'estudiantes_12', 'estudiantes_13', 'estudiantes_15_y_10'
-    ]
+    const excludedMetaKeys = ['id', 'anio', 'mes', 'fecha_inicio', 'fecha_fin', 'created_at', 'updated_at']
+    const calderasCols = ['caldera_1_leon','caldera_2','caldera_3','mega_calefaccion_1','mega_calefaccion_2','mega_calefaccion_3','mega_calefaccion_4','mega_calefaccion_5','calefaccion_1_bryan','calefaccion_2_aerco','wellness_general_calefaccion','residencias_abc_calefaccion']
+    const comedoresCols = ['comedor_centrales_tec_food','dona_tota','chilaquiles_tec','carls_junior','centrales_local','davilas_grill_team','pizza_little_caesars','ciap_super_salads','wellness_supersalads','nikkori','nectar_works','sr_latino','la_dia']
+    const residenciasCols = ['residencias_1','residencias_2','residencias_3','residencias_4','residencias_5','residencias_7','residencias_8','residencias_abc_calefaccion','residencias_abc_regaderas','residencias_abc_locales_comida','estudiantes_11','estudiantes_12','estudiantes_13','estudiantes_15_y_10']
 
-    const sumConsumption = (data, columns) => {
-      return data.reduce((total, row) => {
-        const sum = columns.reduce((colSum, col) => {
-          const columnName = `l_${col}`
-          const value = parseFloat(row[columnName]) || 0
-          return colSum + value
-        }, 0)
-        return total + sum
-      }, 0)
-    }
+    const sumCols = (data, cols) => data.reduce((t, row) => t + cols.reduce((s, c) => s + (parseFloat(row[c]) || 0), 0), 0)
+    const sumAll = (data) => data.reduce((t, row) => t + Object.keys(row).reduce((s, k) => {
+      if (excludedMetaKeys.includes(k) || row[k] === null) return s
+      const v = parseFloat(row[k]); return s + (isNaN(v) ? 0 : v)
+    }, 0), 0)
 
-    const last3 = monthlyConsumption.slice(-3)
-    const prev3 = monthlyConsumption.slice(-6, -3)
+    const mid = Math.floor(monthlyConsumption.length / 2)
+    const allMonths = monthlyConsumption
+    const firstHalf = monthlyConsumption.slice(0, mid)
+
+    const total = selectedPoint === 'todos'
+      ? Math.round(sumAll(allMonths))
+      : Math.round(allMonths.reduce((s, row) => s + (parseFloat(row[selectedPoint]) || 0), 0))
+    const totalPrev = selectedPoint === 'todos'
+      ? Math.round(sumAll(firstHalf))
+      : Math.round(firstHalf.reduce((s, row) => s + (parseFloat(row[selectedPoint]) || 0), 0))
 
     return {
-      calderas: Math.round(sumConsumption(last3, calderasCols)),
-      comedores: Math.round(sumConsumption(last3, comedoresCols)),
-      residencial: Math.round(sumConsumption(last3, residenciasCols)),
-      calderasPrev: Math.round(sumConsumption(prev3, calderasCols)),
-      comedoresPrev: Math.round(sumConsumption(prev3, comedoresCols)),
-      residencialPrev: Math.round(sumConsumption(prev3, residenciasCols))
+      total, totalPrev,
+      calderas: Math.round(sumCols(allMonths, calderasCols)),
+      comedores: Math.round(sumCols(allMonths, comedoresCols)),
+      residencial: Math.round(sumCols(allMonths, residenciasCols)),
+      calderasPrev: Math.round(sumCols(firstHalf, calderasCols)),
+      comedoresPrev: Math.round(sumCols(firstHalf, comedoresCols)),
+      residencialPrev: Math.round(sumCols(firstHalf, residenciasCols))
     }
   }
 
@@ -243,6 +214,9 @@ export default function GasComsumptionMonthlyPage() {
     : 0
   const residencialTrend = metrics.residencialPrev > 0
     ? ((metrics.residencial - metrics.residencialPrev) / metrics.residencialPrev * 100).toFixed(1)
+    : 0
+  const totalTrend = metrics.totalPrev > 0
+    ? ((metrics.total - metrics.totalPrev) / metrics.totalPrev * 100).toFixed(1)
     : 0
 
   return (
@@ -317,16 +291,16 @@ export default function GasComsumptionMonthlyPage() {
                         <div>
                           <p className="text-sm text-muted-foreground">Consumo Total de Gas</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.calderas.toLocaleString()} m3
+                            {metrics.total.toLocaleString()} m3
                           </p>
                           <div className="flex items-center gap-1 mt-1">
-                            {parseFloat(calderasTrend) > 0 ? (
+                            {parseFloat(totalTrend) > 0 ? (
                               <TrendingUpIcon className="h-4 w-4 text-destructive" />
                             ) : (
                               <TrendingDownIcon className="h-4 w-4 text-green-500" />
                             )}
-                            <span className={`text-sm ${parseFloat(calderasTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
-                              {parseFloat(calderasTrend) > 0 ? '+' : ''}{calderasTrend}% vs 3 meses anteriores
+                            <span className={`text-sm ${parseFloat(totalTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                              {parseFloat(totalTrend) > 0 ? '+' : ''}{totalTrend}% vs 1er semestre
                             </span>
                           </div>
                         </div>
@@ -351,7 +325,7 @@ export default function GasComsumptionMonthlyPage() {
                               <TrendingDownIcon className="h-4 w-4 text-green-500" />
                             )}
                             <span className={`text-sm ${parseFloat(calderasTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
-                              {parseFloat(calderasTrend) > 0 ? '+' : ''}{calderasTrend}% vs 3 meses anteriores
+                              {parseFloat(calderasTrend) > 0 ? '+' : ''}{calderasTrend}% vs 1er semestre
                             </span>
                           </div>
                         </div>
@@ -377,7 +351,7 @@ export default function GasComsumptionMonthlyPage() {
                               <TrendingDownIcon className="h-4 w-4 text-green-500" />
                             )}
                             <span className={`text-sm ${parseFloat(comedoresTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
-                              {parseFloat(comedoresTrend) > 0 ? '+' : ''}{comedoresTrend}% vs 3 meses anteriores
+                              {parseFloat(comedoresTrend) > 0 ? '+' : ''}{comedoresTrend}% vs 1er semestre
                             </span>
                           </div>
                         </div>
@@ -403,7 +377,7 @@ export default function GasComsumptionMonthlyPage() {
                               <TrendingDownIcon className="h-4 w-4 text-green-500" />
                             )}
                             <span className={`text-sm ${parseFloat(residencialTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
-                              {parseFloat(residencialTrend) > 0 ? '+' : ''}{residencialTrend}% vs meses anteriores
+                              {parseFloat(residencialTrend) > 0 ? '+' : ''}{residencialTrend}% vs 1er semestre
                             </span>
                           </div>
                         </div>
@@ -540,7 +514,7 @@ export default function GasComsumptionMonthlyPage() {
                             ?.find(c => c.id === activeTab)
                             ?.points.filter(p => !p.noRead)
                             .map(point => {
-                              const columnName = `l_${point.id}`
+                              const columnName = point.id
                               const monthValues = MONTHS.map(month => {
                                 const monthData = monthlyConsumption.find(r => r.mes === month.value)
                                 return monthData ? parseFloat(monthData[columnName]) || 0 : 0
