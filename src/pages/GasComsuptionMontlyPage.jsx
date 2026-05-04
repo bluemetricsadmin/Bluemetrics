@@ -44,8 +44,8 @@ export default function GasComsumptionMonthlyPage() {
   const [monthlyData2026, setMonthlyData2026] = useState([])
 
   const [comparisonChartType, setComparisonChartType] = useState('line')
-  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2025', '2026'])
-  const [availableYears] = useState(['2022','2023', '2024', '2025', '2026'])
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2026'])
+  const [availableYears] = useState(['2022','2023', '2024', '2026'])
   
   const [selectedPoint, setSelectedPoint] = useState('campus_acometida_principal_digital')
   

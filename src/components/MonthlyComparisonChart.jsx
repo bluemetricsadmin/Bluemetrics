@@ -48,7 +48,7 @@ export default function MonthlyComparisonChart({
   multiYearData = null,
 }) {
   const [internalChartType, setInternalChartType] = useState('line')
-  const [selectedYears, setSelectedYears] = useState(['2023', '2024', '2025', '2026'])
+  const [selectedYears, setSelectedYears] = useState(['2022','2023', '2024', '2025', '2026'])
 
   const chartType = externalChartType !== null ? externalChartType : internalChartType
 
