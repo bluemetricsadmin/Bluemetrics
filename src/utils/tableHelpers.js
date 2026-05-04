@@ -45,7 +45,7 @@ export const getWeeklyConsumptionTableNameByYear = (year) => {
 /**
  * Lista de años disponibles en el sistema
  */
-export const AVAILABLE_YEARS = ['2023', '2024', '2025', '2026']
+export const AVAILABLE_YEARS = ['2022', '2023', '2024', '2025', '2026']
 
 /**
  * Año por defecto (el más reciente)
@@ -59,6 +59,24 @@ export const DEFAULT_YEAR = '2026'
  */
 export const getMonthlyWaterTableName = () => {
   return 'lecturas_mensuales_agua'
+}
+
+/**
+ * Utilidad para obtener el nombre de la tabla de lecturas MENSUALES de gas
+ * Nota: Esta es una tabla única multi-año (no separada por año)
+ * @returns {string} - Nombre de la tabla: 'lecturas_mensuales_agua'
+ */
+export const getMonthlyGasTableName = () => {
+  return 'lecturas_mensuales_gas'
+}
+
+/**
+ * Utilidad para obtener el nombre de la tabla de CONSUMO mensual de gas
+ * Nota: Esta es una tabla única multi-año (no separada por año)
+ * @returns {string} - Nombre de la tabla: 'lecturas_mensuales_gas_consumo'
+ */
+export const getMonthlyGasConsumptionTableName = () => {
+  return 'lecturas_mensuales_gas_consumo'
 }
 
 /**
