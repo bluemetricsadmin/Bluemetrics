@@ -1014,6 +1014,22 @@
             }
           ]
         },
+           {
+          "id": "hub",
+          "name": "HUB",
+          "type": "concesion",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 19780
+            },
+            {
+              "week": 2,
+              "reading": 20075
+            }
+          ]
+        },
         {
           "id": "expedition_bread",
           "name": "Expedition Bread",

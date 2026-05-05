@@ -595,7 +595,7 @@ export default function AddWeeklyReadingsPage() {
       'crepaso', 'el_negro', 'aulas_5', 'ciap_starbucks', 'ciap_super_salads',
       'ciap_sotano', 'reflexion', 'comedor_2_residencias_10_15', 'residencias_10_15',
       'residencias_10_15_llenado', 'comedor_2_caldera_2', 'la_choza', 'cedes_cisterna',
-      'cedes_site', 'nucleo', 'expedition', 'expedition_bread', 'expedition_matthew',
+      'cedes_site', 'nucleo', 'expedition','hub', 'expedition_bread', 'expedition_matthew',
       'caffenio', 'cedes_e2', 'e2_beiker', 'e2_evobike', 'e2_pancho_de_rigo',
       'e2_bebedero_nube', 'aulas_1', 'rectoria_norte', 'pabellon_la_carreta',
       'rectoria_sur', 'aulas_2', 'cetec', 'biblioteca', 'biblioteca_nikkori',
