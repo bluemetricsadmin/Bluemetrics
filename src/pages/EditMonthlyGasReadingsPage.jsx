@@ -1352,7 +1352,7 @@ const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
                   <Trash2Icon className="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">Eliminar Lectura Diaria</h3>
+                  <h3 className="text-lg font-semibold">Eliminar Lectura Mensual</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     Esta acción no se puede deshacer
                   </p>
