@@ -56,6 +56,8 @@ import ExcelToSqlMonthlyWater from './pages/ExcelToSql/ExcelToSqlMonthlyWater'
 
 //Lecturas Mensuales de Gas
 import GasComsumptionMonthlyPage  from './pages/GasComsuptionMontlyPage' 
+import EditMonthlyGasReadingsPage from './pages/EditMonthlyGasReadingsPage'
+import AddMonthlyGasReadingsPage from './pages/AddMonthlyGasReadingsPage'
 
 function App() {
   return (
@@ -82,7 +84,9 @@ function App() {
         {/* Rutas de GAS - requieren permiso 'gas' */}
         <Route path="/consumo-gas" element={<PermissionRoute permission="gas"><GasConsumptionPage /></PermissionRoute>} />
         <Route path="/consumo-mensual-gas" element={<PermissionRoute permission="gas"><GasComsumptionMonthlyPage /></PermissionRoute>} />
-        
+        <Route path="/agregar-lecturas-mensuales-gas" element={<PermissionRoute permission="gas"><AddMonthlyGasReadingsPage /></PermissionRoute>} />
+        <Route path="/editar-lecturas-mensuales-gas" element={<PermissionRoute permission="gas"><EditMonthlyGasReadingsPage /></PermissionRoute>} />
+
         {/* Rutas de PTAR - requieren permiso 'ptar' */}
         <Route path="/ptar" element={<PermissionRoute permission="ptar"><PTARPage /></PermissionRoute>} />
         
