@@ -144,7 +144,7 @@ export function DashboardSidebar() {
       allowedRoles: ['admin', 'ejecutivo','water','gas', 'user'],
       items: [
         { id: "gas-consumption", label: "Consumo Semanal de Gas", path: "/consumo-gas", icon: Flame, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'user'] },
-        { id: "gas-consumption-monthly", label: "Consumo Mensual de Gas", path: "/consumo-mensual-gas", icon: Flame, allowedRoles: ['admin', 'ejecutivo'] }
+        { id: "gas-consumption-monthly", label: "Consumo Mensual de Gas", path: "/consumo-mensual-gas", icon: Flame, allowedRoles: ['admin', 'ejecutivo','gas','water'] }
       
       ]
     },
