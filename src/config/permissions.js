@@ -43,8 +43,8 @@ export const PERMISSIONS = {
 
   // Datos - solo puede agregar/editar datos
   datos: {
-    water: false,
-    gas: false,
+    water: true,
+    gas: true,
     ptar: false,
     alerts: false,
     predictions: false,
@@ -73,7 +73,7 @@ export const PERMISSIONS = {
   
   // Gas solo gestión de gas
   gas: {
-    water: false,
+    water: true,
     gas: true,          // Solo consumo de gas
     ptar: false,
     alerts: true,       // Puede ver alertas de gas

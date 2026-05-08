@@ -84,8 +84,8 @@ function App() {
         {/* Rutas de GAS - requieren permiso 'gas' */}
         <Route path="/consumo-gas" element={<PermissionRoute permission="gas"><GasConsumptionPage /></PermissionRoute>} />
         <Route path="/consumo-mensual-gas" element={<PermissionRoute permission="gas"><GasComsumptionMonthlyPage /></PermissionRoute>} />
-        <Route path="/agregar-lecturas-mensuales-gas" element={<PermissionRoute permission="gas"><AddMonthlyGasReadingsPage /></PermissionRoute>} />
-        <Route path="/editar-lecturas-mensuales-gas" element={<PermissionRoute permission="gas"><EditMonthlyGasReadingsPage /></PermissionRoute>} />
+        <Route path="/agregar-lecturas-mensuales-gas" element={<DataRoute><AddMonthlyGasReadingsPage /></DataRoute>} />
+        <Route path="/editar-lecturas-mensuales-gas" element={<DataRoute><EditMonthlyGasReadingsPage /></DataRoute>} />
 
         {/* Rutas de PTAR - requieren permiso 'ptar' */}
         <Route path="/ptar" element={<PermissionRoute permission="ptar"><PTARPage /></PermissionRoute>} />

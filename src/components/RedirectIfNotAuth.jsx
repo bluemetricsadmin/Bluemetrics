@@ -70,25 +70,15 @@ export function RedirectIfNotAuth({ children }) {
       // Si el usuario tiene rol "datos", redirigir siempre a lecturas semanales
       // excepto si ya está en una página de datos permitida
       if (userRole === 'datos') {
-        const allowedPaths = [
-          '/agregar-lecturas',
-          '/editar-lecturas',
-          '/agregar-datos',
-          '/agregar-lecturas-diarias',
-          '/agregar-lecturas-gas',
-          '/agregar-lecturas-ptar',
-          '/excel-to-sql',
-          '/excel-to-sql/agua/2023',
-          '/excel-to-sql/agua/2024',
-          '/excel-to-sql/agua/2025',
-          '/excel-to-sql/gas/2023',
-          '/excel-to-sql/gas/2024',
-          '/excel-to-sql/gas/2025',
-          '/excel-to-sql/ptar',
-          '/csv-to-sql-daily'
-        ];
-        
-        if (!allowedPaths.includes(currentPath)) {
+        const isAllowedPath =
+          currentPath.startsWith('/agregar-') ||
+          currentPath.startsWith('/editar-') ||
+          currentPath.startsWith('/excel-to-sql') ||
+          currentPath.startsWith('/csv-to-sql') ||
+          currentPath === '/agregar-datos' ||
+          currentPath === '/dashboard';
+
+        if (!isAllowedPath) {
           console.log('🔄 Redirigiendo usuario con rol "datos" a lecturas semanales...');
           navigate('/agregar-lecturas', { replace: true });
         }
