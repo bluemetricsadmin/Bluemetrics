@@ -20,7 +20,8 @@ import {
   Gauge,
   ShieldAlert,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Waves
 } from "lucide-react"
 
 // Mapeo de well_id → nombre del pozo
@@ -29,10 +30,37 @@ const WELL_NAMES = {
   14: 'Pozo 14', 4: 'Pozo 4 (Riego)', 8: 'Pozo 8 (Riego)', 15: 'Pozo 15 (Riego)'
 }
 
+// Convierte columna técnica → etiqueta legible
+// ej: "l_ciap_andatti" → "Ciap Andatti", "megacentral" → "Megacentral"
+function formatMeterLabel(col) {
+  if (!col) return null
+  return col
+    .replace(/^l_/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+// Obtiene la etiqueta de medidor para cualquier tipo de alerta
+function getAlertMeterLabel(evt) {
+  if (evt.event_type === 'posible_fuga') {
+    return formatMeterLabel(evt.meter_column) || 'Medidor desconocido'
+  }
+  return WELL_NAMES[evt.well_id] || `Pozo ${evt.well_id}`
+}
+
 function getAlertVisual(event) {
   const isCritical = event.severity === 'critica'
   const isOverconsumption = event.event_type === 'sobreconsumo'
   const isDropAlert = event.title?.includes('Caída')
+  const isLeakAlert = event.event_type === 'posible_fuga'
+
+  if (isLeakAlert) {
+    return {
+      icon: <Waves className="w-5 h-5" />,
+      colors: 'text-cyan-700 bg-cyan-50 border-cyan-200',
+      badgeClass: 'bg-cyan-100 text-cyan-800'
+    }
+  }
 
   if (isCritical && isDropAlert) {
     return {
@@ -94,7 +122,7 @@ export default function AlertsPage() {
     const { data, error } = await supabase
       .from('well_events')
       .select('*')
-      .in('event_type', ['alerta_consumo', 'sobreconsumo'])
+      .in('event_type', ['alerta_consumo', 'sobreconsumo', 'posible_fuga'])
       .order('created_at', { ascending: false })
       .limit(200)
 
@@ -122,7 +150,7 @@ export default function AlertsPage() {
 
           if (payload.eventType === 'INSERT') {
             const newEvent = payload.new
-            if (newEvent.event_type === 'alerta_consumo' || newEvent.event_type === 'sobreconsumo') {
+            if (['alerta_consumo', 'sobreconsumo', 'posible_fuga'].includes(newEvent.event_type)) {
               setAlerts(prev => [newEvent, ...prev])
             }
           }
@@ -160,8 +188,9 @@ export default function AlertsPage() {
     const matchesSearch = !searchTerm || 
       a.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      WELL_NAMES[a.well_id]?.toLowerCase().includes(searchTerm.toLowerCase())
-    
+      WELL_NAMES[a.well_id]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (a.meter_column && formatMeterLabel(a.meter_column).toLowerCase().includes(searchTerm.toLowerCase()))
+
     const matchesSeverity = filterSeverity === "all" || a.severity === filterSeverity
     const matchesStatus = filterStatus === "all" || a.event_status === filterStatus
     const matchesType = filterType === "all" || a.event_type === filterType
@@ -304,6 +333,7 @@ export default function AlertsPage() {
                     <option value="all">Todo tipo</option>
                     <option value="alerta_consumo">Alerta consumo</option>
                     <option value="sobreconsumo">Sobreconsumo</option>
+                    <option value="posible_fuga">Posible fuga</option>
                   </select>
 
                   <select 
@@ -357,12 +387,12 @@ export default function AlertsPage() {
                               </Badge>
                               <Badge variant="outline" className="text-xs">
                                 <Droplets className="w-3 h-3 mr-1" />
-                                {WELL_NAMES[evt.well_id] || `Pozo ${evt.well_id}`}
+                                {getAlertMeterLabel(evt)}
                               </Badge>
                             </div>
-                            
+
                             <p className="text-sm text-muted-foreground mb-2">{evt.description}</p>
-                            
+
                             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
@@ -371,7 +401,13 @@ export default function AlertsPage() {
                               {evt.event_type && (
                                 <div className="flex items-center gap-1">
                                   <Activity className="w-3 h-3" />
-                                  <span>{evt.event_type === 'alerta_consumo' ? 'Alerta de consumo' : 'Sobreconsumo'}</span>
+                                  <span>
+                                    {evt.event_type === 'alerta_consumo' ? 'Alerta de consumo'
+                                      : evt.event_type === 'sobreconsumo' ? 'Sobreconsumo'
+                                      : evt.event_type === 'posible_fuga'
+                                        ? `Posible fuga · ${evt.alert_granularity === 'weekly' ? 'Semanal' : evt.alert_granularity === 'monthly' ? 'Mensual' : 'Diario'}`
+                                      : evt.event_type}
+                                  </span>
                                 </div>
                               )}
                               {evt.end_date && (
