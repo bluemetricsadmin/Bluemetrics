@@ -509,6 +509,7 @@ export default function MonthlyWaterConsumptionPage() {
                         <option value="correos">Correos Mr Heppy</option>
                         <option value="residencias_abc">Residencias ABC (Residencias 1 Nuevas)</option>
                         <option value="residencias_abc_lavanderia">Residencias ABC (Lavandería)</option>
+                        <option value="mil_mascaras">Mil Mascaras</option>
                       </optgroup>
                       <optgroup label="Circuito 4 A7-CE">
                         <option value="circuito_4_a7_ce">Circuito 4 A7-CE</option>
@@ -556,7 +557,7 @@ export default function MonthlyWaterConsumptionPage() {
                         <option value="ciap_cisterna_pluvial">Ciap Cisterna Pluvial-Riego al sanitario 2</option>
                       </optgroup>
                       <optgroup label="Agua de la Ciudad">
-                        <option value="mil_mascaras">Mil Mascaras(Antes Estacionamiento E3(Ciudad) Quitaron Medidor 23-Marzo-26)</option>
+                        <option value="estacionamiento_e3">Estacionamiento E3</option>
                         <option value="guarderia">Guardería (Ciudad)</option>
                         <option value="naranjos">Naranjos (Ciudad-Guardería)</option>
                         <option value="casa_solar">Casa Solar (Ciudad)</option>

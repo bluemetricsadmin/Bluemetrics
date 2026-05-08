@@ -631,7 +631,7 @@ export default function EditMonthlyWaterReadingsPage() {
       'aulas_4_norte', 'circuito_6_residencias', 'residencias_1_antiguo', 'residencias_2_ote',
       'residencias_2_pte', 'residencias_3', 'residencias_4', 'residencias_5',
       'residencias_7', 'residencias_8', 'correos', 'alberca', 'residencias_abc',
-      'residencias_abc_lavanderia', 'circuito_4_a7_ce', 'aulas_7', 'cah3_torre_enfriamiento',
+      'residencias_abc_lavanderia','mil_mascaras', 'circuito_4_a7_ce', 'aulas_7', 'cah3_torre_enfriamiento',
       'caldera_3', 'la_dia', 'aulas_4_sur', 'aulas_4_maestros', 'centro_congresos',
       'jubileo', 'aulas_4_oxxo', 'circuito_planta_fisica', 'estacionamiento_e1',
       'arquitectura_e1', 'arquitectura_anexo', 'megacentral_te_2', 'escamilla_banos_trabajadores',
@@ -643,7 +643,7 @@ export default function EditMonthlyWaterReadingsPage() {
       'cedes_tinaco_riego_pluvial', 'megacentral_te_purgas', 'megacentral_suavizador_purga',
       'cah3_te_purgas', 'residencias_10_15_te_purga', 'estadio_borrego_pluvial',
       'ciap_cisterna_pluvial', 'campo_soft_bol', 'cedes_ciudad',
-      'mil_mascaras', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos',
+      'estacionamiento_e3', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos',
       'residencias_11_ciudad', 'residencias_12_ciudad', 'residencias_13_1_ciudad',
       'residencias_13_2_ciudad', 'residencias_13_3_ciudad', 'residencias_15_sotano'
     ]
@@ -652,7 +652,7 @@ export default function EditMonthlyWaterReadingsPage() {
     const aguaCiudadOrder = [
       'campo_soft_bol',
       'cedes_ciudad',
-      'mil_mascaras',
+      'estacionamiento_e3',
       'guarderia',
       'naranjos',
       'casa_solar'

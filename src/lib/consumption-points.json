@@ -1638,6 +1638,7 @@
             }
           ]
         },
+       
         {
           "id": "residencias_abc_lavanderia",
           "name": "Residencias ABC (Lavandería)",
@@ -1653,9 +1654,29 @@
               "reading": 0
             }
           ]
+        },
+        {
+          "id": "mil_mascaras",
+          "name": "Mil Mascaras",
+          "type": "estacionamiento",
+          "source": "ciudad",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 7595
+            },
+            {
+              "week": 2,
+              "reading": 7695
+            }
+          ]
         }
+
+
       ]
     },
+     
     {
       "id": "circuito_4_a7_ce",
       "name": "Circuito 4\" A7-CE",
@@ -2388,9 +2409,10 @@
             }
           ]
         },
-        {
-          "id": "mil_mascaras",
-          "name": "Mil Mascaras(Antes Estacionamiento E3(Ciudad) Quitaron Medidor 23-Marzo-26)",
+
+         {
+          "id": "estacionamiento_e3",
+          "name": "Estacionamiento E3 (Ciudad)",
           "type": "estacionamiento",
           "source": "ciudad",
           "unit": "m³",
@@ -2405,6 +2427,7 @@
             }
           ]
         },
+       
         {
           "id": "guarderia",
           "name": "Guardería (Ciudad)",
