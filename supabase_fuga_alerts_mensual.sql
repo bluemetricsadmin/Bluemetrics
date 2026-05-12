@@ -106,8 +106,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_well_events_fuga_monthly
 
 -- ============================================================
 -- 3. HELPER: fn_check_monthly_leak_rules()
--- Evalúa las 5 reglas de fuga para un mes específico.
--- Retorna TRUE si ≥1 regla supera el 30%.
+-- Evalúa las 3 reglas de fuga para un mes específico.
+-- Retorna TRUE solo si las 3 reglas se cumplen simultáneamente (AND).
 -- No inserta nada (permite uso en chequeo consecutivo).
 -- ============================================================
 CREATE OR REPLACE FUNCTION fn_check_monthly_leak_rules(
@@ -124,13 +124,12 @@ DECLARE
   v_moving_sum     DECIMAL := 0;
   v_moving_count   INTEGER := 0;
   v_prev_val       DECIMAL;
-  v_year_peak      DECIMAL;
   v_same_prev_yr   DECIMAL;
-  v_multi_yr_avg   DECIMAL;
-  v_available_yrs  INTEGER := 0;
   v_check_month    INTEGER;
   v_check_year     INTEGER;
-  v_violations     INTEGER := 0;
+  v_rule1_ok       BOOLEAN := FALSE;
+  v_rule2_ok       BOOLEAN := FALSE;
+  v_rule3_ok       BOOLEAN := FALSE;
   i                INTEGER;
 BEGIN
   -- Obtener consumo del mes actual
@@ -168,7 +167,7 @@ BEGIN
   IF v_moving_count >= 3 THEN
     v_moving_avg := v_moving_sum / v_moving_count;
     IF v_moving_avg > 0 AND v_current_val > v_moving_avg * 1.30 THEN
-      v_violations := v_violations + 1;
+      v_rule1_ok := TRUE;
     END IF;
   END IF;
 
@@ -189,24 +188,12 @@ BEGIN
 
   IF v_prev_val IS NOT NULL AND v_prev_val > 0 THEN
     IF v_current_val > v_prev_val * 1.30 THEN
-      v_violations := v_violations + 1;
+      v_rule2_ok := TRUE;
     END IF;
   END IF;
 
   -- -------------------------------------------------------
-  -- Regla 3: vs pico más grande del año (excluyendo mes actual)
-  -- -------------------------------------------------------
-  EXECUTE format(
-    'SELECT COALESCE(MAX(%I), 0) FROM lecturas_mensuales_agua_consumo WHERE anio = %s AND mes <> %s',
-    p_column, p_year, p_month
-  ) INTO v_year_peak;
-
-  IF v_year_peak > 0 AND v_current_val > v_year_peak * 1.30 THEN
-    v_violations := v_violations + 1;
-  END IF;
-
-  -- -------------------------------------------------------
-  -- Regla 4: vs mismo mes, año anterior
+  -- Regla 3: vs mismo mes, año anterior
   -- -------------------------------------------------------
   EXECUTE format(
     'SELECT COALESCE(%I, 0) FROM lecturas_mensuales_agua_consumo WHERE anio = %s AND mes = %s LIMIT 1',
@@ -215,25 +202,12 @@ BEGIN
 
   IF v_same_prev_yr IS NOT NULL AND v_same_prev_yr > 0 THEN
     IF v_current_val > v_same_prev_yr * 1.30 THEN
-      v_violations := v_violations + 1;
+      v_rule3_ok := TRUE;
     END IF;
   END IF;
 
-  -- -------------------------------------------------------
-  -- Regla 5: vs mismo mes, promedio de años anteriores
-  -- -------------------------------------------------------
-  EXECUTE format(
-    'SELECT COUNT(*), COALESCE(AVG(%I), 0) FROM lecturas_mensuales_agua_consumo WHERE anio < %s AND mes = %s AND %I > 0',
-    p_column, p_year, p_month, p_column
-  ) INTO v_available_yrs, v_multi_yr_avg;
-
-  IF v_available_yrs >= 2 AND v_multi_yr_avg > 0 THEN
-    IF v_current_val > v_multi_yr_avg * 1.30 THEN
-      v_violations := v_violations + 1;
-    END IF;
-  END IF;
-
-  RETURN v_violations > 0;
+  -- Las 3 reglas deben cumplirse simultáneamente (condición AND)
+  RETURN v_rule1_ok AND v_rule2_ok AND v_rule3_ok;
 END;
 $$;
 
@@ -241,7 +215,7 @@ $$;
 -- ============================================================
 -- 4. fn_evaluate_leak_alerts_monthly()
 -- Evalúa alertas de fuga para un pozo en un mes específico.
--- Inserta solo si mes N Y mes N-1 tienen violaciones (consecutivo).
+-- Inserta solo si las 3 reglas se cumplen simultáneamente (AND).
 -- ============================================================
 CREATE OR REPLACE FUNCTION fn_evaluate_leak_alerts_monthly(
   p_meter_label TEXT,
@@ -260,15 +234,14 @@ DECLARE
   v_moving_count   INTEGER := 0;
   v_moving_avg     DECIMAL;
   v_prev_val       DECIMAL;
-  v_year_peak      DECIMAL;
   v_same_prev_yr   DECIMAL;
-  v_multi_yr_avg   DECIMAL;
-  v_available_yrs  INTEGER := 0;
   v_check_month    INTEGER;
   v_check_year     INTEGER;
-  v_prev_month     INTEGER;
-  v_prev_year      INTEGER;
   i                INTEGER;
+  -- Flags AND: las tres reglas deben cumplirse simultáneamente
+  v_rule1_ok       BOOLEAN := FALSE;
+  v_rule2_ok       BOOLEAN := FALSE;
+  v_rule3_ok       BOOLEAN := FALSE;
   v_title          TEXT;
   v_description    TEXT;
   v_recommendation TEXT;
@@ -282,10 +255,8 @@ BEGIN
   IF v_current_val IS NULL OR v_current_val = 0 THEN RETURN; END IF;
 
   -- -------------------------------------------------------
-  -- Evaluar reglas para mes actual (con detalle)
+  -- Regla 1: vs promedio móvil de los 10 meses anteriores
   -- -------------------------------------------------------
-
-  -- Regla 1: promedio móvil 10 meses
   FOR i IN 1..10 LOOP
     v_check_month := p_month - i;
     v_check_year  := p_year;
@@ -306,13 +277,16 @@ BEGIN
   IF v_moving_count >= 3 THEN
     v_moving_avg := v_moving_sum / v_moving_count;
     IF v_moving_avg > 0 AND v_current_val > v_moving_avg * 1.30 THEN
+      v_rule1_ok := TRUE;
       v_rules_fired := array_append(v_rules_fired,
         format('promedio móvil 10 meses (%s m³ vs %s m³ ref)',
           round(v_current_val, 2), round(v_moving_avg, 2)));
     END IF;
   END IF;
 
-  -- Regla 2: mes anterior
+  -- -------------------------------------------------------
+  -- Regla 2: vs mes anterior
+  -- -------------------------------------------------------
   v_check_month := p_month - 1;
   v_check_year  := p_year;
   IF v_check_month < 1 THEN
@@ -325,65 +299,31 @@ BEGIN
   ) INTO v_prev_val;
   IF v_prev_val IS NOT NULL AND v_prev_val > 0 THEN
     IF v_current_val > v_prev_val * 1.30 THEN
+      v_rule2_ok := TRUE;
       v_rules_fired := array_append(v_rules_fired,
         format('mes anterior (%s m³ vs %s m³)',
           round(v_current_val, 2), round(v_prev_val, 2)));
     END IF;
   END IF;
 
-  -- Regla 3: pico del año
-  EXECUTE format(
-    'SELECT COALESCE(MAX(%I), 0) FROM lecturas_mensuales_agua_consumo WHERE anio = %s AND mes <> %s',
-    p_column, p_year, p_month
-  ) INTO v_year_peak;
-  IF v_year_peak > 0 AND v_current_val > v_year_peak * 1.30 THEN
-    v_rules_fired := array_append(v_rules_fired,
-      format('pico del año (%s m³ vs %s m³ pico)',
-        round(v_current_val, 2), round(v_year_peak, 2)));
-  END IF;
-
-  -- Regla 4: mismo mes año anterior
+  -- -------------------------------------------------------
+  -- Regla 3: vs mismo mes, año anterior
+  -- -------------------------------------------------------
   EXECUTE format(
     'SELECT COALESCE(%I, 0) FROM lecturas_mensuales_agua_consumo WHERE anio = %s AND mes = %s LIMIT 1',
     p_column, p_year - 1, p_month
   ) INTO v_same_prev_yr;
   IF v_same_prev_yr IS NOT NULL AND v_same_prev_yr > 0 THEN
     IF v_current_val > v_same_prev_yr * 1.30 THEN
+      v_rule3_ok := TRUE;
       v_rules_fired := array_append(v_rules_fired,
         format('mismo mes año anterior (%s m³ vs %s m³ en %s)',
           round(v_current_val, 2), round(v_same_prev_yr, 2), p_year - 1));
     END IF;
   END IF;
 
-  -- Regla 5: promedio de años anteriores
-  EXECUTE format(
-    'SELECT COUNT(*), COALESCE(AVG(%I), 0) FROM lecturas_mensuales_agua_consumo WHERE anio < %s AND mes = %s AND %I > 0',
-    p_column, p_year, p_month, p_column
-  ) INTO v_available_yrs, v_multi_yr_avg;
-  IF v_available_yrs >= 2 AND v_multi_yr_avg > 0 THEN
-    IF v_current_val > v_multi_yr_avg * 1.30 THEN
-      v_rules_fired := array_append(v_rules_fired,
-        format('promedio histórico mismo mes (%s m³ vs %s m³ promedio)',
-          round(v_current_val, 2), round(v_multi_yr_avg, 2)));
-    END IF;
-  END IF;
-
-  -- Sin violaciones → no hay alerta
-  IF array_length(v_rules_fired, 1) IS NULL THEN RETURN; END IF;
-
-  -- -------------------------------------------------------
-  -- Chequeo consecutivo: mes N-1 también debe tener violaciones
-  -- -------------------------------------------------------
-  v_prev_month := p_month - 1;
-  v_prev_year  := p_year;
-  IF v_prev_month < 1 THEN
-    v_prev_month := 12;
-    v_prev_year  := v_prev_year - 1;
-  END IF;
-
-  IF NOT fn_check_monthly_leak_rules(p_column, v_prev_year, v_prev_month) THEN
-    RETURN; -- Pico aislado → no es fuga
-  END IF;
+  -- Las tres reglas deben cumplirse simultáneamente (condición AND)
+  IF NOT (v_rule1_ok AND v_rule2_ok AND v_rule3_ok) THEN RETURN; END IF;
 
   -- -------------------------------------------------------
   -- Insertar alerta consolidada
@@ -394,13 +334,12 @@ BEGIN
   );
 
   v_description := format(
-    'El consumo del mes %s del año %s (%s m³) supera en más del 30%% el valor de referencia en %s regla(s) consecutiva(s): %s',
+    'El consumo del mes %s del año %s (%s m³) supera en más del 30%% el valor de referencia en las 3 reglas simultáneas: %s',
     p_month, p_year, round(v_current_val, 2),
-    array_length(v_rules_fired, 1),
     array_to_string(v_rules_fired, '; ')
   );
 
-  v_recommendation := 'Revisar físicamente el pozo y las líneas de distribución. Verificar si existe fuga, válvula abierta o medidor defectuoso. El incremento se detectó en 2 meses consecutivos.';
+  v_recommendation := 'Revisar físicamente el pozo y las líneas de distribución. Verificar si existe fuga, válvula abierta o medidor defectuoso.';
 
   INSERT INTO well_events (
     well_id, meter_column, event_type, severity, is_automatic,

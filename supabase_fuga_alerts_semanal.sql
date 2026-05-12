@@ -177,8 +177,8 @@ $$;
 
 -- ============================================================
 -- 4. HELPER: fn_check_weekly_leak_rules()
--- Evalúa las 5 reglas de fuga para una semana específica.
--- Retorna TRUE si al menos 1 regla supera el umbral del 30%.
+-- Evalúa las 3 reglas de fuga para una semana específica.
+-- Retorna TRUE solo si las 3 reglas se cumplen simultáneamente (AND).
 -- No inserta nada — solo evalúa (permite uso en chequeo consecutivo).
 -- ============================================================
 CREATE OR REPLACE FUNCTION fn_check_weekly_leak_rules(
@@ -190,22 +190,18 @@ RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  v_table          TEXT;
-  v_current_val    DECIMAL;
-  v_reference      DECIMAL;
-  v_moving_avg     DECIMAL;
-  v_prev_week_val  DECIMAL;
-  v_year_peak      DECIMAL;
+  v_table           TEXT;
+  v_current_val     DECIMAL;
+  v_moving_avg      DECIMAL;
+  v_prev_week_val   DECIMAL;
   v_same_wk_prev_yr DECIMAL;
-  v_multi_yr_avg   DECIMAL;
-  v_violations     INTEGER := 0;
-  v_yr             INTEGER;
-  v_available_yrs  INTEGER := 0;
-  v_yr_sum         DECIMAL := 0;
-  v_yr_val         DECIMAL;
-  v_moving_sum     DECIMAL := 0;
-  v_moving_count   INTEGER := 0;
-  i                INTEGER;
+  v_yr_val          DECIMAL;
+  v_moving_sum      DECIMAL := 0;
+  v_moving_count    INTEGER := 0;
+  v_rule1_ok        BOOLEAN := FALSE;
+  v_rule2_ok        BOOLEAN := FALSE;
+  v_rule3_ok        BOOLEAN := FALSE;
+  i                 INTEGER;
 BEGIN
   v_table := 'lecturas_semana_agua_consumo_' || p_year;
 
@@ -242,7 +238,7 @@ BEGIN
   IF v_moving_count >= 3 THEN
     v_moving_avg := v_moving_sum / v_moving_count;
     IF v_moving_avg > 0 AND v_current_val > v_moving_avg * 1.30 THEN
-      v_violations := v_violations + 1;
+      v_rule1_ok := TRUE;
     END IF;
   END IF;
 
@@ -252,53 +248,22 @@ BEGIN
   v_prev_week_val := fn_get_week_consumption(p_column, p_year, p_week - 1);
   IF v_prev_week_val IS NOT NULL AND v_prev_week_val > 0 THEN
     IF v_current_val > v_prev_week_val * 1.30 THEN
-      v_violations := v_violations + 1;
+      v_rule2_ok := TRUE;
     END IF;
   END IF;
 
   -- -------------------------------------------------------
-  -- Regla 3: vs pico más grande del año
-  -- -------------------------------------------------------
-  EXECUTE format(
-    'SELECT COALESCE(MAX(%I), 0) FROM %I WHERE l_numero_semana <> %s',
-    p_column, v_table, p_week
-  ) INTO v_year_peak;
-
-  IF v_year_peak > 0 AND v_current_val > v_year_peak * 1.30 THEN
-    v_violations := v_violations + 1;
-  END IF;
-
-  -- -------------------------------------------------------
-  -- Regla 4: vs misma semana, año anterior
+  -- Regla 3: vs misma semana, año anterior
   -- -------------------------------------------------------
   v_same_wk_prev_yr := fn_get_week_consumption(p_column, p_year - 1, p_week);
   IF v_same_wk_prev_yr IS NOT NULL AND v_same_wk_prev_yr > 0 THEN
     IF v_current_val > v_same_wk_prev_yr * 1.30 THEN
-      v_violations := v_violations + 1;
+      v_rule3_ok := TRUE;
     END IF;
   END IF;
 
-  -- -------------------------------------------------------
-  -- Regla 5: vs misma semana, promedio de años anteriores
-  -- -------------------------------------------------------
-  v_yr := p_year - 1;
-  WHILE v_yr >= p_year - 5 LOOP
-    v_yr_val := fn_get_week_consumption(p_column, v_yr, p_week);
-    IF v_yr_val IS NOT NULL AND v_yr_val > 0 THEN
-      v_yr_sum       := v_yr_sum + v_yr_val;
-      v_available_yrs := v_available_yrs + 1;
-    END IF;
-    v_yr := v_yr - 1;
-  END LOOP;
-
-  IF v_available_yrs >= 2 THEN
-    v_multi_yr_avg := v_yr_sum / v_available_yrs;
-    IF v_multi_yr_avg > 0 AND v_current_val > v_multi_yr_avg * 1.30 THEN
-      v_violations := v_violations + 1;
-    END IF;
-  END IF;
-
-  RETURN v_violations > 0;
+  -- Las 3 reglas deben cumplirse simultáneamente (condición AND)
+  RETURN v_rule1_ok AND v_rule2_ok AND v_rule3_ok;
 END;
 $$;
 
@@ -306,8 +271,7 @@ $$;
 -- ============================================================
 -- 5. fn_evaluate_leak_alerts_weekly()
 -- Evalúa alertas de fuga para un pozo en una semana específica.
--- Solo inserta alerta si AMBAS semana N y semana N-1 tienen
--- al menos 1 regla disparada (chequeo consecutivo).
+-- Inserta solo si las 3 reglas se cumplen simultáneamente (AND).
 -- ============================================================
 CREATE OR REPLACE FUNCTION fn_evaluate_leak_alerts_weekly(
   p_meter_label TEXT,
@@ -322,21 +286,18 @@ DECLARE
   v_table          TEXT;
   v_current_val    DECIMAL;
   v_now            TIMESTAMP WITH TIME ZONE := NOW();
-  -- Referencias para descripción
   v_moving_avg     DECIMAL;
   v_prev_week_val  DECIMAL;
-  v_year_peak      DECIMAL;
   v_same_prev_yr   DECIMAL;
-  v_multi_yr_avg   DECIMAL;
-  -- Detección de reglas
   v_rules_fired    TEXT[] := '{}';
   v_moving_sum     DECIMAL := 0;
   v_moving_count   INTEGER := 0;
   v_yr_val         DECIMAL;
-  v_yr             INTEGER;
-  v_available_yrs  INTEGER := 0;
-  v_yr_sum         DECIMAL := 0;
   i                INTEGER;
+  -- Flags AND: las tres reglas deben cumplirse simultáneamente
+  v_rule1_ok       BOOLEAN := FALSE;
+  v_rule2_ok       BOOLEAN := FALSE;
+  v_rule3_ok       BOOLEAN := FALSE;
   v_title          TEXT;
   v_description    TEXT;
   v_recommendation TEXT;
@@ -352,10 +313,8 @@ BEGIN
   IF v_current_val IS NULL OR v_current_val = 0 THEN RETURN; END IF;
 
   -- -------------------------------------------------------
-  -- Evaluar reglas para semana actual (con detalle para descripción)
+  -- Regla 1: vs promedio móvil de las 10 semanas anteriores
   -- -------------------------------------------------------
-
-  -- Regla 1: promedio móvil 10 semanas
   FOR i IN 1..10 LOOP
     v_yr_val := fn_get_week_consumption(p_column, p_year, p_week - i);
     IF v_yr_val IS NOT NULL AND v_yr_val > 0 THEN
@@ -366,71 +325,41 @@ BEGIN
   IF v_moving_count >= 3 THEN
     v_moving_avg := v_moving_sum / v_moving_count;
     IF v_moving_avg > 0 AND v_current_val > v_moving_avg * 1.30 THEN
+      v_rule1_ok := TRUE;
       v_rules_fired := array_append(v_rules_fired,
         format('promedio móvil 10 semanas (%s m³ vs %s m³ ref)',
           round(v_current_val, 2), round(v_moving_avg, 2)));
     END IF;
   END IF;
 
-  -- Regla 2: semana anterior
+  -- -------------------------------------------------------
+  -- Regla 2: vs semana anterior
+  -- -------------------------------------------------------
   v_prev_week_val := fn_get_week_consumption(p_column, p_year, p_week - 1);
   IF v_prev_week_val IS NOT NULL AND v_prev_week_val > 0 THEN
     IF v_current_val > v_prev_week_val * 1.30 THEN
+      v_rule2_ok := TRUE;
       v_rules_fired := array_append(v_rules_fired,
         format('semana anterior (%s m³ vs %s m³)',
           round(v_current_val, 2), round(v_prev_week_val, 2)));
     END IF;
   END IF;
 
-  -- Regla 3: pico del año
-  EXECUTE format(
-    'SELECT COALESCE(MAX(%I), 0) FROM %I WHERE l_numero_semana <> %s',
-    p_column, v_table, p_week
-  ) INTO v_year_peak;
-  IF v_year_peak > 0 AND v_current_val > v_year_peak * 1.30 THEN
-    v_rules_fired := array_append(v_rules_fired,
-      format('pico del año (%s m³ vs %s m³ pico)',
-        round(v_current_val, 2), round(v_year_peak, 2)));
-  END IF;
-
-  -- Regla 4: misma semana año anterior
+  -- -------------------------------------------------------
+  -- Regla 3: vs misma semana, año anterior
+  -- -------------------------------------------------------
   v_same_prev_yr := fn_get_week_consumption(p_column, p_year - 1, p_week);
   IF v_same_prev_yr IS NOT NULL AND v_same_prev_yr > 0 THEN
     IF v_current_val > v_same_prev_yr * 1.30 THEN
+      v_rule3_ok := TRUE;
       v_rules_fired := array_append(v_rules_fired,
         format('misma semana año anterior (%s m³ vs %s m³ en %s)',
           round(v_current_val, 2), round(v_same_prev_yr, 2), p_year - 1));
     END IF;
   END IF;
 
-  -- Regla 5: promedio de años anteriores
-  v_yr := p_year - 1;
-  WHILE v_yr >= p_year - 5 LOOP
-    v_yr_val := fn_get_week_consumption(p_column, v_yr, p_week);
-    IF v_yr_val IS NOT NULL AND v_yr_val > 0 THEN
-      v_yr_sum        := v_yr_sum + v_yr_val;
-      v_available_yrs := v_available_yrs + 1;
-    END IF;
-    v_yr := v_yr - 1;
-  END LOOP;
-  IF v_available_yrs >= 2 THEN
-    v_multi_yr_avg := v_yr_sum / v_available_yrs;
-    IF v_multi_yr_avg > 0 AND v_current_val > v_multi_yr_avg * 1.30 THEN
-      v_rules_fired := array_append(v_rules_fired,
-        format('promedio histórico misma semana (%s m³ vs %s m³ promedio)',
-          round(v_current_val, 2), round(v_multi_yr_avg, 2)));
-    END IF;
-  END IF;
-
-  -- Sin violaciones → no hay alerta
-  IF array_length(v_rules_fired, 1) IS NULL THEN RETURN; END IF;
-
-  -- -------------------------------------------------------
-  -- Chequeo consecutivo: semana N-1 también debe tener violaciones
-  -- -------------------------------------------------------
-  IF NOT fn_check_weekly_leak_rules(p_column, p_year, p_week - 1) THEN
-    RETURN; -- El pico es aislado → no es fuga
-  END IF;
+  -- Las tres reglas deben cumplirse simultáneamente (condición AND)
+  IF NOT (v_rule1_ok AND v_rule2_ok AND v_rule3_ok) THEN RETURN; END IF;
 
   -- -------------------------------------------------------
   -- Insertar alerta consolidada (ON CONFLICT DO NOTHING dedup)
@@ -441,13 +370,12 @@ BEGIN
   );
 
   v_description := format(
-    'El consumo de la semana %s del año %s (%s m³) supera en más del 30%% el valor de referencia en %s regla(s) consecutiva(s): %s',
+    'El consumo de la semana %s del año %s (%s m³) supera en más del 30%% el valor de referencia en las 3 reglas simultáneas: %s',
     p_week, p_year, round(v_current_val, 2),
-    array_length(v_rules_fired, 1),
     array_to_string(v_rules_fired, '; ')
   );
 
-  v_recommendation := 'Revisar físicamente el pozo y las líneas de distribución. Verificar si existe fuga, válvula abierta o medidor defectuoso. El incremento se detectó en 2 semanas consecutivas.';
+  v_recommendation := 'Revisar físicamente el pozo y las líneas de distribución. Verificar si existe fuga, válvula abierta o medidor defectuoso.';
 
   INSERT INTO well_events (
     well_id, meter_column, event_type, severity, is_automatic,

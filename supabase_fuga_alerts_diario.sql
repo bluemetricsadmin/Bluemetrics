@@ -153,9 +153,12 @@ DECLARE
   v_moving_sum     DECIMAL := 0;
   v_moving_count   INTEGER := 0;
   v_prev_val       DECIMAL;
-  v_year_peak      DECIMAL;
   v_prev_yr_val    DECIMAL;
   v_rules_fired    TEXT[] := '{}';
+  -- Flags AND: las tres reglas deben cumplirse simultáneamente
+  v_rule1_ok       BOOLEAN := FALSE;
+  v_rule2_ok       BOOLEAN := FALSE;
+  v_rule3_ok       BOOLEAN := FALSE;
   -- Para "mismo día semana anterior"
   v_prev_week_day  INTEGER;
   v_prev_week_mes  TEXT;
@@ -222,6 +225,7 @@ BEGIN
 
   IF v_moving_count >= 3 AND v_moving_avg > 0 THEN
     IF v_current_val > v_moving_avg * 1.30 THEN
+      v_rule1_ok := TRUE;
       v_rules_fired := array_append(v_rules_fired,
         format('promedio móvil 10 días (%s m³ vs %s m³ ref)',
           round(v_current_val, 2), round(v_moving_avg, 2)));
@@ -264,6 +268,7 @@ BEGIN
 
       IF v_prev_val IS NOT NULL AND v_prev_val > 0 THEN
         IF v_current_val > v_prev_val * 1.30 THEN
+          v_rule2_ok := TRUE;
           v_rules_fired := array_append(v_rules_fired,
             format('mismo día semana anterior (%s m³ vs %s m³)',
               round(v_current_val, 2), round(v_prev_val, 2)));
@@ -293,28 +298,15 @@ BEGIN
 
   IF v_prev_yr_val IS NOT NULL AND v_prev_yr_val > 0 THEN
     IF v_current_val > v_prev_yr_val * 1.30 THEN
+      v_rule3_ok := TRUE;
       v_rules_fired := array_append(v_rules_fired,
         format('mismo día año anterior (%s m³ vs %s m³ en %s)',
           round(v_current_val, 2), round(v_prev_yr_val, 2), v_current_anio - 1));
     END IF;
   END IF;
 
-  -- -------------------------------------------------------
-  -- Regla 4: vs pico más grande del año actual
-  -- -------------------------------------------------------
-  EXECUTE format(
-    'SELECT COALESCE(MAX(%I), 0) FROM lecturas_diarias_consumo WHERE anio = %L AND id <> %s',
-    p_daily_col, v_current_anio::TEXT, p_row_id
-  ) INTO v_year_peak;
-
-  IF v_year_peak > 0 AND v_current_val > v_year_peak * 1.30 THEN
-    v_rules_fired := array_append(v_rules_fired,
-      format('pico del año (%s m³ vs %s m³ pico)',
-        round(v_current_val, 2), round(v_year_peak, 2)));
-  END IF;
-
-  -- Sin violaciones → no hay alerta
-  IF array_length(v_rules_fired, 1) IS NULL THEN RETURN; END IF;
+  -- Las tres reglas deben cumplirse simultáneamente (condición AND)
+  IF NOT (v_rule1_ok AND v_rule2_ok AND v_rule3_ok) THEN RETURN; END IF;
 
   -- -------------------------------------------------------
   -- Insertar alerta consolidada (sin chequeo consecutivo en diarias)
@@ -325,9 +317,8 @@ BEGIN
   );
 
   v_description := format(
-    'El consumo diario del %s de %s (%s m³) supera en más del 30%% el valor de referencia en %s regla(s): %s',
+    'El consumo diario del %s de %s (%s m³) supera en más del 30%% el valor de referencia en las 3 reglas simultáneas: %s',
     p_dia_hora, p_mes_anio, round(v_current_val, 2),
-    array_length(v_rules_fired, 1),
     array_to_string(v_rules_fired, '; ')
   );
 
