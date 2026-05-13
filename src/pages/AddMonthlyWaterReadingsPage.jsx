@@ -516,7 +516,7 @@ export default function AddMonthlyWaterReadingsPage() {
   // Descargar plantilla de Excel
   const downloadTemplate = () => {
     // Lista de IDs permitidos en la plantilla (mismo set que semanales)
-    const allowedIds = [
+   const allowedIds = [
       'medidor_general_pozos', 'pozo_11', 'pozo_14', 'pozo_12', 'pozo_7', 'pozo_3',
       'pozo_4_riego', 'pozo_8_riego', 'pozo_15_riego',
       'circuito_8_campus', 'auditorio_luis_elizondo', 'cdb2', 'cdb2_banos_nuevos_2025',
@@ -541,7 +541,7 @@ export default function AddMonthlyWaterReadingsPage() {
       'aulas_4_norte', 'circuito_6_residencias', 'residencias_1_antiguo', 'residencias_2_ote',
       'residencias_2_pte', 'residencias_3', 'residencias_4', 'residencias_5',
       'residencias_7', 'residencias_8', 'correos', 'alberca', 'residencias_abc',
-      'residencias_abc_lavanderia', 'circuito_4_a7_ce', 'aulas_7', 'cah3_torre_enfriamiento',
+      'residencias_abc_lavanderia','mil_mascaras', 'circuito_4_a7_ce', 'aulas_7', 'cah3_torre_enfriamiento',
       'caldera_3', 'la_dia', 'aulas_4_sur', 'aulas_4_maestros', 'centro_congresos',
       'jubileo', 'aulas_4_oxxo', 'circuito_planta_fisica', 'estacionamiento_e1',
       'arquitectura_e1', 'arquitectura_anexo', 'megacentral_te_2', 'escamilla_banos_trabajadores',
@@ -553,7 +553,7 @@ export default function AddMonthlyWaterReadingsPage() {
       'cedes_tinaco_riego_pluvial', 'megacentral_te_purgas', 'megacentral_suavizador_purga',
       'cah3_te_purgas', 'residencias_10_15_te_purga', 'estadio_borrego_pluvial',
       'ciap_cisterna_pluvial', 'campo_soft_bol', 'cedes_ciudad',
-      'mil_mascaras', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos',
+      'estacionamiento_e3', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos',
       'residencias_11_ciudad', 'residencias_12_ciudad', 'residencias_13_1_ciudad',
       'residencias_13_2_ciudad', 'residencias_13_3_ciudad', 'residencias_15_sotano'
     ]
@@ -562,7 +562,7 @@ export default function AddMonthlyWaterReadingsPage() {
     const aguaCiudadOrder = [
       'campo_soft_bol',
       'cedes_ciudad',
-      'mil_mascaras',
+      'estacionamiento_e3',
       'guarderia',
       'naranjos',
       'casa_solar'

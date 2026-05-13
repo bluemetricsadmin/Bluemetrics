@@ -713,8 +713,6 @@ const checkIfMonthExists = async () => {
     
     gasConsumptionPointsData.categories.forEach(category => {
       category.points.forEach(point => {
-        if (point.noRead) return
-
         templateData.push({
           'Punto de Consumo': point.name,
           'ID': point.id,

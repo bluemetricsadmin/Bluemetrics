@@ -1434,7 +1434,7 @@ export default function EditMonthlyWaterReadingsPage() {
                   <Trash2Icon className="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">Eliminar Lectura Diaria</h3>
+                  <h3 className="text-lg font-semibold">Eliminar Lectura Mensual</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     Esta acción no se puede deshacer
                   </p>
@@ -1444,7 +1444,7 @@ export default function EditMonthlyWaterReadingsPage() {
             <CardContent>
               <div className="mb-6">
                 <p className="text-sm text-foreground mb-4">
-                  ¿Estás seguro de que deseas eliminar la lectura de la semana <strong>{selectedMonth}</strong>?
+                  ¿Estás seguro de que deseas eliminar la lectura del mes <strong>{selectedMonth}</strong>?
                 </p>
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                   <p className="text-xs text-red-800 dark:text-red-200">
