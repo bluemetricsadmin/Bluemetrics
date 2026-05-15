@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from "react-router"
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
-import { Card } from "../components/ui/card"
+import { Card, CardContent } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { supabase } from '../supabaseClient'
@@ -29,7 +29,8 @@ import {
   TrendingDownIcon,
   MinusIcon,
   BarChart3Icon,
-  LineChartIcon
+  LineChartIcon,
+  Waves
 } from "lucide-react"
 
 export default function WellsPage() {
@@ -62,6 +63,14 @@ export default function WellsPage() {
     currentYearData: [],
     previousYearData: []
   })
+  const [metrics, setMetrics] = useState({ pozos: 0, riego: 0, servicios: 0 })
+  const [pozosTrend, setPozosTrend] = useState('0.0')
+  const [riegoTrend, setRiegoTrend] = useState('0.0')
+  const [serviciosTrend, setServiciosTrend] = useState('0.0')
+  const [weeklyMetrics, setWeeklyMetrics] = useState({ pozos: 0, riego: 0, servicios: 0 })
+  const [pozosTrendW, setPozosTrendW] = useState('0.0')
+  const [riegoTrendW, setRiegoTrendW] = useState('0.0')
+  const [serviciosTrendW, setServiciosTrendW] = useState('0.0')
   
   // Información estática de pozos (igual que en WellDetailPage)
   const [wellsStaticInfo, setWellsStaticInfo] = useState({
@@ -549,7 +558,49 @@ export default function WellsPage() {
     }
   }
 
-  
+  // Calcular métricas de últimos 3 meses (~13 semanas) desde weeklyData
+  useEffect(() => {
+    const calcTrend = (seriesData) => {
+      const data2026 = seriesData.find(y => y.year === '2026')?.data || []
+      const last13 = data2026.slice(-13)
+      const prev13 = data2026.slice(-26, -13)
+      const sumLast = last13.reduce((acc, w) => acc + (w.consumption || 0), 0)
+      const sumPrev = prev13.reduce((acc, w) => acc + (w.consumption || 0), 0)
+      const trend = sumPrev > 0 ? ((sumLast - sumPrev) / sumPrev * 100).toFixed(1) : '0.0'
+      return { total: parseFloat(sumLast.toFixed(2)), trend }
+    }
+
+    const pozos = calcTrend(weeklyData.multiYearData)
+    const riego = calcTrend(weeklyData.multiYearDataRiego)
+    const servicios = calcTrend(weeklyData.multiYearDataServicios)
+
+    setMetrics({ pozos: pozos.total, riego: riego.total, servicios: servicios.total })
+    setPozosTrend(pozos.trend)
+    setRiegoTrend(riego.trend)
+    setServiciosTrend(servicios.trend)
+  }, [weeklyData])
+
+  // Calcular métricas semanales (últimas 4 semanas vs 4 anteriores)
+  useEffect(() => {
+    const calcWeeklyTrend = (seriesData) => {
+      const data2026 = seriesData.find(y => y.year === '2026')?.data || []
+      const last4 = data2026.slice(-4)
+      const prev4 = data2026.slice(-8, -4)
+      const sumLast = last4.reduce((acc, w) => acc + (w.consumption || 0), 0)
+      const sumPrev = prev4.reduce((acc, w) => acc + (w.consumption || 0), 0)
+      const trend = sumPrev > 0 ? ((sumLast - sumPrev) / sumPrev * 100).toFixed(1) : '0.0'
+      return { total: parseFloat(sumLast.toFixed(2)), trend }
+    }
+
+    const pozos = calcWeeklyTrend(weeklyData.multiYearData)
+    const riego = calcWeeklyTrend(weeklyData.multiYearDataRiego)
+    const servicios = calcWeeklyTrend(weeklyData.multiYearDataServicios)
+
+    setWeeklyMetrics({ pozos: pozos.total, riego: riego.total, servicios: servicios.total })
+    setPozosTrendW(pozos.trend)
+    setRiegoTrendW(riego.trend)
+    setServiciosTrendW(servicios.trend)
+  }, [weeklyData])
 
   const getQualityBadge = (quality) => {
     switch (quality) {
@@ -799,7 +850,191 @@ export default function WellsPage() {
               <WellsGeneralCharts />
             )}
 
-            
+
+            {/* Métricas Mensuales */}
+            <div className="flex items-center gap-3 pt-2 border-b pb-3">
+              <CalendarIcon className="h-5 w-5 text-purple-600" />
+              <h2 className="text-lg font-semibold text-gray-900">Métricas Mensuales</h2>
+              <Badge variant="outline" className="text-xs text-purple-700 border-purple-300 bg-purple-50">Últimos 3 meses (~13 semanas)</Badge>
+            </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  {/* Total Pozos */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Pozos</p>
+                          <p className="text-xs text-muted-foreground/70">Últimos 3 meses</p>
+                          <p className="text-2xl font-bold text-foreground mt-1">
+                            {metrics.pozos.toLocaleString()} m³
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            {parseFloat(pozosTrend) > 0 ? (
+                              <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                            )}
+                            <span className={`text-sm ${parseFloat(pozosTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                              {parseFloat(pozosTrend) > 0 ? '+' : ''}{pozosTrend}% vs 3 meses anteriores
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <DropletIcon className="h-6 w-6 text-primary" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Pozos de Riego */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Pozos de Riego</p>
+                          <p className="text-xs text-muted-foreground/70">Pozos (4, 8, 15)</p>
+                          <p className="text-2xl font-bold text-foreground mt-1">
+                            {metrics.riego.toLocaleString()} m³
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            {parseFloat(riegoTrend) > 0 ? (
+                              <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                            )}
+                            <span className={`text-sm ${parseFloat(riegoTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                              {parseFloat(riegoTrend) > 0 ? '+' : ''}{riegoTrend}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                          <Waves className="h-6 w-6 text-green-500" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Pozos de Servicios */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Pozos de Servicios</p>
+                          <p className="text-xs text-muted-foreground/70">Pozos (11, 12, 3, 7, 14)</p>
+                          <p className="text-2xl font-bold text-foreground mt-1">
+                            {metrics.servicios.toLocaleString()} m³
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            {parseFloat(serviciosTrend) > 0 ? (
+                              <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                            )}
+                            <span className={`text-sm ${parseFloat(serviciosTrend) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                              {parseFloat(serviciosTrend) > 0 ? '+' : ''}{serviciosTrend}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                          <DropletIcon className="h-6 w-6 text-blue-500" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+            {/* Métricas Semanales */}
+            <div className="flex items-center gap-3 pt-2 border-b pb-3">
+              <ClockIcon className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900">Métricas Semanales</h2>
+              <Badge variant="outline" className="text-xs text-blue-700 border-blue-300 bg-blue-50">Últimas 4 semanas</Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Total Pozos - Semanal */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Pozos</p>
+                      <p className="text-xs text-muted-foreground/70">Servicios + Riego — Últimas 4 semanas</p>
+                      <p className="text-2xl font-bold text-foreground mt-1">
+                        {weeklyMetrics.pozos.toLocaleString()} m³
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {parseFloat(pozosTrendW) > 0 ? (
+                          <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                        )}
+                        <span className={`text-sm ${parseFloat(pozosTrendW) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                          {parseFloat(pozosTrendW) > 0 ? '+' : ''}{pozosTrendW}% vs 4 semanas anteriores
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <DropletIcon className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pozos de Riego - Semanal */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Pozos de Riego</p>
+                      <p className="text-xs text-muted-foreground/70">Pozos (4, 8, 15) — Últimas 4 semanas</p>
+                      <p className="text-2xl font-bold text-foreground mt-1">
+                        {weeklyMetrics.riego.toLocaleString()} m³
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {parseFloat(riegoTrendW) > 0 ? (
+                          <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                        )}
+                        <span className={`text-sm ${parseFloat(riegoTrendW) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                          {parseFloat(riegoTrendW) > 0 ? '+' : ''}{riegoTrendW}% vs 4 semanas anteriores
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <Waves className="h-6 w-6 text-green-500" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pozos de Servicios - Semanal */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Pozos de Servicios</p>
+                      <p className="text-xs text-muted-foreground/70">Pozos (11, 12, 3, 7, 14) — Últimas 4 semanas</p>
+                      <p className="text-2xl font-bold text-foreground mt-1">
+                        {weeklyMetrics.servicios.toLocaleString()} m³
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {parseFloat(serviciosTrendW) > 0 ? (
+                          <TrendingUpIcon className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <TrendingDownIcon className="h-4 w-4 text-green-500" />
+                        )}
+                        <span className={`text-sm ${parseFloat(serviciosTrendW) > 0 ? 'text-destructive' : 'text-green-500'}`}>
+                          {parseFloat(serviciosTrendW) > 0 ? '+' : ''}{serviciosTrendW}% vs 4 semanas anteriores
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                      <DropletIcon className="h-6 w-6 text-blue-500" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Sección de detalles adicionales */}
             <div className="flex justify-center">
               {/* Alertas de pozos */}
