@@ -1448,7 +1448,7 @@ export default function EditMonthlyWaterReadingsPage() {
                 </p>
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                   <p className="text-xs text-red-800 dark:text-red-200">
-                    <strong>Advertencia:</strong> Se eliminarán permanentemente todas las lecturas de esta semana.
+                    <strong>Advertencia:</strong> Se eliminarán permanentemente todas las lecturas de este mes.
                   </p>
                 </div>
               </div>

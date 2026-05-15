@@ -101,20 +101,7 @@ export const PERMISSIONS = {
     dashboard: true,
   },
   
-  // User básico - solo lectura
-  user: {
-    water: true,
-    gas: true,
-    ptar: true,
-    alerts: true,
-    predictions: true,
-    analysis: true,
-    contact: true,
-    addData: false,
-    correos: false,
-    excelToSql: false,
-    dashboard: true,
-  },
+  
 };
 
 // Función para verificar si un rol tiene permiso
