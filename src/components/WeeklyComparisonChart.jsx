@@ -160,13 +160,23 @@ export default function WeeklyComparisonChart({
       }
     }
 
-    const currentTotal = processedCurrent.reduce((sum, w) => sum + w.consumption, 0)
-    const previousTotal = processedPrevious.reduce((sum, w) => sum + w.consumption, 0)
+    // Determinar la última semana con datos reales en el año actual
+    const weeksWithData = processedCurrent.filter(w => w.consumption > 0)
+    const maxWeekWithData = weeksWithData.length > 0
+      ? Math.max(...weeksWithData.map(w => w.week))
+      : 52
+
+    // Filtrar ambos años a las mismas semanas transcurridas
+    const currentFiltered = processedCurrent.filter(w => w.week <= maxWeekWithData)
+    const previousFiltered = processedPrevious.filter(w => w.week <= maxWeekWithData)
+
+    const currentTotal = currentFiltered.reduce((sum, w) => sum + w.consumption, 0)
+    const previousTotal = previousFiltered.reduce((sum, w) => sum + w.consumption, 0)
     const yearOverYear = previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal * 100) : 0
-    
-    const avgWeeklyCurrent = currentTotal / processedCurrent.length
-    const avgWeeklyPrevious = processedPrevious.length > 0 
-      ? previousTotal / processedPrevious.length 
+
+    const avgWeeklyCurrent = currentFiltered.length > 0 ? currentTotal / currentFiltered.length : 0
+    const avgWeeklyPrevious = previousFiltered.length > 0
+      ? previousTotal / previousFiltered.length
       : 0
 
     // Comparación semana actual vs semana anterior
