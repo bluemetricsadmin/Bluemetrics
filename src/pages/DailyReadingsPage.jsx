@@ -360,6 +360,8 @@ const DailyReadingsPage = () => {
                 icon={ArrowUpDown}
                 iconColor="text-green-600"
               />
+
+              {/*
               <MetricCard
                 title="de Ahorro"
                 comparison={parseFloat(metricasPunto.ahorroPorcentaje)}
@@ -368,6 +370,9 @@ const DailyReadingsPage = () => {
                 icon={Percent}
                 iconColor="text-purple-600"
               />
+              
+              */}
+              
             </div>
           </div>
         )}
