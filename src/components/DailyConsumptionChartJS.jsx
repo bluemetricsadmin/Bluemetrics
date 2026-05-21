@@ -268,9 +268,14 @@ const DailyConsumptionChartJS = ({
   const comparisonStats = useMemo(() => {
     if (!useMultiYear || processedMultiYear.length === 0) return null
 
+    // Determinar el último índice con datos reales en el año más reciente
+    const latestProcessed = processedMultiYear[processedMultiYear.length - 1].processed
+    const indicesWithData = latestProcessed.reduce((acc, d, i) => (d.valor > 0 ? i : acc), -1)
+    const maxIndexWithData = indicesWithData >= 0 ? indicesWithData : latestProcessed.length - 1
+
     const yearTotals = processedMultiYear.map(y => ({
       year: y.year,
-      total: y.processed.reduce((sum, d) => sum + d.valor, 0)
+      total: y.processed.slice(0, maxIndexWithData + 1).reduce((sum, d) => sum + d.valor, 0)
     }))
 
     const latest = yearTotals[yearTotals.length - 1]
@@ -392,10 +397,12 @@ const DailyConsumptionChartJS = ({
             if (!contextItems || contextItems.length === 0) return ''
 
             const firstItem = contextItems[0]
-            const { datasetIndex, dataIndex } = firstItem
+            const { dataIndex } = firstItem
 
-            if (useMultiYear && processedMultiYear[datasetIndex]) {
-              const point = processedMultiYear[datasetIndex].processed[dataIndex]
+            if (useMultiYear && processedMultiYear.length > 0) {
+              // Usar siempre el año más reciente para el título (es el que define el eje X)
+              const latestYear = processedMultiYear[processedMultiYear.length - 1]
+              const point = latestYear.processed[dataIndex]
               return point ? `Fecha: ${construirFechaTooltip(point, vistaActual)}` : firstItem.label
             }
 

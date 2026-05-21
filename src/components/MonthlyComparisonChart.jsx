@@ -155,13 +155,23 @@ export default function MonthlyComparisonChart({
       }
     }
 
-    const currentTotal = processedCurrent.reduce((sum, m) => sum + m.consumption, 0)
-    const previousTotal = processedPrevious.reduce((sum, m) => sum + m.consumption, 0)
+    // Determinar el último mes con datos reales en el año actual
+    const monthsWithData = processedCurrent.filter(m => m.consumption > 0)
+    const maxMonthWithData = monthsWithData.length > 0
+      ? Math.max(...monthsWithData.map(m => m.month))
+      : 12
+
+    // Filtrar ambos años a los mismos meses transcurridos
+    const currentFiltered = processedCurrent.filter(m => m.month <= maxMonthWithData)
+    const previousFiltered = processedPrevious.filter(m => m.month <= maxMonthWithData)
+
+    const currentTotal = currentFiltered.reduce((sum, m) => sum + m.consumption, 0)
+    const previousTotal = previousFiltered.reduce((sum, m) => sum + m.consumption, 0)
     const yearOverYear = previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal * 100) : 0
 
-    const avgMonthlyCurrent = currentTotal / processedCurrent.length
-    const avgMonthlyPrevious = processedPrevious.length > 0
-      ? previousTotal / processedPrevious.length
+    const avgMonthlyCurrent = currentFiltered.length > 0 ? currentTotal / currentFiltered.length : 0
+    const avgMonthlyPrevious = previousFiltered.length > 0
+      ? previousTotal / previousFiltered.length
       : 0
 
     const lastMonth = processedCurrent[processedCurrent.length - 1]
