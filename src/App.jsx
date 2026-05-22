@@ -26,6 +26,7 @@ import AlertsPage from './pages/AlertsPage'
 import PredictionsPage from './pages/PredictionsPage'
 import ContactPage from './pages/ContactPage'
 import ConfirmationPage from './pages/ConfirmationPage'
+import NosotrosPage from './pages/NosotrosPage'
 import CorreosPage from './pages/CorreosPage'
 import ExcelToSqlPage from './pages/ExcelToSqlPage'
 import CsvToSqlDailyPage from './pages/CsvToSqlDailyPage'
@@ -67,6 +68,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/contacto" element={<ContactPage />} />
+        <Route path="/nosotros" element={<NosotrosPage />} />
         <Route path="/confirmacion" element={<ConfirmationPage />} />
 
         {/* Dashboard - requiere permiso dashboard */}

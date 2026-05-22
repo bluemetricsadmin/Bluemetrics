@@ -3,6 +3,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import AquaNetLogo from "../components/svg/AquaNetLogo";
 import AquaNetText from "../components/svg/AquaNetText";
+import { FaWhatsapp } from "react-icons/fa";
 import { 
   CheckCircle,
   ArrowRight,
@@ -99,7 +100,7 @@ const ConfirmationPage = () => {
               <CardContent className="p-8">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-4">
-                    <Phone className="w-6 h-6 text-white" />
+                    <FaWhatsapp className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold">¿Prefieres contactarnos?</h3>

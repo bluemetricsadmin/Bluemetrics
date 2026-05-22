@@ -3,7 +3,10 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import TecIcon from '../assets/tec.svg';
 import LogoBlueMetrics from '../assets/BlueMetrics.png';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { FaLinkedin } from 'react-icons/fa';
+import { FaInstagram } from 'react-icons/fa6';
+
 import { 
   Droplets, 
   Zap, 
@@ -107,10 +110,7 @@ const Header = () => {
       { name: 'Salud', path: 'salud-section' },
       { name: 'Campus', path: 'campus-section' }
     ]},
-    { label: 'Recursos', submenu: [
-      { name: 'Calculadora de ROI', path: 'roi-section' },
-      { name: 'Casos de Éxito', path: 'casos-section' }
-    ]},
+    
   ];
 
   return (
@@ -972,7 +972,7 @@ const ROIEngineSection = () => {
                   className="w-full py-4 rounded-xl bg-gradient-to-r from-[#0A4C8A] to-[#1FB6C9] text-white font-semibold flex items-center justify-center gap-2 hover:shadow-[0_0_30px_rgba(31,182,201,0.4)] transition-all duration-300"
                 >
                   <Download className="w-5 h-5" />
-                  Solicitar reporte personalizado
+                  Solicitar Información ahora
                 </button>
               </div>
             </div>
@@ -1176,8 +1176,8 @@ const FooterSection = () => {
             <div>
               <h4 className="text-white font-semibold mb-4">Empresa</h4>
               <ul className="space-y-2 text-white/50 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Nosotros</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Casos de Éxito</a></li>
+                <li><Link to="/nosotros" className="hover:text-white transition-colors">Nosotros</Link></li>
+                
                 <li><button onClick={() => navigate('/contacto')} className="hover:text-white transition-colors">Contacto</button></li>
               </ul>
             </div>
@@ -1197,8 +1197,10 @@ const FooterSection = () => {
               © 2026 BlueMetrics MX. Todos los derechos reservados.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="text-white/30 hover:text-white transition-colors text-sm">LinkedIn</a>
-              <a href="#" className="text-white/30 hover:text-white transition-colors text-sm">Twitter</a>
+            
+            
+              <a href="https://www.linkedin.com/company/108869672/admin/page-posts/published/" className="text-white/30 hover:text-white transition-colors text-sm"><FaLinkedin className='text-2xl' /></a>
+              <a href="https://www.instagram.com/blue_metrics_ai?igsh=anY5bWdicnBuMDNn" className="text-white/30 hover:text-white transition-colors text-sm"><FaInstagram className='text-2xl' /></a>
             </div>
           </div>
         </div>

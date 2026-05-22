@@ -4,7 +4,8 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import BrevoForm from '../components/BrevoForm';
 import LogoBlueMetrics from '../assets/BlueMetrics.png';
-import { ArrowLeft, Mail, Phone, MapPin } from 'lucide-react';
+import { ArrowLeft, Mail, MapPin } from 'lucide-react';
+import { FaWhatsapp } from "react-icons/fa";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -102,7 +103,7 @@ const ContactPage = () => {
               <div className="p-6 rounded-2xl bg-gradient-to-br from-[#FFB020]/10 to-transparent border border-white/10 hover:border-[#FFB020]/30 transition-all duration-300">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-[#FFB020]/20 flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-6 h-6 text-[#FFB020]" />
+                    <FaWhatsapp className="w-6 h-6 text-[#FFB020]" />
                   </div>
                   <div>
                     <h3 className="text-white font-semibold mb-1">Teléfono</h3>
@@ -118,7 +119,7 @@ const ContactPage = () => {
                   </div>
                   <div>
                     <h3 className="text-white font-semibold mb-1">Ubicación</h3>
-                    <p className="text-white/60">Monterrey, Nuevo León, México</p>
+                    <p className="text-white/60">Ramos Arizpe, Coahuila, México</p>
                   </div>
                 </div>
               </div>

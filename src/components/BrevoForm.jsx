@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from './ui/card';
 import { Mail, User, Phone, Building, ArrowRight, CheckCircle, MessageSquare } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
+
 const BrevoForm = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,7 +85,7 @@ const BrevoForm = () => {
           {/* Título */}
           <div className="text-center mb-8">
             <h3 className="text-3xl font-bold text-blue-900 mb-3">
-              ¡Solicita tu demo ahora!
+              ¡Solicita información ahora!
             </h3>
             <p className="text-blue-700 text-lg leading-relaxed">
               Descubre cómo BlueMetrics puede transformar la gestión de los recursos de tu empresa
@@ -162,7 +163,7 @@ const BrevoForm = () => {
                   id="TELEFONO" 
                   name="TELEFONO" 
                   autoComplete="off" 
-                  placeholder="+52 (844) 123-4567" 
+                  placeholder="+52 (844) 5447606" 
                 />
               </div>
             </div>
@@ -218,7 +219,7 @@ const BrevoForm = () => {
                 </>
               ) : (
                 <>
-                  Solicitar demo gratuito
+                  Solicitar información
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
