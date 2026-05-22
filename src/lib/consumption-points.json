@@ -901,6 +901,22 @@
           ]
         },
         {
+          "id": "caffenio",
+          "name": "Caffenio",
+          "type": "edificio",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 14685
+            },
+            {
+              "week": 2,
+              "reading": 14880
+            }
+          ]
+        },
+        {
           "id": "residencias_10_15_llenado",
           "name": "Residencias 10 y 15 llenado",
           "type": "residencia",
@@ -967,6 +983,22 @@
           ]
         },
         {
+          "id": "san_huevito",
+          "name": "San Huevito",
+          "type": "edificio",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 48580
+            },
+            {
+              "week": 2,
+              "reading": 49185
+            }
+          ]
+        },
+        {
           "id": "cedes_site",
           "name": "Cedes Site",
           "type": "edificio",
@@ -1014,22 +1046,7 @@
             }
           ]
         },
-           {
-          "id": "hub",
-          "name": "HUB",
-          "type": "concesion",
-          "unit": "m³",
-          "weeklyData": [
-            {
-              "week": 1,
-              "reading": 19780
-            },
-            {
-              "week": 2,
-              "reading": 20075
-            }
-          ]
-        },
+           
         {
           "id": "expedition_bread",
           "name": "Expedition Bread",
@@ -1062,23 +1079,24 @@
             }
           ]
         }, 
-        
         {
-          "id": "caffenio",
-          "name": "Caffenio",
-          "type": "edificio",
+          "id": "hub",
+          "name": "HUB",
+          "type": "concesion",
           "unit": "m³",
           "weeklyData": [
             {
               "week": 1,
-              "reading": 14685
+              "reading": 19780
             },
             {
               "week": 2,
-              "reading": 14880
+              "reading": 20075
             }
           ]
         },
+        
+        
         {
           "id": "cedes_e2",
           "name": "Cedes-E2",
@@ -1420,6 +1438,22 @@
         {
           "id": "aulas_4_norte",
           "name": "Aulas 4 Norte",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 31380
+            },
+            {
+              "week": 2,
+              "reading": 31775
+            }
+          ]
+        },
+        {
+          "id": "aulas_4_centro",
+          "name": "Aulas 4 Centro",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": [
@@ -1779,6 +1813,22 @@
           ]
         },
         {
+          "id": "cdi_1",
+          "name": "CDI. 1",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 31380
+            },
+            {
+              "week": 2,
+              "reading": 31775
+            }
+          ]
+        },
+        {
           "id": "aulas_4_maestros",
           "name": "Aulas 4 maestros",
           "type": "edificio_academico",
@@ -1791,6 +1841,22 @@
             {
               "week": 2,
               "reading": 14880
+            }
+          ]
+        },
+        {
+          "id": "cdi_2",
+          "name": "CDI. 2",
+          "type": "edificio_academico",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 31380
+            },
+            {
+              "week": 2,
+              "reading": 31775
             }
           ]
         },
@@ -2218,22 +2284,6 @@
           ]
         },
         {
-          "id": "wellness_te_rebosadero",
-          "name": "Wellness T.E. rebosadero",
-          "type": "purga",
-          "unit": "m³",
-          "weeklyData": [
-            {
-              "week": 1,
-              "reading": 6885
-            },
-            {
-              "week": 2,
-              "reading": 6975
-            }
-          ]
-        },
-        {
           "id": "wellness_te_purga",
           "name": "Wellness T.E. purga (importante)",
           "type": "purga",
@@ -2250,6 +2300,23 @@
             }
           ]
         },
+        {
+          "id": "wellness_te_rebosadero",
+          "name": "Wellness T.E. rebosadero",
+          "type": "purga",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 6885
+            },
+            {
+              "week": 2,
+              "reading": 6975
+            }
+          ]
+        },
+        
         {
           "id": "cedes_tinaco_riego_pluvial",
           "name": "Cedes Tinaco Riego SS2 pluvial  (fuera de servicio)",
