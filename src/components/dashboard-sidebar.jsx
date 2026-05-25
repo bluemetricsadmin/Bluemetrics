@@ -158,14 +158,6 @@ export function DashboardSidebar() {
         { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] }
       ]
     },
-    {
-      id: 'admin',
-      label: 'Administración',
-      allowedRoles: ['admin'],
-      items: [
-        { id: "correos", label: "Correos", path: "/correos", icon: Mail, badge: "Admin", allowedRoles: ['admin'] }
-      ]
-    }
   ]
 
   // Filtrar menú según rol del usuario
