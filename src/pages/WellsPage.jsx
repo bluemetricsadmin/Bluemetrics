@@ -630,6 +630,25 @@ export default function WellsPage() {
     }
   }
 
+  const formatMeterLabel = (col) => {
+    if (!col) return null
+    return col
+      .replace(/^l_/, '')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase())
+  }
+
+  const getAlertWellLabel = (alert) => {
+    if (alert.event_type === 'posible_fuga') {
+      return formatMeterLabel(alert.meter_column) || 'Medidor desconocido'
+    }
+
+    const mappedWellName = wellsConfig.find(w => w.id === alert.well_id)?.name
+    if (mappedWellName) return mappedWellName
+
+    return alert.well_id != null ? `Pozo ${alert.well_id}` : 'Pozo desconocido'
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar fijo */}
@@ -1062,7 +1081,7 @@ export default function WellsPage() {
                       </div>
                     ) : (
                       recentAlerts.map((alert) => {
-                        const wellName = wellsConfig.find(w => w.id === alert.well_id)?.name || `Pozo ${alert.well_id}`
+                        const wellName = getAlertWellLabel(alert)
                         const isCritical = alert.severity === 'critica'
                         const isPreventive = alert.severity === 'preventiva'
                         const isConsumo = alert.event_type === 'alerta_consumo'
