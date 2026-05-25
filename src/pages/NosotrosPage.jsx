@@ -152,17 +152,17 @@ const NosotrosPage = () => {
             Nosotros
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-            Inteligencia aplicada al consumo de recursos criticos
+            Inteligencia aplicada al consumo de recursos hídricos y energéticos
           </h1>
           <p className="text-lg sm:text-xl text-white/75 leading-relaxed max-w-4xl">
-            BlueMetrics ayuda a empresas e industrias a entender, monitorear y optimizar el consumo de agua,
-            energía y gas a través de una plataforma inteligente basada en datos.
+            BlueMetrics ayuda a empresas e industrias a analizar, monitorear y optimizar el consumo de agua,
+            gas y electricidad a través de una plataforma inteligente basada en datos.
           </p>
         </section>
 
         <section ref={contentRef} className="grid lg:grid-cols-2 gap-6 sm:gap-8 mb-12 sm:mb-16">
           <article className="p-7 sm:p-8 rounded-3xl bg-gradient-to-br from-[#0A4C8A]/25 to-transparent border border-white/10">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">Datos que se convierten en accion</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">Datos que se convierten en acción</h2>
             <p className="text-white/75 leading-relaxed">
               Centralizamos información proveniente de medidores, sensores, archivos Excel y registros manuales
               para transformar datos dispersos en indicadores accionables, alertas y visualizaciones en tiempo real.
@@ -170,7 +170,7 @@ const NosotrosPage = () => {
           </article>
 
           <article className="p-7 sm:p-8 rounded-3xl bg-gradient-to-br from-[#1FB6C9]/20 to-transparent border border-white/10">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">Mision orientada a resultados</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-4">Misión orientada a resultados</h2>
             <p className="text-white/75 leading-relaxed">
               Nuestra misión es ayudar a las organizaciones a reducir desperdicios, detectar anomalías,
               mejorar la toma de decisiones y avanzar hacia una operación más eficiente y sostenible.
