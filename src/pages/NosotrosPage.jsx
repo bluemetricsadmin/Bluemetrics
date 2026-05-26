@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -15,7 +15,18 @@ const NosotrosPage = () => {
   const cardsRef = useRef([]);
   const ctaRef = useRef(null);
 
-  useEffect(() => {
+
+
+useEffect(() => {
+    // 1. Forzar el scroll arriba de forma instantánea al montar la vista
+    // Usamos 'instant' (o 'auto') para que no haga un scroll suave desde abajo
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
+    // 2. Limpiar memoria y recalcular ScrollTrigger
+    ScrollTrigger.clearScrollMemory?.();
+    window.history.scrollRestoration = 'manual'; // Previene que el navegador pelee con la posición
+
+    // 3. Inicializar GSAP
     const ctx = gsap.context(() => {
       gsap.fromTo(
         headerRef.current,
@@ -83,8 +94,18 @@ const NosotrosPage = () => {
       );
     });
 
-    return () => ctx.revert();
-  }, []);
+    // 4. Refrescar los triggers basándose en la nueva posición de scroll (arriba)
+    // Es crucial usar un pequeño setTimeout para darle tiempo al DOM a asentarse tras el scrollTo
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 50);
+
+    return () => {
+      ctx.revert();
+      // Opcional: restaurar el comportamiento nativo al desmontar
+      window.history.scrollRestoration = 'auto'; 
+    };
+  }, []); // <-- El array vacío asegura que esto solo corra al montar el componente
 
   const pillars = [
     {
