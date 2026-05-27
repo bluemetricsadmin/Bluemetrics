@@ -96,6 +96,8 @@ const Header = () => {
   };
 
   const menuItems = [
+    { label: 'Nosotros', submenu: [{ name: 'Conócenos', path: 'conocenos-section', onclick: () => navigate('/nosotros') }] },
+    
     { label: 'Soluciones', submenu: [
       { name: 'Agua', path: 'agua-section' },
       { name: 'Electricidad', path: 'electricidad-section' },
@@ -110,6 +112,7 @@ const Header = () => {
       { name: 'Salud', path: 'salud-section' },
       { name: 'Campus', path: 'campus-section' }
     ]},
+    
     
   ];
 
@@ -154,7 +157,7 @@ const Header = () => {
                     {item.submenu.map((sub) => (
                       <button 
                         key={sub.name}
-                        onClick={() => handleNavigation(sub.path)}
+                        onClick={() => sub.onclick ? sub.onclick() : handleNavigation(sub.path)}
                         className="block w-full text-left px-4 py-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                       >
                         {sub.name}
@@ -214,7 +217,7 @@ const Header = () => {
                     {item.submenu.map((sub) => (
                       <button 
                         key={sub.name}
-                        onClick={() => handleNavigation(sub.path)}
+                        onClick={() => sub.onclick ? sub.onclick() : handleNavigation(sub.path)}
                         className="block w-full text-left px-4 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-sm"
                       >
                         {sub.name}
