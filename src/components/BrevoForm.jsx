@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Mail, User, Phone, Building, ArrowRight, CheckCircle, MessageSquare } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+//import { supabase } from '../supabaseClient';
 
 
 const BrevoForm = () => {
@@ -25,6 +25,7 @@ const BrevoForm = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
+    const APP_SCRIPT_URL = import.meta.env.VITE_APP_SCRIPT_URL;
     try {
       // Obtener datos del formulario
       const formData = new FormData(e.target);
@@ -38,30 +39,18 @@ const BrevoForm = () => {
       // Construir el remitente completo
       const remitente = apellidos ? `${nombre} ${apellidos}` : nombre;
       
-      // Insertar en Supabase tabla 'correos'
-      const { data, error } = await supabase
-        .from('correos')
-        .insert([
-          {
-            remitente: remitente,
-            email: email,
-            telefono: telefono || null,
-            empresa: empresa || null,
-            asunto: 'Solicitud de demo desde Landing Page',
-            mensaje: mensaje || `Solicitud de contacto de ${remitente}`,
-            leido: false,
-            importante: false,
-            categoria: 'consulta'
-          }
-        ])
-        .select();
+      // Enviar datos a Google Apps Script
+      // content-type: text/plain es requerido con mode:'no-cors' (header simple)
+      await fetch(APP_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'content-type': 'text/plain',
+        },
+        body: JSON.stringify({ nombre, apellidos, correo: email, telefono, empresa, mensaje }),
+      });
 
-      if (error) {
-        console.error('❌ Error al guardar en Supabase:', error);
-        throw error;
-      }
-
-      console.log('✅ Correo guardado exitosamente en Supabase:', data);
+      console.log('✅ Correo guardado exitosamente en Google Apps Script');
       
       // Redirigir a la página de confirmación
       navigate('/confirmacion');
