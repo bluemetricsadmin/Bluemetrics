@@ -44,9 +44,9 @@ export default function AddWeeklyReadingsPage() {
   }
 
   // Fórmulas ajustadas: consumo final = consumo_base - consumo(factores)
-  const newFormulas1 = ['residencias_10_15', 'estadio_banorte', 'estadio_banorte_purgas']
+  const newFormulas1 = ['residencias_10_15', 'estadio_banorte', 'estadio_banorte_purgas','aulas_4_sur', 'aulas_4_maestros']
   const newFormulas2 = ['nucleo', 'aulas_3']
-  const factorConsumption1 = ['caffenio', 'estadio_azul', 'wellnes_te_purga']
+  const factorConsumption1 = ['caffenio', 'estadio_azul', 'wellnes_te_purga','cdi_1', 'cdi_2']
   const factorConsumption2 = ['expedition', 'hub', 'basanti', 'aulas_3_sr_latino']
 
   // Mapa derivado: formulaId → [factorIds a restar]

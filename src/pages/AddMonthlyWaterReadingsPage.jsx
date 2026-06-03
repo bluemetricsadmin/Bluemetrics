@@ -60,7 +60,29 @@ export default function AddMonthlyWaterReadingsPage() {
   
   // Estado para seleccionar tipo de tabla destino
   const [targetTable, setTargetTable, clearTargetTable] = usePersistedState('monthly_water_targetTable', 'ambas') // 'lectura', 'consumo' o 'ambas'
-  
+
+  // Casos especiales con factor multiplicador
+  const specialCases = {
+    'circuito_6_residencias': 10,
+    'circuito_8_campus': 10,
+    'medidor_general_pozos': 10,
+    'campo_soft_bol': 10
+  }
+
+  // Fórmulas ajustadas: consumo final = consumo_base - consumo(factores)
+  const newFormulas1 = ['residencias_10_15', 'estadio_banorte', 'estadio_banorte_purgas','aulas_4_sur', 'aulas_4_maestros']
+  const newFormulas2 = ['nucleo', 'aulas_3']
+  const factorConsumption1 = ['caffenio', 'estadio_azul', 'wellnes_te_purga','cdi_1', 'cdi_2']
+  const factorConsumption2 = ['expedition', 'hub', 'basanti', 'aulas_3_sr_latino']
+
+  // Mapa derivado: formulaId → [factorIds a restar]
+  const adjustmentMap = {}
+  newFormulas1.forEach((id, i) => { adjustmentMap[id] = [factorConsumption1[i]] })
+  const _chunkSize = factorConsumption2.length / newFormulas2.length
+  newFormulas2.forEach((id, i) => {
+    adjustmentMap[id] = factorConsumption2.slice(i * _chunkSize, (i + 1) * _chunkSize)
+  })
+
   // Función para limpiar todos los datos persistidos
   const clearAllPersistedData = () => {
     clearStep()
@@ -283,14 +305,6 @@ export default function AddMonthlyWaterReadingsPage() {
       // Obtener mes anterior y calcular consumo
       const prevMonth = await fetchPreviousMonthReadings()
       
-      // Casos especiales con factor 10
-      const specialCases = {
-        'circuito_6_residencias': 10,
-        'circuito_8_campus': 10,
-        'medidor_general_pozos': 10,
-        'campo_soft_bol': 10
-      }
-
       // Calcular consumo
       const newConsumption = {}
       consumptionPointsData.categories.forEach(category => {
@@ -309,6 +323,20 @@ export default function AddMonthlyWaterReadingsPage() {
         })
       })
       
+      // Segunda pasada: aplicar ajustes (restar consumos de factores)
+      Object.entries(adjustmentMap).forEach(([formulaId, factorIds]) => {
+        const formulaKey = `${formulaId}_${readingKey}`
+        if (newConsumption[formulaKey] !== undefined) {
+          factorIds.forEach(factorId => {
+            const factorKey = `${factorId}_${readingKey}`
+            const factorVal = newConsumption[factorKey]
+            if (factorVal !== undefined && !isNaN(factorVal)) {
+              newConsumption[formulaKey] -= factorVal
+            }
+          })
+        }
+      })
+
       setConsumption(newConsumption)
       console.log('📊 Consumo calculado para', Object.keys(newConsumption).length, 'puntos')
 
@@ -471,17 +499,44 @@ export default function AddMonthlyWaterReadingsPage() {
       const currentValue = parseFloat(value)
       if (!isNaN(currentValue)) {
         const previousValue = parseFloat(previousMonthReadings[`l_${pointId}`]) || 0
-        
-        const specialCases = {
-          'circuito_6_residencias': 10,
-          'circuito_8_campus': 10,
-          'medidor_general_pozos': 10,
-          'campo_soft_bol': 10
-        }
         const factor = specialCases[pointId] || 1
-        const consumoValue = (currentValue - previousValue) * factor
-        
-        setConsumption(prev => ({ ...prev, [key]: consumoValue }))
+        const baseConsumption = (currentValue - previousValue) * factor
+
+        setConsumption(prev => {
+          const updated = { ...prev, [key]: baseConsumption }
+
+          // Si el punto editado es una fórmula ajustada, aplicar su ajuste
+          if (adjustmentMap[pointId]) {
+            let adjusted = baseConsumption
+            adjustmentMap[pointId].forEach(factorId => {
+              const factorVal = updated[`${factorId}_${readingKey}`]
+              if (factorVal !== undefined && !isNaN(factorVal)) {
+                adjusted -= factorVal
+              }
+            })
+            updated[key] = adjusted
+          }
+
+          // Si el punto editado es un factor de alguna fórmula, recalcular esa fórmula
+          Object.entries(adjustmentMap).forEach(([formulaId, factorIds]) => {
+            if (factorIds.includes(pointId)) {
+              const formulaKey = `${formulaId}_${readingKey}`
+              const formulaCurrent = parseFloat(newReadings[formulaKey])
+              if (!isNaN(formulaCurrent)) {
+                const formulaPrev = parseFloat(previousMonthReadings[`l_${formulaId}`]) || 0
+                const formulaFactor = specialCases[formulaId] || 1
+                let formulaAdjusted = (formulaCurrent - formulaPrev) * formulaFactor
+                factorIds.forEach(fId => {
+                  const fVal = updated[`${fId}_${readingKey}`]
+                  if (fVal !== undefined && !isNaN(fVal)) formulaAdjusted -= fVal
+                })
+                updated[formulaKey] = formulaAdjusted
+              }
+            }
+          })
+
+          return updated
+        })
       }
     }
   }
