@@ -428,6 +428,18 @@ export default function EditWeeklyReadingsPage() {
           'campo_soft_bol': 10
         }
 
+        // Fórmulas ajustadas: consumo final = consumo_base - consumo(factores)
+        const newFormulas1 = ['residencias_10_15', 'estadio_banorte', 'estadio_banorte_purgas']
+        const newFormulas2 = ['nucleo', 'aulas_3']
+        const factorConsumption1 = ['caffenio', 'estadio_azul', 'wellnes_te_purga']
+        const factorConsumption2 = ['expedition', 'hub', 'basanti', 'aulas_3_sr_latino']
+        const adjustmentMap = {}
+        newFormulas1.forEach((id, i) => { adjustmentMap[id] = [factorConsumption1[i]] })
+        const chunkSize = factorConsumption2.length / newFormulas2.length
+        newFormulas2.forEach((id, i) => {
+          adjustmentMap[id] = factorConsumption2.slice(i * chunkSize, (i + 1) * chunkSize)
+        })
+
         // Calcular consumo para cada punto
         const consumoTableName = `lecturas_semana_agua_consumo_${selectedYear}`
         const consumoData = {
@@ -453,6 +465,20 @@ export default function EditWeeklyReadingsPage() {
               consumoCount++
             }
           })
+        })
+
+        // Segunda pasada: aplicar ajustes (restar consumos de factores)
+        Object.entries(adjustmentMap).forEach(([formulaId, factorIds]) => {
+          const formulaField = `l_${formulaId}`
+          if (consumoData[formulaField] !== undefined) {
+            factorIds.forEach(factorId => {
+              const factorField = `l_${factorId}`
+              const factorVal = consumoData[factorField]
+              if (factorVal !== undefined && !isNaN(factorVal)) {
+                consumoData[formulaField] -= factorVal
+              }
+            })
+          }
         })
 
         if (consumoCount > 0) {
