@@ -153,8 +153,8 @@ export function DashboardSidebar() {
       label: 'Análisis',
       allowedRoles: ['admin', 'ejecutivo', 'gas', 'ptar', 'user'],
       items: [
-        { id: "analysis-section", label: "Centro de Análisis", path: "/analisis", icon: BarChart3, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] },
-        { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'user'] },
+        /*{ id: "analysis-section", label: "Centro de Análisis", path: "/analisis", icon: BarChart3, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] },
+        { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'user'] },*/
         { id: "alerts", label: "Alertas", path: "/alertas", icon: Bell, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] }
       ]
     },
