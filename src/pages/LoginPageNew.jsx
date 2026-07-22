@@ -35,7 +35,7 @@ const LoginPage = () => {
     if (user?.role === 'datos') return '/agregar-lecturas';
     
     // Para otros roles, usar el sistema de permisos existente
-    if (can('dashboard')) return '/dashboard';
+    //if (can('dashboard')) return '/dashboard';
     if (can('water')) return '/consumo';
     if (can('gas')) return '/consumo-gas';
     if (can('ptar')) return '/ptar';
