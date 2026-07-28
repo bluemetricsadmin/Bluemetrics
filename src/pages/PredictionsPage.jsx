@@ -6,19 +6,14 @@ import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { 
   Brain, 
-  TrendingUp, 
   Target, 
-  Zap, 
+  RefreshCw,
+  Loader2,
   AlertTriangle,
   CheckCircle,
-  Calendar,
-  Settings,
-  Download,
-  RefreshCw,
   Activity,
   BarChart3,
-  LineChart,
-  Eye
+  LineChart
 } from "lucide-react"
 import {
   Chart as ChartJS,
@@ -32,7 +27,8 @@ import {
   Legend,
   Filler,
 } from 'chart.js'
-import { Line, Bar } from 'react-chartjs-2'
+import { Bar, Line } from 'react-chartjs-2'
+import { usePredictions } from '../hooks/usePredictions'
 
 ChartJS.register(
   CategoryScale,
@@ -46,251 +42,103 @@ ChartJS.register(
   Filler
 )
 
-// Datos fake de predicciones
-const predictionsData = {
-  daily: [
-    { day: "Lun", actual: 54.2, predicted: 52.8, confidence: 94, weather: "soleado", factors: ["temperatura", "demanda_industrial"] },
-    { day: "Mar", actual: 58.1, predicted: 55.6, confidence: 91, weather: "nublado", factors: ["humedad", "operaciones"] },
-    { day: "Mié", actual: null, predicted: 61.3, confidence: 88, weather: "lluvioso", factors: ["lluvia", "reduccion_riego"] },
-    { day: "Jue", actual: null, predicted: 58.7, confidence: 92, weather: "soleado", factors: ["temperatura", "demanda_normal"] },
-    { day: "Vie", actual: null, predicted: 63.2, confidence: 85, weather: "caluroso", factors: ["alta_temperatura", "pico_demanda"] },
-    { day: "Sáb", actual: null, predicted: 59.4, confidence: 89, weather: "nublado", factors: ["fin_semana", "reduccion_industrial"] },
-    { day: "Dom", actual: null, predicted: 56.1, confidence: 93, weather: "templado", factors: ["fin_semana", "minima_operacion"] },
-  ],
-  weekly: [
-    { week: 1, predicted: 445.2, confidence: 92, factors: ["clima_estable", "operaciones_normales"], range: "442-448" },
-    { week: 2, predicted: 468.7, confidence: 89, factors: ["mantenimiento_programado", "temperatura_alta"], range: "461-476" },
-    { week: 3, predicted: 441.8, confidence: 91, factors: ["operaciones_optimizadas"], range: "438-445" },
-    { week: 4, predicted: 475.3, confidence: 87, factors: ["pico_demanda", "eventos_especiales"], range: "468-483" },
-    { week: 5, predicted: 452.1, confidence: 90, factors: ["estabilizacion", "eficiencia_mejorada"], range: "448-456" },
-    { week: 6, predicted: 439.6, confidence: 93, factors: ["optimizaciones_implementadas"], range: "436-443" },
-    { week: 7, predicted: 461.4, confidence: 88, factors: ["incremento_estacional"], range: "454-469" },
-    { week: 8, predicted: 448.9, confidence: 91, factors: ["estabilizacion_consumo"], range: "445-453" }
-  ],
-  monthly: [
-    { month: "Oct 2024", predicted: 1847.5, confidence: 87, factors: ["estacional", "temperaturas_moderadas"] },
-    { month: "Nov 2024", predicted: 1765.2, confidence: 91, factors: ["reduccion_estacional", "eficiencias"] },
-    { month: "Dic 2024", predicted: 1698.8, confidence: 89, factors: ["minimos_anuales", "vacaciones"] },
-    { month: "Ene 2025", predicted: 1723.4, confidence: 85, factors: ["reinicio_operaciones", "clima_frio"] },
-    { month: "Feb 2025", predicted: 1789.6, confidence: 88, factors: ["incremento_gradual"] },
-    { month: "Mar 2025", predicted: 1856.3, confidence: 86, factors: ["inicio_temporada_alta"] }
-  ]
+const POZO_LABELS = {
+  l_pozo_3: 'Pozo 3',
+  l_pozo_7: 'Pozo 7',
+  l_pozo_11: 'Pozo 11',
+  l_pozo_12: 'Pozo 12',
+  l_pozo_14: 'Pozo 14',
 }
 
-// Datos de factores de influencia
-const influenceFactors = [
-  { 
-    factor: "Temperatura",
-    impact: 85,
-    correlation: 0.89,
-    description: "Correlación positiva fuerte con el consumo",
-    trend: "aumentando"
-  },
-  { 
-    factor: "Humedad",
-    impact: 45,
-    correlation: -0.34,
-    description: "Correlación negativa moderada",
-    trend: "estable"
-  },
-  { 
-    factor: "Precipitación",
-    impact: 72,
-    correlation: -0.67,
-    description: "Reduce significativamente el consumo de riego",
-    trend: "variable"
-  },
-  { 
-    factor: "Demanda Industrial",
-    impact: 93,
-    correlation: 0.95,
-    description: "Factor más predictivo del consumo",
-    trend: "aumentando"
-  },
-  { 
-    factor: "Día de la Semana",
-    impact: 38,
-    correlation: 0.42,
-    description: "Patrones semanales identificables",
-    trend: "cíclico"
-  },
-  { 
-    factor: "Eventos Especiales",
-    impact: 28,
-    correlation: 0.31,
-    description: "Impacto variable según el evento",
-    trend: "irregular"
-  }
-]
-
-// Datos de anomalías detectadas
-const anomaliesData = [
-  {
-    id: 1,
-    date: "2024-10-08",
-    type: "consumption_spike",
-    severity: "high",
-    description: "Pico de consumo inesperado del 45% en Pozo 8",
-    predicted: 68.3,
-    actual: 99.1,
-    deviation: 45.2,
-    source: "Pozo 8 - Sector Industrial",
-    action: "Investigar causa y ajustar modelo"
-  },
-  {
-    id: 2,
-    date: "2024-10-06",
-    type: "efficiency_drop",
-    severity: "medium",
-    description: "Caída de eficiencia no prevista en sistema de bombeo",
-    predicted: 91.2,
-    actual: 73.8,
-    deviation: -19.1,
-    source: "Sistema de Bombeo Principal",
-    action: "Revisar predicciones de mantenimiento"
-  },
-  {
-    id: 3,
-    date: "2024-10-05",
-    type: "pattern_break",
-    severity: "low",
-    description: "Ruptura de patrón semanal habitual",
-    predicted: 45.6,
-    actual: 38.9,
-    deviation: -14.7,
-    source: "Consumo General",
-    action: "Actualizar patrones estacionales"
-  },
-  {
-    id: 4,
-    date: "2024-10-03",
-    type: "quality_anomaly",
-    severity: "medium", 
-    description: "Variación inesperada en calidad del agua",
-    predicted: 7.2,
-    actual: 6.8,
-    deviation: -5.6,
-    source: "Pozo 3 - Tratamiento",
-    action: "Calibrar sensores de calidad"
-  }
-]
-
-// Datos de insights de IA
-const aiInsights = [
-  {
-    id: 1,
-    type: "seasonal",
-    title: "Patrón Estacional Identificado",
-    description: "Incremento del 15% en consumo durante abril-agosto detectado con alta confianza",
-    confidence: 96,
-    impact: "high",
-    recommendation: "Preparar capacidad adicional para temporada alta",
-    timeframe: "Próximos 4 meses"
-  },
-  {
-    id: 2,
-    type: "weekly",
-    title: "Picos de Demanda Predecibles",
-    description: "Picos consistentes los martes y jueves entre 12:00-14:00",
-    confidence: 94,
-    impact: "medium",
-    recommendation: "Optimizar distribución de carga en horarios pico",
-    timeframe: "Implementar esta semana"
-  },
-  {
-    id: 3,
-    type: "weather",
-    title: "Correlación Climática Fuerte",
-    description: "Correlación positiva de 0.89 entre temperatura y consumo",
-    confidence: 91,
-    impact: "high",
-    recommendation: "Integrar pronósticos meteorológicos en predicciones",
-    timeframe: "Próximas 2 semanas"
-  },
-  {
-    id: 4,
-    type: "operational",
-    title: "Impacto de Mantenimiento",
-    description: "Eficiencia decrece 3% temporalmente post-mantenimiento",
-    confidence: 88,
-    impact: "low",
-    recommendation: "Programar mantenimientos en períodos de baja demanda",
-    timeframe: "Próximo mantenimiento"
-  },
-  {
-    id: 5,
-    type: "optimization",
-    title: "Oportunidad de Ahorro",
-    description: "Posible reducción del 8% en consumo nocturno mediante optimización",
-    confidence: 85,
-    impact: "medium",
-    recommendation: "Implementar control inteligente de bombeo nocturno",
-    timeframe: "Próximos 30 días"
-  }
-]
-
 export default function PredictionsPage() {
-  const [selectedTimeframe, setSelectedTimeframe] = useState('daily')
-  const [selectedMetric, setSelectedMetric] = useState('consumption')
-  const [showConfidenceIntervals, setShowConfidenceIntervals] = useState(true)
+  const { loading, error, predictions, historicalData, pozos, refetch } = usePredictions()
+  const [comparisonChartType, setComparisonChartType] = useState('bar')
+  const [historicalChartType, setHistoricalChartType] = useState('line')
 
-  // Preparar datos para gráficos
-  const getChartData = () => {
-    const data = predictionsData[selectedTimeframe]
-    const labels = data.map(item => item.day || item.month || `Sem ${item.week}`)
-    
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Predicción (m³)',
-          data: data.map(item => item.predicted),
-          borderColor: 'rgb(59, 130, 246)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          fill: false,
-          tension: 0.4,
-        },
-        {
-          label: 'Real (m³)',
-          data: data.map(item => item.actual),
-          borderColor: 'rgb(34, 197, 94)',
-          backgroundColor: 'rgba(34, 197, 94, 0.1)',
-          fill: false,
-          tension: 0.4,
-        }
-      ]
-    }
-  }
+  const lastWeekData = historicalData[historicalData.length - 1] || {}
+  const predicciones = predictions?.predictions_m3 || {}
 
-  const confidenceData = {
-    labels: predictionsData[selectedTimeframe].map(item => item.day || item.month || `Sem ${item.week}`),
+  const comparisonData = {
+    labels: pozos.map(p => POZO_LABELS[p] || p),
     datasets: [
       {
-        label: 'Confianza (%)',
-        data: predictionsData[selectedTimeframe].map(item => item.confidence),
-        backgroundColor: 'rgba(168, 85, 247, 0.6)',
-        borderColor: 'rgb(168, 85, 247)',
+        label: 'Consumo Real (m³)',
+        data: pozos.map(p => lastWeekData[p] || 0),
+        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+        borderColor: 'rgb(34, 197, 94)',
         borderWidth: 2,
-      }
-    ]
+      },
+      {
+        label: 'Predicción ML (m³)',
+        data: pozos.map(p => predicciones[p] || 0),
+        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+        borderColor: 'rgb(59, 130, 246)',
+        borderWidth: 2,
+      },
+    ],
   }
 
-  const getImpactColor = (impact) => {
-    switch (impact) {
-      case 'high': return 'bg-red-100 text-red-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'low': return 'bg-blue-100 text-blue-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
+  const POZO_COLORS = [
+    { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.7)' },
+    { border: 'rgb(34, 197, 94)', bg: 'rgba(34, 197, 94, 0.7)' },
+    { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.7)' },
+    { border: 'rgb(168, 85, 247)', bg: 'rgba(168, 85, 247, 0.7)' },
+    { border: 'rgb(245, 158, 11)', bg: 'rgba(245, 158, 11, 0.7)' },
+  ]
+
+  const historicalChartLabels = historicalData.map((d, i) => `Sem ${i + 1}`)
+  const historicalChartDatasets = pozos.map((p, idx) => ({
+    label: POZO_LABELS[p] || p,
+    data: historicalData.map(d => d[p] || 0),
+    borderColor: POZO_COLORS[idx % 5].border,
+    backgroundColor: POZO_COLORS[idx % 5].bg,
+    tension: 0.4,
+    fill: false,
+  }))
+
+  const totalReal = pozos.reduce((sum, p) => sum + (lastWeekData[p] || 0), 0)
+  const totalPredicho = pozos.reduce((sum, p) => sum + (predicciones[p] || 0), 0)
+  const diffPercent = totalReal > 0 ? (((totalPredicho - totalReal) / totalReal) * 100).toFixed(1) : 0
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardSidebar />
+        <div className="ml-64">
+          <DashboardHeader />
+          <main className="p-6 flex items-center justify-center h-[60vh]">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
+              <p className="text-muted-foreground">Cargando predicciones...</p>
+            </div>
+          </main>
+        </div>
+      </div>
+    )
   }
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'high': return 'bg-red-100 text-red-800'
-      case 'medium': return 'bg-orange-100 text-orange-800'
-      case 'low': return 'bg-yellow-100 text-yellow-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardSidebar />
+        <div className="ml-64">
+          <DashboardHeader />
+          <main className="p-6">
+            <Card>
+              <CardContent className="p-8 text-center">
+                <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-bold mb-2">Error al cargar predicciones</h2>
+                <p className="text-muted-foreground mb-4">{error}</p>
+                <Button onClick={refetch}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reintentar
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -305,21 +153,13 @@ export default function PredictionsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Análisis Predictivo</h1>
                 <p className="text-muted-foreground">
-                  Predicciones de IA y análisis de patrones de consumo
+                  Predicciones de consumo de agua por pozos - Modelo ML
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={refetch}>
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Actualizar Modelo
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configurar
+                  Actualizar
                 </Button>
               </div>
             </div>
@@ -333,8 +173,8 @@ export default function PredictionsPage() {
                       <Brain className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">94%</div>
-                      <div className="text-sm text-muted-foreground">Precisión IA</div>
+                      <div className="text-2xl font-bold">{pozos.length}</div>
+                      <div className="text-sm text-muted-foreground">Pozos Modelados</div>
                     </div>
                   </div>
                 </CardContent>
@@ -347,22 +187,8 @@ export default function PredictionsPage() {
                       <Target className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">87%</div>
-                      <div className="text-sm text-muted-foreground">Confianza Media</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <AlertTriangle className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{anomaliesData.length}</div>
-                      <div className="text-sm text-muted-foreground">Anomalías</div>
+                      <div className="text-2xl font-bold">{totalReal.toFixed(1)}</div>
+                      <div className="text-sm text-muted-foreground">Real (m³)</div>
                     </div>
                   </div>
                 </CardContent>
@@ -372,254 +198,231 @@ export default function PredictionsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-100 rounded-lg">
-                      <Zap className="w-5 h-5 text-purple-600" />
+                      <Activity className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{aiInsights.length}</div>
-                      <div className="text-sm text-muted-foreground">Insights IA</div>
+                      <div className="text-2xl font-bold">{totalPredicho.toFixed(1)}</div>
+                      <div className="text-sm text-muted-foreground">Predicho (m³)</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${Number(diffPercent) >= 0 ? 'bg-orange-100' : 'bg-blue-100'}`}>
+                      {Number(diffPercent) >= 0 
+                        ? <AlertTriangle className="w-5 h-5 text-orange-600" />
+                        : <CheckCircle className="w-5 h-5 text-blue-600" />
+                      }
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{diffPercent}%</div>
+                      <div className="text-sm text-muted-foreground">Desviación</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Controles de visualización */}
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="flex flex-wrap gap-4 items-center">
-                  <div className="flex gap-2">
-                    <label className="text-sm font-medium">Período:</label>
-                    <select 
-                      className="px-3 py-1 border border-border rounded-md text-sm"
-                      value={selectedTimeframe}
-                      onChange={(e) => setSelectedTimeframe(e.target.value)}
-                    >
-                      <option value="daily">Diario (7 días)</option>
-                      <option value="weekly">Semanal (8 semanas)</option>
-                      <option value="monthly">Mensual (6 meses)</option>
-                    </select>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <label className="text-sm font-medium">Métrica:</label>
-                    <select 
-                      className="px-3 py-1 border border-border rounded-md text-sm"
-                      value={selectedMetric}
-                      onChange={(e) => setSelectedMetric(e.target.value)}
-                    >
-                      <option value="consumption">Consumo</option>
-                      <option value="efficiency">Eficiencia</option>
-                      <option value="quality">Calidad</option>
-                    </select>
-                  </div>
-
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={showConfidenceIntervals}
-                      onChange={(e) => setShowConfidenceIntervals(e.target.checked)}
-                    />
-                    <span className="text-sm">Mostrar intervalos de confianza</span>
-                  </label>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
-          {/* Gráficos principales */}
-          <div className="grid lg:grid-cols-2 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Predicciones vs Realidad</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <Line 
-                    data={getChartData()} 
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'top',
-                        }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: {
-                            display: true,
-                            text: 'Consumo (m³)'
-                          }
-                        }
-                      }
-                    }} 
-                  />
+          {/* Gráfico comparativo Real vs Predicho - Full width */}
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Consumo Real vs Predicción ML</h3>
+                  <p className="text-sm text-muted-foreground">Última semana disponible</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Nivel de Confianza</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
+                <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                  <Button
+                    variant={comparisonChartType === 'bar' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setComparisonChartType('bar')}
+                    className="h-8 px-3"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-1" />
+                    Barras
+                  </Button>
+                  <Button
+                    variant={comparisonChartType === 'line' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setComparisonChartType('line')}
+                    className="h-8 px-3"
+                  >
+                    <LineChart className="w-4 h-4 mr-1" />
+                    Líneas
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-96">
+                {comparisonChartType === 'bar' ? (
                   <Bar 
-                    data={confidenceData} 
+                    data={comparisonData} 
                     options={{
                       responsive: true,
                       maintainAspectRatio: false,
                       plugins: {
-                        legend: {
-                          position: 'top',
-                        }
+                        legend: { position: 'top' },
                       },
                       scales: {
                         y: {
                           beginAtZero: true,
-                          max: 100,
-                          title: {
-                            display: true,
-                            text: 'Confianza (%)'
-                          }
-                        }
-                      }
+                          title: { display: true, text: 'Consumo (m³)' },
+                        },
+                      },
                     }} 
                   />
+                ) : (
+                  <Line 
+                    data={comparisonData} 
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { position: 'top' },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          title: { display: true, text: 'Consumo (m³)' },
+                        },
+                      },
+                    }} 
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico tendencia histórica - Full width */}
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Tendencia Histórica por Pozo</h3>
+                  <p className="text-sm text-muted-foreground">Últimas {historicalData.length} semanas</p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Factores de influencia */}
-          <Card className="mb-6">
-            <CardHeader>
-              <h3 className="text-lg font-semibold">Factores de Influencia</h3>
+                <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                  <Button
+                    variant={historicalChartType === 'bar' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setHistoricalChartType('bar')}
+                    className="h-8 px-3"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-1" />
+                    Barras
+                  </Button>
+                  <Button
+                    variant={historicalChartType === 'line' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setHistoricalChartType('line')}
+                    className="h-8 px-3"
+                  >
+                    <LineChart className="w-4 h-4 mr-1" />
+                    Líneas
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {influenceFactors.map((factor, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{factor.factor}</h4>
-                      <Badge variant="outline">{factor.trend}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">{factor.description}</p>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Impacto:</span>
-                        <span className="font-medium">{factor.impact}%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div 
-                          className="h-2 bg-blue-500 rounded-full" 
-                          style={{ width: `${factor.impact}%` }}
-                        ></div>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Correlación:</span>
-                        <span className="font-medium">{factor.correlation}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="h-96">
+                {historicalChartType === 'bar' ? (
+                  <Bar 
+                    data={{ labels: historicalChartLabels, datasets: historicalChartDatasets }} 
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { position: 'top' },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          title: { display: true, text: 'Consumo (m³)' },
+                        },
+                      },
+                    }} 
+                  />
+                ) : (
+                  <Line 
+                    data={{ labels: historicalChartLabels, datasets: historicalChartDatasets }} 
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { position: 'top' },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          title: { display: true, text: 'Consumo (m³)' },
+                        },
+                      },
+                    }} 
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Anomalías detectadas */}
-          <Card className="mb-6">
-            <CardHeader>
-              <h3 className="text-lg font-semibold">Anomalías Detectadas</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {anomaliesData.map((anomaly) => (
-                  <div key={anomaly.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-medium">{anomaly.description}</h4>
-                          <Badge className={getSeverityColor(anomaly.severity)}>
-                            {anomaly.severity}
-                          </Badge>
-                        </div>
-                        <div className="grid md:grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Fecha:</span>
-                            <span className="ml-2 font-medium">{anomaly.date}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Predicho:</span>
-                            <span className="ml-2 font-medium">{anomaly.predicted}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Real:</span>
-                            <span className="ml-2 font-medium">{anomaly.actual}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Fuente:</span>
-                            <span className="ml-2 font-medium">{anomaly.source}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Desviación:</span>
-                            <span className={`ml-2 font-medium ${anomaly.deviation > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                              {anomaly.deviation > 0 ? '+' : ''}{anomaly.deviation}%
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Acción:</span>
-                            <span className="ml-2 font-medium">{anomaly.action}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Insights de IA */}
+          {/* Tabla de detalle por pozo */}
           <Card>
             <CardHeader>
-              <h3 className="text-lg font-semibold">Insights de Inteligencia Artificial</h3>
+              <h3 className="text-lg font-semibold">Detalle por Pozo</h3>
+              <p className="text-sm text-muted-foreground">Comparación de consumo real vs predicho</p>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                {aiInsights.map((insight) => (
-                  <div key={insight.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium mb-1">{insight.title}</h4>
-                        <Badge className={getImpactColor(insight.impact)}>
-                          {insight.impact} impacto
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-3 font-medium">Pozo</th>
+                      <th className="text-right p-3 font-medium">Real (m³)</th>
+                      <th className="text-right p-3 font-medium">Predicho (m³)</th>
+                      <th className="text-right p-3 font-medium">Diferencia</th>
+                      <th className="text-center p-3 font-medium">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pozos.map(p => {
+                      const real = lastWeekData[p] || 0
+                      const pred = predicciones[p] || 0
+                      const diff = real > 0 ? (((pred - real) / real) * 100).toFixed(1) : 'N/A'
+                      const isClose = Math.abs(Number(diff)) <= 10
+
+                      return (
+                        <tr key={p} className="border-b hover:bg-muted/50">
+                          <td className="p-3 font-medium">{POZO_LABELS[p] || p}</td>
+                          <td className="p-3 text-right">{real.toFixed(2)}</td>
+                          <td className="p-3 text-right">{pred.toFixed(2)}</td>
+                          <td className={`p-3 text-right ${Number(diff) > 0 ? 'text-orange-600' : 'text-blue-600'}`}>
+                            {diff !== 'N/A' ? `${Number(diff) > 0 ? '+' : ''}${diff}%` : diff}
+                          </td>
+                          <td className="p-3 text-center">
+                            <Badge variant={isClose ? 'default' : 'destructive'}>
+                              {isClose ? 'Cerca' : 'Desviado'}
+                            </Badge>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    <tr className="font-bold bg-muted/30">
+                      <td className="p-3">Total</td>
+                      <td className="p-3 text-right">{totalReal.toFixed(2)}</td>
+                      <td className="p-3 text-right">{totalPredicho.toFixed(2)}</td>
+                      <td className="p-3 text-right">{diffPercent}%</td>
+                      <td className="p-3 text-center">
+                        <Badge variant={Math.abs(Number(diffPercent)) <= 10 ? 'default' : 'destructive'}>
+                          {Math.abs(Number(diffPercent)) <= 10 ? 'Óptimo' : 'Revisar'}
                         </Badge>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-muted-foreground">Confianza</div>
-                        <div className="text-lg font-bold">{insight.confidence}%</div>
-                      </div>
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground mb-3">{insight.description}</p>
-                    
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Recomendación:</span>
-                        <p className="font-medium">{insight.recommendation}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Timeframe:</span>
-                        <span className="ml-2 font-medium">{insight.timeframe}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
