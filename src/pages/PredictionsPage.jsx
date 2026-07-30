@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
@@ -12,8 +12,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Activity,
-  BarChart3,
-  LineChart
 } from "lucide-react"
 import {
   Chart as ChartJS,
@@ -21,13 +19,12 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler,
 } from 'chart.js'
-import { Bar, Line } from 'react-chartjs-2'
+import { Line } from 'react-chartjs-2'
 import { usePredictions } from '../hooks/usePredictions'
 
 ChartJS.register(
@@ -35,7 +32,6 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -50,55 +46,97 @@ const POZO_LABELS = {
   l_pozo_14: 'Pozo 14',
 }
 
+const POZO_COLORS = [
+  { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.12)', predBg: 'rgba(239, 68, 68, 0.25)' },
+  { border: 'rgb(34, 197, 94)', bg: 'rgba(34, 197, 94, 0.12)', predBg: 'rgba(34, 197, 94, 0.25)' },
+  { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.12)', predBg: 'rgba(59, 130, 246, 0.25)' },
+  { border: 'rgb(168, 85, 247)', bg: 'rgba(168, 85, 247, 0.12)', predBg: 'rgba(168, 85, 247, 0.25)' },
+  { border: 'rgb(245, 158, 11)', bg: 'rgba(245, 158, 11, 0.12)', predBg: 'rgba(245, 158, 11, 0.25)' },
+]
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top',
+      labels: { usePointStyle: true, padding: 16 },
+    },
+    tooltip: {
+      callbacks: {
+        label: (ctx) => {
+          if (ctx.raw === null || ctx.raw === undefined) return null
+          return `${ctx.dataset.label}: ${ctx.raw.toFixed(2)} m³`
+        },
+      },
+    },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      title: { display: true, text: 'Consumo (m³)' },
+    },
+    x: {
+      grid: { display: false },
+    },
+  },
+}
+
 export default function PredictionsPage() {
   const { loading, error, predictions, historicalData, pozos, refetch } = usePredictions()
-  const [comparisonChartType, setComparisonChartType] = useState('bar')
-  const [historicalChartType, setHistoricalChartType] = useState('line')
+  const [selectedPozo, setSelectedPozo] = useState('l_pozo_3')
+  const predicciones = useMemo(() => predictions?.predictions_m3 || {}, [predictions])
 
   const lastWeekData = historicalData[historicalData.length - 1] || {}
-  const predicciones = predictions?.predictions_m3 || {}
-
-  const comparisonData = {
-    labels: pozos.map(p => POZO_LABELS[p] || p),
-    datasets: [
-      {
-        label: 'Consumo Real (m³)',
-        data: pozos.map(p => lastWeekData[p] || 0),
-        backgroundColor: 'rgba(34, 197, 94, 0.7)',
-        borderColor: 'rgb(34, 197, 94)',
-        borderWidth: 2,
-      },
-      {
-        label: 'Predicción ML (m³)',
-        data: pozos.map(p => predicciones[p] || 0),
-        backgroundColor: 'rgba(59, 130, 246, 0.7)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 2,
-      },
-    ],
-  }
-
-  const POZO_COLORS = [
-    { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.7)' },
-    { border: 'rgb(34, 197, 94)', bg: 'rgba(34, 197, 94, 0.7)' },
-    { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.7)' },
-    { border: 'rgb(168, 85, 247)', bg: 'rgba(168, 85, 247, 0.7)' },
-    { border: 'rgb(245, 158, 11)', bg: 'rgba(245, 158, 11, 0.7)' },
-  ]
-
-  const historicalChartLabels = historicalData.map((d, i) => `Sem ${i + 1}`)
-  const historicalChartDatasets = pozos.map((p, idx) => ({
-    label: POZO_LABELS[p] || p,
-    data: historicalData.map(d => d[p] || 0),
-    borderColor: POZO_COLORS[idx % 5].border,
-    backgroundColor: POZO_COLORS[idx % 5].bg,
-    tension: 0.4,
-    fill: false,
-  }))
 
   const totalReal = pozos.reduce((sum, p) => sum + (lastWeekData[p] || 0), 0)
   const totalPredicho = pozos.reduce((sum, p) => sum + (predicciones[p] || 0), 0)
   const diffPercent = totalReal > 0 ? (((totalPredicho - totalReal) / totalReal) * 100).toFixed(1) : 0
+
+  const chartData = useMemo(() => {
+    const idx = pozos.indexOf(selectedPozo)
+    const color = POZO_COLORS[idx >= 0 ? idx % POZO_COLORS.length : 0]
+    const histData = historicalData.map(d => d[selectedPozo] || 0)
+    const predValue = predicciones[selectedPozo] || 0
+    const lastHistValue = histData[histData.length - 1] || 0
+    const labels = historicalData.map((_, i) => `Sem ${i + 1}`)
+    labels.push('Predicción')
+
+    const histDataset = {
+      label: 'Consumo Histórico',
+      data: [...histData, null],
+      borderColor: color.border,
+      backgroundColor: color.bg,
+      tension: 0.4,
+      fill: true,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 2,
+    }
+
+    const predDataset = {
+      label: 'Predicción ML',
+      data: [...Array(histData.length - 1).fill(null), lastHistValue, predValue],
+      borderColor: color.border,
+      backgroundColor: color.predBg,
+      tension: 0.4,
+      fill: true,
+      pointRadius: 6,
+      pointHoverRadius: 8,
+      borderWidth: 3,
+      borderDash: [6, 4],
+      pointStyle: 'rectRot',
+    }
+
+    return { labels, datasets: [histDataset, predDataset] }
+  }, [selectedPozo, pozos, historicalData, predicciones])
+
+  const selectedHistData = historicalData.map(d => d[selectedPozo] || 0)
+  const selectedPredValue = predicciones[selectedPozo] || 0
+  const selectedLastValue = selectedHistData[selectedHistData.length - 1] || 0
+  const selectedPredDiff = selectedLastValue > 0
+    ? (((selectedPredValue - selectedLastValue) / selectedLastValue) * 100).toFixed(1)
+    : 'N/A'
 
   if (loading) {
     return (
@@ -227,144 +265,42 @@ export default function PredictionsPage() {
             </div>
           </div>
 
-          {/* Gráfico comparativo Real vs Predicho - Full width */}
+          {/* Selector de pozo + Gráfica */}
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">Consumo Real vs Predicción ML</h3>
-                  <p className="text-sm text-muted-foreground">Última semana disponible</p>
+                  <h3 className="text-lg font-semibold">Consumo Histórico + Predicción</h3>
+                  <p className="text-sm text-muted-foreground">Selecciona un pozo para visualizar</p>
                 </div>
                 <div className="flex gap-1 bg-muted p-1 rounded-lg">
-                  <Button
-                    variant={comparisonChartType === 'bar' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setComparisonChartType('bar')}
-                    className="h-8 px-3"
-                  >
-                    <BarChart3 className="w-4 h-4 mr-1" />
-                    Barras
-                  </Button>
-                  <Button
-                    variant={comparisonChartType === 'line' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setComparisonChartType('line')}
-                    className="h-8 px-3"
-                  >
-                    <LineChart className="w-4 h-4 mr-1" />
-                    Líneas
-                  </Button>
+                  {pozos.map(p => (
+                    <Button
+                      key={p}
+                      variant={selectedPozo === p ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setSelectedPozo(p)}
+                      className="h-8 px-3"
+                    >
+                      {POZO_LABELS[p] || p}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-96">
-                {comparisonChartType === 'bar' ? (
-                  <Bar 
-                    data={comparisonData} 
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { position: 'top' },
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: { display: true, text: 'Consumo (m³)' },
-                        },
-                      },
-                    }} 
-                  />
-                ) : (
-                  <Line 
-                    data={comparisonData} 
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { position: 'top' },
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: { display: true, text: 'Consumo (m³)' },
-                        },
-                      },
-                    }} 
-                  />
-                )}
+                <Line data={chartData} options={chartOptions} />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Gráfico tendencia histórica - Full width */}
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Tendencia Histórica por Pozo</h3>
-                  <p className="text-sm text-muted-foreground">Últimas {historicalData.length} semanas</p>
-                </div>
-                <div className="flex gap-1 bg-muted p-1 rounded-lg">
-                  <Button
-                    variant={historicalChartType === 'bar' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setHistoricalChartType('bar')}
-                    className="h-8 px-3"
-                  >
-                    <BarChart3 className="w-4 h-4 mr-1" />
-                    Barras
-                  </Button>
-                  <Button
-                    variant={historicalChartType === 'line' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setHistoricalChartType('line')}
-                    className="h-8 px-3"
-                  >
-                    <LineChart className="w-4 h-4 mr-1" />
-                    Líneas
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-96">
-                {historicalChartType === 'bar' ? (
-                  <Bar 
-                    data={{ labels: historicalChartLabels, datasets: historicalChartDatasets }} 
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { position: 'top' },
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: { display: true, text: 'Consumo (m³)' },
-                        },
-                      },
-                    }} 
-                  />
-                ) : (
-                  <Line 
-                    data={{ labels: historicalChartLabels, datasets: historicalChartDatasets }} 
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { position: 'top' },
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: { display: true, text: 'Consumo (m³)' },
-                        },
-                      },
-                    }} 
-                  />
-                )}
+              <div className="flex justify-between mt-4 text-sm text-muted-foreground border-t pt-4">
+                <span>Última semana: <strong>{selectedLastValue.toFixed(2)} m³</strong></span>
+                <span>Predicción: <strong>{selectedPredValue.toFixed(2)} m³</strong></span>
+                <span>
+                  Desviación:{' '}
+                  <strong className={Number(selectedPredDiff) > 0 ? 'text-orange-600' : 'text-blue-600'}>
+                    {selectedPredDiff !== 'N/A' ? `${Number(selectedPredDiff) > 0 ? '+' : ''}${selectedPredDiff}%` : 'N/A'}
+                  </strong>
+                </span>
               </div>
             </CardContent>
           </Card>
