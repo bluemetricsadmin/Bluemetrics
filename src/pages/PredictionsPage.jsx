@@ -116,7 +116,7 @@ export default function PredictionsPage() {
 
     const predDataset = {
       label: 'Predicción ML',
-      data: [...Array(histData.length - 1).fill(null), lastHistValue, predValue],
+      data: [...Array(Math.max(0, histData.length - 1)).fill(null), lastHistValue, predValue],
       borderColor: color.border,
       backgroundColor: color.predBg,
       tension: 0.4,
@@ -136,7 +136,7 @@ export default function PredictionsPage() {
   const selectedLastValue = selectedHistData[selectedHistData.length - 1] || 0
   const selectedPredDiff = selectedLastValue > 0
     ? (((selectedPredValue - selectedLastValue) / selectedLastValue) * 100).toFixed(1)
-    : 'N/A'
+    : '0'
 
   if (loading) {
     return (
@@ -240,7 +240,7 @@ export default function PredictionsPage() {
                     </div>
                     <div>
                       <div className="text-2xl font-bold">{totalPredicho.toFixed(1)}</div>
-                      <div className="text-sm text-muted-foreground">Predicho (m³)</div>
+                      <div className="text-sm text-muted-foreground">Prediccción (m³)</div>
                     </div>
                   </div>
                 </CardContent>
@@ -257,7 +257,7 @@ export default function PredictionsPage() {
                     </div>
                     <div>
                       <div className="text-2xl font-bold">{diffPercent}%</div>
-                      <div className="text-sm text-muted-foreground">Desviación</div>
+                      <div className="text-sm text-muted-foreground">Desviación vs Último Registro</div>
                     </div>
                   </div>
                 </CardContent>
@@ -298,7 +298,7 @@ export default function PredictionsPage() {
                 <span>
                   Desviación:{' '}
                   <strong className={Number(selectedPredDiff) > 0 ? 'text-orange-600' : 'text-blue-600'}>
-                    {selectedPredDiff !== 'N/A' ? `${Number(selectedPredDiff) > 0 ? '+' : ''}${selectedPredDiff}%` : 'N/A'}
+                    {`${Number(selectedPredDiff) > 0 ? '+' : ''}${selectedPredDiff}%`}
                   </strong>
                 </span>
               </div>
@@ -317,8 +317,8 @@ export default function PredictionsPage() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-3 font-medium">Pozo</th>
-                      <th className="text-right p-3 font-medium">Real (m³)</th>
-                      <th className="text-right p-3 font-medium">Predicho (m³)</th>
+                      <th className="text-right p-3 font-medium">Último Consumo (m³)</th>
+                      <th className="text-right p-3 font-medium">Predicción a una semana (m³)</th>
                       <th className="text-right p-3 font-medium">Diferencia</th>
                       <th className="text-center p-3 font-medium">Estado</th>
                     </tr>
@@ -327,7 +327,7 @@ export default function PredictionsPage() {
                     {pozos.map(p => {
                       const real = lastWeekData[p] || 0
                       const pred = predicciones[p] || 0
-                      const diff = real > 0 ? (((pred - real) / real) * 100).toFixed(1) : 'N/A'
+                      const diff = real > 0 ? (((pred - real) / real) * 100).toFixed(1) : '0'
                       const isClose = Math.abs(Number(diff)) <= 10
 
                       return (
@@ -336,7 +336,7 @@ export default function PredictionsPage() {
                           <td className="p-3 text-right">{real.toFixed(2)}</td>
                           <td className="p-3 text-right">{pred.toFixed(2)}</td>
                           <td className={`p-3 text-right ${Number(diff) > 0 ? 'text-orange-600' : 'text-blue-600'}`}>
-                            {diff !== 'N/A' ? `${Number(diff) > 0 ? '+' : ''}${diff}%` : diff}
+                            {`${Number(diff) > 0 ? '+' : ''}${diff}%`}
                           </td>
                           <td className="p-3 text-center">
                             <Badge variant={isClose ? 'default' : 'destructive'}>
