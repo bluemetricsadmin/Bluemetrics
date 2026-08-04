@@ -26,6 +26,7 @@ import {
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { usePredictions } from '../hooks/usePredictions'
+import { POZO_LABELS } from '../lib/pozoLabels'
 
 ChartJS.register(
   CategoryScale,
@@ -37,14 +38,6 @@ ChartJS.register(
   Legend,
   Filler
 )
-
-const POZO_LABELS = {
-  l_pozo_3: 'Pozo 3',
-  l_pozo_7: 'Pozo 7',
-  l_pozo_11: 'Pozo 11',
-  l_pozo_12: 'Pozo 12',
-  l_pozo_14: 'Pozo 14',
-}
 
 const POZO_COLORS = [
   { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.12)', predBg: 'rgba(239, 68, 68, 0.25)' },

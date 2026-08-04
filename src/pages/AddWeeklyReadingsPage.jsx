@@ -6,11 +6,12 @@ import { Button } from "../components/ui/button"
 import consumptionPointsData from '../lib/consumption-points.json'
 import { supabase } from '../supabaseClient'
 import * as XLSX from 'xlsx'
-import { 
-  SaveIcon, 
+import {
+  SaveIcon,
   UploadIcon,
   CheckCircle2Icon,
   AlertCircleIcon,
+  AlertTriangleIcon,
   CalendarIcon,
   Loader2Icon,
   FileSpreadsheetIcon,
@@ -23,6 +24,92 @@ import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
 import { getTableNameByYear, AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers'
 import PointsOrderModal, { applyOrderToCategories } from '../components/PointsOrderModal'
 import { usePersistedState } from '../hooks/usePersistedState'
+import { predictionService } from '../services/predictionService'
+import { fetchRecentHistoricalData } from '../lib/predictionMapping'
+import { POZO_LABELS } from '../lib/pozoLabels'
+
+// Sincroniza último consumo + predicción (1 semana adelante) hacia el Google Sheet externo.
+// Best-effort: nunca lanza, siempre resuelve { ok, error? } para que saveReadings()
+// pueda mostrar una advertencia visible sin bloquear el éxito del guardado principal.
+async function syncPredictionToSheet(consumoTableName, consumptionData, weekNumber) {
+  const DEBUG = '[DEBUG-SYNC]'
+
+  try {
+    // ── Capa 1: Supabase – obtener histórico ──────────────────────────
+    console.debug(`${DEBUG} [Capa 1] Fetching histórico de ${consumoTableName}, limit=12`)
+    const { data: historico, error: supaError } = await fetchRecentHistoricalData(
+      supabase,
+      consumoTableName,
+      12
+    )
+    if (supaError) {
+      console.error(`${DEBUG} [Capa 1] Error Supabase:`, supaError)
+      throw new Error(`Supabase: ${supaError.message}`)
+    }
+    if (!historico || historico.length === 0) {
+      throw new Error('No hay suficiente histórico para generar una predicción')
+    }
+    console.debug(`${DEBUG} [Capa 1] Histórico OK, ${historico.length} semanas`)
+
+    // ── Capa 2: API de predicción ─────────────────────────────────────
+    const withTimeout = (promise, ms) =>
+      Promise.race([
+        promise,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Tiempo de espera agotado consultando el modelo')), ms)
+        ),
+      ])
+
+    console.debug(`${DEBUG} [Capa 2] Enviando a predictionService.predict...`)
+    const result = await withTimeout(predictionService.predict(historico), 15000)
+    const predictions = result?.predictions_m3
+    if (!predictions) {
+      console.error(`${DEBUG} [Capa 2] Respuesta de predicción sin formato esperado:`, result)
+      throw new Error('La respuesta de predicción no tiene el formato esperado')
+    }
+    console.debug(`${DEBUG} [Capa 2] Predicciones recibidas:`, predictions)
+
+    // ── Capa 3: Construir payload (consumo + predicción) ──────────────
+    const nowIso = new Date().toISOString()
+    const payload = Object.keys(POZO_LABELS).map((key) => {
+      const consumptionKey = `${key.replace('l_', '')}_${weekNumber}`
+      return {
+        fecha: nowIso,
+        medidor: POZO_LABELS[key],
+        semana: weekNumber,
+        consumo: consumptionData[consumptionKey] ?? null,
+        prediccion: predictions[key] ?? null,
+      }
+    })
+    console.debug(`${DEBUG} [Capa 3] Payload construido (${payload.length} pozos):`, payload)
+
+    // ── Capa 4: Enviar a Google Sheet (Apps Script) ───────────────────
+    // Se usa FormData + mode:'no-cors' para evitar el preflight CORS que
+    // Apps Script no responde. El body se envía como campo "data" y el
+    // Apps Script lo lee desde e.parameter.data.
+    const scriptUrl = import.meta.env.VITE_SCRIPT_PREDICT_URL
+    if (!scriptUrl) throw new Error('VITE_SCRIPT_PREDICT_URL no está configurada')
+
+    const formData = new FormData()
+    formData.append('data', JSON.stringify(payload))
+
+    console.debug(`${DEBUG} [Capa 4] POST (FormData+no-cors) a Apps Script: ${scriptUrl}`)
+    console.debug(`${DEBUG} [Capa 4] Payload enviado:`, payload)
+    await fetch(scriptUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: formData,
+    })
+    // Con no-cors la respuesta es opaca: no podemos leer status/body,
+    // pero si el fetch no lanza, la petición salió correctamente.
+    console.debug(`${DEBUG} [Capa 4] Fetch completado (respuesta opaca, no-cors)`)
+
+    return { ok: true }
+  } catch (err) {
+    console.error(`${DEBUG} Error en syncPredictionToSheet:`, err)
+    return { ok: false, error: err.message || 'Error desconocido al sincronizar la predicción' }
+  }
+}
 
 export default function AddWeeklyReadingsPage() {
   // IDs que solo aparecen en plantilla Excel, NO en la plataforma web
@@ -86,6 +173,7 @@ export default function AddWeeklyReadingsPage() {
   )
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
+  const [predictionSyncWarning, setPredictionSyncWarning] = useState(null)
   
   // Función para limpiar todos los datos persistidos
   const clearAllPersistedData = () => {
@@ -109,6 +197,7 @@ export default function AddWeeklyReadingsPage() {
     setError(null)
     setSuccess(null)
     setPreviousWeekReadings(null)
+    setPredictionSyncWarning(null)
     console.log('🔄 Proceso cancelado, volviendo al inicio')
   }
 
@@ -121,6 +210,7 @@ export default function AddWeeklyReadingsPage() {
     setError(null)
     setSuccess(null)
     setPreviousWeekReadings(null)
+    setPredictionSyncWarning(null)
     console.log('✅ Proceso completado, volviendo al inicio')
   }
 
@@ -538,7 +628,15 @@ export default function AddWeeklyReadingsPage() {
       } else {
         setSuccess(`✅ ${readingsCount} lecturas guardadas exitosamente`)
       }
-      
+
+      // Sincronizar consumo + predicción con el Google Sheet externo (best-effort, no bloquea el guardado)
+      const syncResult = await syncPredictionToSheet(consumoTableName, consumption, weekNumber)
+      setPredictionSyncWarning(
+        syncResult.ok
+          ? null
+          : `No se pudo sincronizar la predicción con el registro externo: ${syncResult.error}`
+      )
+
       setSavedCount(readingsCount)
       setShowSuccessModal(true)
 
@@ -614,6 +712,7 @@ export default function AddWeeklyReadingsPage() {
     setExcelData(null)
     setError(null)
     setSuccess(null)
+    setPredictionSyncWarning(null)
     fetchNextWeekNumber()
   }
 
@@ -843,6 +942,13 @@ export default function AddWeeklyReadingsPage() {
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
                 <CheckCircle2Icon className="h-5 w-5 text-green-600" />
                 <p className="text-green-800">{success}</p>
+              </div>
+            )}
+
+            {predictionSyncWarning && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
+                <AlertTriangleIcon className="h-5 w-5 text-yellow-600" />
+                <p className="text-yellow-800">{predictionSyncWarning}</p>
               </div>
             )}
 
