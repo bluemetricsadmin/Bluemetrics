@@ -738,7 +738,7 @@ export default function AddWeeklyReadingsPage() {
         'medidor_general_pozos', 'pozo_11', 'pozo_14', 'pozo_12', 'pozo_7', 'pozo_3',
         'pozo_4_riego', 'pozo_8_riego', 'pozo_15_riego',
         'circuito_8_campus', 'auditorio_luis_elizondo', 'cdb2', 'cdb2_banos_nuevos_2025',
-        'arena_borrego', 'farnville', 'em_box', 'edificio_negocios_daf', 'aulas_6',
+        'arena_borrego', 'lago_aulas_7_llenado', 'farnville', 'em_box', 'edificio_negocios_daf', 'aulas_6',
         'domo_cultural', 'wellness_parque_central_tunel', 'wellness_registro',
         'parque_central_registro', 'wellness_edificio', 'wellness_super_salads',
         'wellness_torre_enfriamiento', 'wellness_alberca', 'centrales_comedor_1_principal',

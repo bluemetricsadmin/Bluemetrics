@@ -259,6 +259,23 @@
             }
           ]
         },
+         {
+          "id": "lago_aulas_7_llenado",
+          "name": "Lago Aulas 7 llenado",
+          "type": "instalacion_deportiva",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 35425
+            },
+            {
+              "week": 2,
+              "reading": 35865
+            }
+          ]
+        },
+        
         {
           "id": "farnville",
           "name": "Farnville",
