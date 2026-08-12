@@ -1014,6 +1014,22 @@
             }
           ]
         },
+           {
+          "id": "cedes_site_bomba",
+          "name": "Cedes Site Bomba",
+          "type": "edificio",
+          "unit": "m³",
+          "weeklyData": [
+            {
+              "week": 1,
+              "reading": 9625
+            },
+            {
+              "week": 2,
+              "reading": 9760
+            }
+          ]
+        },
         {
           "id": "nucleo",
           "name": "Nucleo",
@@ -1030,22 +1046,7 @@
             }
           ]
         },
-        {
-          "id": "cedes_site_bomba",
-          "name": "Cedes Site Bomba",
-          "type": "edificio",
-          "unit": "m³",
-          "weeklyData": [
-            {
-              "week": 1,
-              "reading": 9625
-            },
-            {
-              "week": 2,
-              "reading": 9760
-            }
-          ]
-        },
+     
         {
           "id": "expedition",
           "name": "Expedition",
