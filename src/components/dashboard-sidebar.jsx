@@ -151,7 +151,7 @@ export function DashboardSidebar() {
     {
       id: 'analysis',
       label: 'Análisis',
-      allowedRoles: ['admin', 'ejecutivo', 'gas', 'ptar', 'user'],
+      allowedRoles: ['admin', 'ejecutivo', 'gas', 'ptar', 'user','water'],
       items: [
         /*{ id: "analysis-section", label: "Centro de Análisis", path: "/analisis", icon: BarChart3, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] },
         { id: "predictions", label: "Predicciones", path: "/predicciones", icon: TrendingUp, allowedRoles: ['admin', 'ejecutivo', 'water', 'gas', 'user'] },*/
