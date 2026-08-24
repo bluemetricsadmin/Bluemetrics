@@ -670,6 +670,57 @@ export default function WellsPage() {
               </Badge>
             </div>
 
+
+
+            {/* Selector de Tipo de Gráfica */}
+            <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Visualización de Datos</h3>
+                  <p className="text-sm text-gray-600">Selecciona el tipo de gráfica que deseas visualizar</p>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant={chartMode === 'timeline' ? 'default' : 'outline'}
+                    onClick={() => setChartMode('timeline')}
+                    className="flex items-center gap-2"
+                    size="lg"
+                  >
+                    <LineChartIcon className="h-5 w-5" />
+                    Comparación de Años
+                  </Button>
+                  <Button
+                    variant={chartMode === 'analysis' ? 'default' : 'outline'}
+                    onClick={() => setChartMode('analysis')}
+                    className="flex items-center gap-2"
+                    size="lg"
+                  >
+                    <BarChart3Icon className="h-5 w-5" />
+                    Línea del Tiempo
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Gráficas Condicionales */}
+            {chartMode === 'timeline' ? (
+              <WeeklyComparisonChart
+                title="Comparación de Consumo por Años (Todos los Pozos)"
+                multiYearData={weeklyData.multiYearData}
+                multiYearDataRiego={weeklyData.multiYearDataRiego}
+                multiYearDataServicios={weeklyData.multiYearDataServicios}
+                currentYearData={weeklyData.currentYearData}
+                previousYearData={weeklyData.previousYearData}
+                currentYear="2026"
+                previousYear="2025"
+                unit="m³"
+                total2023={kpiData.total2023}
+                showControls={true}
+              />
+            ) : (
+              <WellsGeneralCharts />
+            )}
+
 {/* Lista de pozos */}
             <Card>
               <div className="p-6">
@@ -820,54 +871,6 @@ export default function WellsPage() {
             </Card>
 
 
-            {/* Selector de Tipo de Gráfica */}
-            <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Visualización de Datos</h3>
-                  <p className="text-sm text-gray-600">Selecciona el tipo de gráfica que deseas visualizar</p>
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    variant={chartMode === 'timeline' ? 'default' : 'outline'}
-                    onClick={() => setChartMode('timeline')}
-                    className="flex items-center gap-2"
-                    size="lg"
-                  >
-                    <LineChartIcon className="h-5 w-5" />
-                    Comparación de Años
-                  </Button>
-                  <Button
-                    variant={chartMode === 'analysis' ? 'default' : 'outline'}
-                    onClick={() => setChartMode('analysis')}
-                    className="flex items-center gap-2"
-                    size="lg"
-                  >
-                    <BarChart3Icon className="h-5 w-5" />
-                    Línea del Tiempo
-                  </Button>
-                </div>
-              </div>
-            </Card>
-
-            {/* Gráficas Condicionales */}
-            {chartMode === 'timeline' ? (
-              <WeeklyComparisonChart
-                title="Comparación de Consumo por Años (Todos los Pozos)"
-                multiYearData={weeklyData.multiYearData}
-                multiYearDataRiego={weeklyData.multiYearDataRiego}
-                multiYearDataServicios={weeklyData.multiYearDataServicios}
-                currentYearData={weeklyData.currentYearData}
-                previousYearData={weeklyData.previousYearData}
-                currentYear="2026"
-                previousYear="2025"
-                unit="m³"
-                total2023={kpiData.total2023}
-                showControls={true}
-              />
-            ) : (
-              <WellsGeneralCharts />
-            )}
 
 
             {/* Métricas Mensuales */}
