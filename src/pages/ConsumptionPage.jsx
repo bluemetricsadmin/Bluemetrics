@@ -618,7 +618,7 @@ export default function ConsumptionPage() {
                       onChange={(e) => setSelectedPoint(e.target.value)}
                       className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors min-w-[200px]"
                     >
-                      <optgroup label="Pozos de Agua Potable (Servicios)">
+                      <optgroup label="Pozos de Servicios">
                         <option value="medidor_general_pozos">Medidor General de los pozos 7,12,11 y 14 / TOTAL POZOS</option>
                         <option value="pozo_11">Pozo de agua potable 11</option>
                         <option value="pozo_14">Pozo de agua potable 14</option>
