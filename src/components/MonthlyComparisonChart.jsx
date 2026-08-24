@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
+import { getColorForYear } from '../utils/chartColors'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -198,17 +199,10 @@ export default function MonthlyComparisonChart({
   // Configuración de Chart.js
   const chartData = useMemo(() => {
     const datasets = []
-    const colors = [
-      { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.6)', bgFill: 'rgba(59, 130, 246, 0.1)' },
-      { border: 'rgb(34, 197, 94)', bg: 'rgba(34, 197, 94, 0.6)', bgFill: 'rgba(34, 197, 94, 0.1)' },
-      { border: 'rgb(245, 158, 11)', bg: 'rgba(245, 158, 11, 0.6)', bgFill: 'rgba(245, 158, 11, 0.1)' },
-      { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.6)', bgFill: 'rgba(239, 68, 68, 0.1)' },
-      { border: 'rgb(139, 92, 246)', bg: 'rgba(139, 92, 246, 0.6)', bgFill: 'rgba(139, 92, 246, 0.1)' }
-    ]
 
     if (useMultiYear && processedMultiYear.length > 0) {
       processedMultiYear.forEach((yearItem, index) => {
-        const color = colors[index % colors.length]
+        const color = getColorForYear(yearItem.year)
         const isLastYear = index === processedMultiYear.length - 1
 
         datasets.push({

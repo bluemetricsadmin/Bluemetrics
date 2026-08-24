@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Line, Bar } from 'react-chartjs-2'
+import { getColorForYear } from '../utils/chartColors'
 import {
   TrendingUpIcon,
   TrendingDownIcon,
@@ -215,18 +216,11 @@ export default function WeeklyComparisonChart({
   // Configuración de Chart.js
   const chartData = useMemo(() => {
     const datasets = []
-    const colors = [
-      { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.6)', bgFill: 'rgba(59, 130, 246, 0.1)' }, // Azul
-      { border: 'rgb(34, 197, 94)', bg: 'rgba(34, 197, 94, 0.6)', bgFill: 'rgba(34, 197, 94, 0.1)' }, // Verde
-      { border: 'rgb(245, 158, 11)', bg: 'rgba(245, 158, 11, 0.6)', bgFill: 'rgba(245, 158, 11, 0.1)' }, // Naranja
-      { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.6)', bgFill: 'rgba(239, 68, 68, 0.1)' }, // Rojo
-      { border: 'rgb(139, 92, 246)', bg: 'rgba(139, 92, 246, 0.6)', bgFill: 'rgba(139, 92, 246, 0.1)' } // Púrpura
-    ]
 
     if (useMultiYear && processedMultiYear.length > 0) {
-      // Modo multi-año: crear dataset para cada año
+      // Modo multi-año: crear dataset para cada año con color fijo por año
       processedMultiYear.forEach((yearItem, index) => {
-        const color = colors[index % colors.length]
+        const color = getColorForYear(yearItem.year)
         const isLastYear = index === processedMultiYear.length - 1
         
         datasets.push({
@@ -254,13 +248,15 @@ export default function WeeklyComparisonChart({
 
     // Modo original de 2 años
     const labels = Array.from({ length: 52 }, (_, i) => `Sem ${i + 1}`)
+    const currentColor = getColorForYear(effectiveCurrentYear)
+    const previousColor = getColorForYear(effectivePreviousYear)
 
     if (comparisonMode === 'current' || comparisonMode === 'both') {
       datasets.push({
         label: `${effectiveCurrentYear}`,
         data: processedCurrent.map(d => d.consumption),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: chartType === 'bar' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(59, 130, 246, 0.1)',
+        borderColor: currentColor.border,
+        backgroundColor: chartType === 'bar' ? currentColor.bg : currentColor.bgFill,
         borderWidth: 2,
         fill: chartType === 'line',
         tension: 0.4,
@@ -269,7 +265,7 @@ export default function WeeklyComparisonChart({
         pointBackgroundColor: processedCurrent.map(d => {
           if (d.vsLastWeekPercent > 5) return 'rgb(239, 68, 68)'
           if (d.vsLastWeekPercent < -5) return 'rgb(34, 197, 94)'
-          return 'rgb(59, 130, 246)'
+          return currentColor.border
         })
       })
     }
@@ -278,8 +274,8 @@ export default function WeeklyComparisonChart({
       datasets.push({
         label: `${effectivePreviousYear}`,
         data: processedPrevious.map(d => d.consumption),
-        borderColor: 'rgb(156, 163, 175)',
-        backgroundColor: chartType === 'bar' ? 'rgba(156, 163, 175, 0.4)' : 'rgba(156, 163, 175, 0.05)',
+        borderColor: previousColor.border,
+        backgroundColor: chartType === 'bar' ? previousColor.bg : previousColor.bgFill,
         borderWidth: 2,
         borderDash: [5, 5],
         fill: chartType === 'line',
