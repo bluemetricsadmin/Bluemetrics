@@ -22,6 +22,7 @@ import {
   Download,
   Filter
 } from 'lucide-react'
+import { getColorForYear } from '../utils/chartColors'
 
 ChartJS.register(
   CategoryScale,
@@ -102,14 +103,6 @@ const MESES_ES = {
   'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
 }
 
-const YEAR_COLORS = [
-  { border: 'rgb(59, 130, 246)', bg: 'rgba(59, 130, 246, 0.6)', bgFill: 'rgba(59, 130, 246, 0.1)' },
-  { border: 'rgb(34, 197, 94)', bg: 'rgba(34, 197, 94, 0.6)', bgFill: 'rgba(34, 197, 94, 0.1)' },
-  { border: 'rgb(245, 158, 11)', bg: 'rgba(245, 158, 11, 0.6)', bgFill: 'rgba(245, 158, 11, 0.1)' },
-  { border: 'rgb(239, 68, 68)', bg: 'rgba(239, 68, 68, 0.6)', bgFill: 'rgba(239, 68, 68, 0.1)' },
-  { border: 'rgb(139, 92, 246)', bg: 'rgba(139, 92, 246, 0.6)', bgFill: 'rgba(139, 92, 246, 0.1)' }
-]
-
 const DailyConsumptionChartJS = ({
   data = [],
   puntoField = 'consumo',
@@ -120,7 +113,7 @@ const DailyConsumptionChartJS = ({
   const [vistaActual, setVistaActual] = useState('mensual')
   const [internalChartType, setInternalChartType] = useState('line')
   const [mostrarPromedio, setMostrarPromedio] = useState(true)
-  const [selectedYears, setSelectedYears] = useState(null) // null = default (current year only)
+  const [selectedYears, setSelectedYears] = useState('2025') // null = default (current year only)
 
   const chartType = externalChartType !== null ? externalChartType : internalChartType
 
@@ -144,7 +137,7 @@ const DailyConsumptionChartJS = ({
 
   const toggleYear = (year) => {
     setSelectedYears(prev => {
-      const current = prev !== null ? prev : availableYears
+      const current = prev !== null ? prev : activeSelectedYears
       if (current.includes(year)) {
         if (current.length === 1) return current
         return current.filter(y => y !== year)
@@ -296,7 +289,7 @@ const DailyConsumptionChartJS = ({
         ?.processed.map(d => d.fechaCorta) || []
 
       const datasets = processedMultiYear.map((yearItem, index) => {
-        const color = YEAR_COLORS[index % YEAR_COLORS.length]
+        const color = getColorForYear(yearItem.year)
         const isLatest = index === processedMultiYear.length - 1
         const values = yearItem.processed.map(d => d.valor)
 
@@ -307,7 +300,7 @@ const DailyConsumptionChartJS = ({
           if (prev === 0) return color.border
           const change = ((val - prev) / prev) * 100
           if (change > 5) return 'rgb(239, 68, 68)'
-          if (change < 0) return 'rgb(34, 197, 94)'
+          if (change < -5) return 'rgb(34, 197, 94)'
           return color.border
         }) : color.border
 
@@ -330,24 +323,27 @@ const DailyConsumptionChartJS = ({
     }
 
     // Single year mode
+    const singleYearColor = getColorForYear(
+      availableYears.length > 0 ? availableYears[availableYears.length - 1] : new Date().getFullYear()
+    )
     const labels = datosProcessados.map(d => d.fechaCorta)
     const values = datosProcessados.map(d => d.valor)
 
     const pointColors = values.map((val, i) => {
-      if (i === 0) return 'rgb(59, 130, 246)'
+      if (i === 0) return singleYearColor.border
       const prev = values[i - 1]
-      if (prev === 0) return 'rgb(59, 130, 246)'
+      if (prev === 0) return singleYearColor.border
       const change = ((val - prev) / prev) * 100
       if (change > 5) return 'rgb(239, 68, 68)'
-      if (change < 0) return 'rgb(34, 197, 94)'
-      return 'rgb(59, 130, 246)'
+      if (change < -5) return 'rgb(34, 197, 94)'
+      return singleYearColor.border
     })
 
     const datasets = [{
       label: puntoLabel,
       data: values,
-      borderColor: 'rgb(59, 130, 246)',
-      backgroundColor: chartType === 'bar' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(59, 130, 246, 0.1)',
+      borderColor: singleYearColor.border,
+      backgroundColor: chartType === 'bar' ? singleYearColor.bg : singleYearColor.bgFill,
       borderWidth: 2,
       fill: chartType === 'line',
       tension: 0.4,
@@ -373,7 +369,7 @@ const DailyConsumptionChartJS = ({
     }
 
     return { labels, datasets }
-  }, [datosProcessados, chartType, puntoLabel, mostrarPromedio, estadisticas, useMultiYear, processedMultiYear])
+  }, [datosProcessados, chartType, puntoLabel, mostrarPromedio, estadisticas, useMultiYear, processedMultiYear, availableYears])
 
   const chartOptions = {
     responsive: true,
@@ -679,7 +675,7 @@ const DailyConsumptionChartJS = ({
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span>Estable (0% a 5%)</span>
+                <span>Estable (-5% a 5%)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
