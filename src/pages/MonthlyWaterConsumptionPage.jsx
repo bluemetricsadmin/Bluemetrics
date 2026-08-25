@@ -193,7 +193,10 @@ export default function MonthlyWaterConsumptionPage() {
       '2026': monthlyData2026
     }
 
-    const sortedSelectedYears = [...comparisonYearsToShow].sort()
+    const sortedSelectedYears = Object.keys(yearDataMap).sort()
+
+    // Se envían todos los años cargados: la gráfica filtra por selectedYearsToShow
+    // y el lookup del año anterior necesita el año N-1 aunque no esté seleccionado
     return sortedSelectedYears.map(year => ({
       year,
       data: yearDataMap[year] || []
@@ -550,6 +553,7 @@ export default function MonthlyWaterConsumptionPage() {
                   unit="m³"
                   chartType={comparisonChartType}
                   showControls={false}
+                  selectedYearsToShow={comparisonYearsToShow}
                   multiYearData={multiYearData}
                 />
 

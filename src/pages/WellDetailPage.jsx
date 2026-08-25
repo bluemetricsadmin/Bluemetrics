@@ -355,9 +355,10 @@ export default function WellDetailPage() {
       '2026': weeklyReadings2026
     }
 
-    const sortedSelectedYears = [...selectedYears].sort()
-    
-    // Generar datos para todos los años seleccionados
+    const sortedSelectedYears = Object.keys(yearDataMap).sort()
+
+    // Se envían todos los años cargados: la gráfica filtra por selectedYearsToShow
+    // y el lookup del año anterior necesita el año N-1 aunque no esté seleccionado
     return sortedSelectedYears.map(year => ({
       year,
       data: yearDataMap[year] || []
@@ -1221,6 +1222,7 @@ export default function WellDetailPage() {
                   unit="m³"
                   chartType={comparisonChartType}
                   showControls={false}
+                  selectedYearsToShow={selectedYears}
                   multiYearData={multiYearData}
                   total2023={totalConsumption2023}
                 />

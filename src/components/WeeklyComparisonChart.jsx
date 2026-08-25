@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Line, Bar } from 'react-chartjs-2'
 import { getColorForYear } from '../utils/chartColors'
+import { getPreviousYearData, construirEtiquetaYoY } from '../utils/yearOverYear'
 import {
   TrendingUpIcon,
   TrendingDownIcon,
@@ -145,6 +146,22 @@ export default function WeeklyComparisonChart({
     }
     return processWeeklyData(previousYearData)
   }, [previousYearData, useMultiYear, processedMultiYear])
+
+  // Lookup vs misma semana del año anterior: activo solo cuando se muestra exactamente 1 año
+  const buildYoyWeekLookup = () => {
+    if (!useMultiYear || filteredMultiYearData.length !== 1) return null
+    const yearStr = filteredMultiYearData[0].year
+    const prevData = getPreviousYearData(activeMultiYearData, yearStr)
+    if (!prevData) return null
+    const mapByWeek = {}
+    prevData.forEach(d => {
+      if (d.week === undefined || d.week === null) return
+      const val = parseFloat(d.consumption)
+      mapByWeek[d.week] = Number.isFinite(val) ? val : null
+    })
+    return { prevYear: String(parseInt(yearStr, 10) - 1), mapByWeek }
+  }
+  const yoyWeekLookup = buildYoyWeekLookup()
 
   // Calcular estadísticas comparativas
   const comparisonStats = useMemo(() => {
@@ -327,6 +344,17 @@ export default function WeeklyComparisonChart({
             }
             
             return label
+          },
+          afterLabel: function(context) {
+            if (!yoyWeekLookup || context.parsed.y <= 0 || !processedMultiYear[context.datasetIndex]) return null
+            const point = processedMultiYear[context.datasetIndex].processed[context.dataIndex]
+            if (!point) return null
+            return construirEtiquetaYoY({
+              valorActual: context.parsed.y,
+              valorAnterior: yoyWeekLookup.mapByWeek[point.week],
+              etiquetaPeriodo: `Sem ${point.week} ${yoyWeekLookup.prevYear}`,
+              unidad: unit
+            }) || null
           }
         }
       }

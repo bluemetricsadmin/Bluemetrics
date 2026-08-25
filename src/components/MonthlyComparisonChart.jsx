@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { getColorForYear } from '../utils/chartColors'
+import { getPreviousYearData, construirEtiquetaYoY } from '../utils/yearOverYear'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -46,6 +47,7 @@ export default function MonthlyComparisonChart({
   unit = "m³",
   chartType: externalChartType = null,
   showControls = true,
+  selectedYearsToShow = null,
   multiYearData = null,
 }) {
   const [internalChartType, setInternalChartType] = useState('line')
@@ -55,10 +57,12 @@ export default function MonthlyComparisonChart({
 
   // Filtrar datos por años seleccionados
   const filteredMultiYearData = useMemo(() => {
-    return multiYearData !== null && Array.isArray(multiYearData)
-      ? multiYearData.filter(yearItem => selectedYears.includes(yearItem.year))
-      : []
-  }, [multiYearData, selectedYears])
+    if (multiYearData === null || !Array.isArray(multiYearData)) return []
+    const activeYears = Array.isArray(selectedYearsToShow) && selectedYearsToShow.length > 0
+      ? selectedYearsToShow
+      : selectedYears
+    return multiYearData.filter(yearItem => activeYears.includes(yearItem.year))
+  }, [multiYearData, selectedYears, selectedYearsToShow])
 
   const useMultiYear = filteredMultiYearData.length > 0
 
@@ -141,6 +145,21 @@ export default function MonthlyComparisonChart({
     }
     return []
   }, [useMultiYear, processedMultiYear])
+
+  // Lookup vs mismo mes del año anterior: activo solo cuando se muestra exactamente 1 año
+  const yoyMonthLookup = useMemo(() => {
+    if (!useMultiYear || filteredMultiYearData.length !== 1) return null
+    const yearStr = filteredMultiYearData[0].year
+    const prevData = getPreviousYearData(multiYearData, yearStr)
+    if (!prevData) return null
+    const mapByMonth = {}
+    prevData.forEach(d => {
+      if (d.month === undefined || d.month === null) return
+      const val = parseFloat(d.consumption)
+      mapByMonth[d.month] = Number.isFinite(val) ? val : null
+    })
+    return { prevYear: String(parseInt(yearStr, 10) - 1), mapByMonth }
+  }, [useMultiYear, filteredMultiYearData, multiYearData])
 
   // Estadísticas comparativas
   const comparisonStats = useMemo(() => {
@@ -263,6 +282,17 @@ export default function MonthlyComparisonChart({
               }
             }
             return label
+          },
+          afterLabel: function (context) {
+            if (!yoyMonthLookup || context.parsed.y <= 0 || !processedMultiYear[context.datasetIndex]) return null
+            const monthData = processedMultiYear[context.datasetIndex].processed[context.dataIndex]
+            if (!monthData) return null
+            return construirEtiquetaYoY({
+              valorActual: context.parsed.y,
+              valorAnterior: yoyMonthLookup.mapByMonth[monthData.month],
+              etiquetaPeriodo: `${monthData.monthName} ${yoyMonthLookup.prevYear}`,
+              unidad: unit
+            }) || null
           }
         }
       }

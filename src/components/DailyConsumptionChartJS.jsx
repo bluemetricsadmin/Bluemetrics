@@ -23,6 +23,7 @@ import {
   Filter
 } from 'lucide-react'
 import { getColorForYear } from '../utils/chartColors'
+import { getPreviousYearData, construirEtiquetaYoY, extraerDiaDeDiaHora, derivarMesDeLectura } from '../utils/yearOverYear'
 
 ChartJS.register(
   CategoryScale,
@@ -113,7 +114,7 @@ const DailyConsumptionChartJS = ({
   const [vistaActual, setVistaActual] = useState('mensual')
   const [internalChartType, setInternalChartType] = useState('line')
   const [mostrarPromedio, setMostrarPromedio] = useState(true)
-  const [selectedYears, setSelectedYears] = useState('2025') // null = default (current year only)
+  const [selectedYears, setSelectedYears] = useState(['2026']) // null = default (current year only)
 
   const chartType = externalChartType !== null ? externalChartType : internalChartType
 
@@ -234,6 +235,40 @@ const DailyConsumptionChartJS = ({
     }
     return processSingleYearData(data, vistaActual)
   }, [data, vistaActual, puntoField, useMultiYear, processedMultiYear])
+
+  // Lookup vs mismo día/mes del año anterior: activo solo cuando se muestra exactamente 1 año
+  const yoyDailyLookup = useMemo(() => {
+    if (!useMultiYear || activeSelectedYears.length !== 1 || !Array.isArray(multiYearData)) return null
+    const yearStr = activeSelectedYears[0]
+    const prevData = getPreviousYearData(multiYearData, yearStr)
+    if (!prevData) return null
+
+    const porDia = {}
+    const porMes = {}
+    prevData.forEach(item => {
+      const mesKey = derivarMesDeLectura(item)
+      if (!mesKey) return
+      const val = parseFloat(item[puntoField])
+      const safeVal = Number.isFinite(val) ? val : 0
+
+      const dia = extraerDiaDeDiaHora(item.dia_hora)
+      if (dia) {
+        const key = `${mesKey}-${dia}`
+        porDia[key] = (porDia[key] || 0) + safeVal
+      }
+
+      if (!porMes[mesKey]) porMes[mesKey] = { total: 0, count: 0 }
+      porMes[mesKey].total += safeVal
+      if (safeVal > 0) porMes[mesKey].count += 1
+    })
+
+    const promediosMes = {}
+    Object.keys(porMes).forEach(k => {
+      promediosMes[k] = porMes[k].count > 0 ? porMes[k].total / porMes[k].count : null
+    })
+
+    return { prevYear: String(parseInt(yearStr, 10) - 1), porDia, promediosMes }
+  }, [useMultiYear, activeSelectedYears, multiYearData, puntoField])
 
   // Estadísticas
   const estadisticas = useMemo(() => {
@@ -426,6 +461,31 @@ const DailyConsumptionChartJS = ({
               }
             }
             return label
+          },
+          afterLabel: function (context) {
+            if (!yoyDailyLookup || context.parsed.y <= 0 || context.datasetIndex !== 0 || processedMultiYear.length === 0) return null
+            const point = processedMultiYear[processedMultiYear.length - 1].processed[context.dataIndex]
+            if (!point) return null
+
+            const mesKey = derivarMesDeLectura({ mes: point.mes })
+            if (vistaActual === 'anual') {
+              if (!mesKey) return null
+              return construirEtiquetaYoY({
+                valorActual: context.parsed.y,
+                valorAnterior: yoyDailyLookup.promediosMes[mesKey],
+                etiquetaPeriodo: `${mesKey} ${yoyDailyLookup.prevYear}`,
+                unidad: 'm³'
+              }) || null
+            }
+
+            const dia = extraerDiaDeDiaHora(point.diaHora || point.fecha)
+            if (!mesKey || !dia) return null
+            return construirEtiquetaYoY({
+              valorActual: context.parsed.y,
+              valorAnterior: yoyDailyLookup.porDia[`${mesKey}-${dia}`],
+              etiquetaPeriodo: `${dia} ${mesKey} ${yoyDailyLookup.prevYear}`,
+              unidad: 'm³'
+            }) || null
           }
         }
       }
