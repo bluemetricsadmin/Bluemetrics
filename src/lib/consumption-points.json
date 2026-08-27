@@ -229,7 +229,7 @@
         },
         {
           "id": "cdb2_banos_nuevos_2025",
-          "name": "CDB2 Baños nuevos 2025",
+          "name": "CDB2 Baños",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -261,7 +261,7 @@
         },
          {
           "id": "lago_aulas_7_llenado",
-          "name": "Lago Aulas 7 llenado",
+          "name": "Lago Aulas 7",
           "type": "instalacion_deportiva",
           "unit": "m³",
           "weeklyData": [
@@ -278,7 +278,7 @@
         
         {
           "id": "farnville",
-          "name": "Farnville",
+          "name": "Farmville",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -358,7 +358,7 @@
         },
         {
           "id": "wellness_parque_central_tunel",
-          "name": "Wellness Parque Central (Parque Central Tunel Instalaciones)",
+          "name": "Wellness Edificio Wellnes + PC (No operativo)",
           "type": "instalacion_deportiva",
           "unit": "m³",
           "weeklyData": [
@@ -374,7 +374,7 @@
         },
         {
           "id": "wellness_registro",
-          "name": "WELLNESS REGISTRO (Wellness-Parque Central)",
+          "name": "Wellness tunel A6(Edificio Wellness + PC)",
           "type": "medidor_registro",
           "unit": "m³",
           "weeklyData": [
@@ -390,7 +390,7 @@
         },
         {
           "id": "parque_central_registro",
-          "name": "Parque Central Registro",
+          "name": "Parque Central General",
           "type": "medidor_registro",
           "unit": "m³",
           "weeklyData": [
@@ -406,7 +406,7 @@
         },
         {
           "id": "wellness_edificio",
-          "name": "Wellness-edificio",
+          "name": "Wellness edificio",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -438,7 +438,7 @@
         },
         {
           "id": "wellness_torre_enfriamiento",
-          "name": "Wellness Torre de Enfriamiento",
+          "name": "Wellness-Torre de Enfriamiento",
           "type": "torre_enfriamiento",
           "unit": "m³",
           "weeklyData": [
@@ -454,7 +454,7 @@
         },
         {
           "id": "wellness_alberca",
-          "name": "Wellness Alberca",
+          "name": "Wellness-Alberca",
           "type": "instalacion_deportiva",
           "unit": "m³",
           "weeklyData": [
@@ -470,7 +470,7 @@
         },
         {
           "id": "centrales_comedor_1_principal",
-          "name": "Centrales Comedor 1 (Puertas Giratorias) (Concesiones)",
+          "name": "Centrales Comedor Concesiones",
           "type": "comedor",
           "unit": "m³",
           "weeklyData": [
@@ -486,7 +486,7 @@
         },
         {
           "id": "centrales_dona_tota",
-          "name": "Centrales Comedor 1-Doña Tota",
+          "name": "Centrales Comedor-Doña Tota",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -502,7 +502,7 @@
         },
         {
           "id": "centrales_subway",
-          "name": "Centrales Comedor 1-Subway",
+          "name": "Centrales Comedor-Subway",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -518,7 +518,7 @@
         },
         {
           "id": "centrales_carls_jr",
-          "name": "Centrales Comedor 1-Carls Jr.",
+          "name": "Centrales Comedor-Carls Jr.",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -534,7 +534,7 @@
         },
         {
           "id": "centrales_little_cesars",
-          "name": "Centrales Comedor 1-Pizza Little Cesars",
+          "name": "Centrales Comedor-Pizza Little Cesars",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -550,7 +550,7 @@
         },
         {
           "id": "centrales_grill_team",
-          "name": "Centrales Comedor 1- Grill Team (Davila´s, GRILL)",
+          "name": "Centrales Comedor-Grill Team (Davila´s, GRILL)",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -566,7 +566,7 @@
         },
         {
           "id": "centrales_chilaquiles",
-          "name": "Centrales Comedor 1 Chilaquiles",
+          "name": "Centrales Comedor-Chilaquiles",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -582,7 +582,7 @@
         },
         {
           "id": "centrales_tec_food",
-          "name": "Centrales Comedor 1 Tec Food",
+          "name": "Centrales Comedor-Tec Food",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -598,7 +598,7 @@
         },
         {
           "id": "centrales_oxxo",
-          "name": "Centrales Comedor 1-oxxo",
+          "name": "Centrales Comedor-Oxxo",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -614,7 +614,7 @@
         },
         {
           "id": "comedor_central_tunel",
-          "name": "Comedor Central (Comedor Comedor 1 tunel)",
+          "name": "Centrales tunel (llave cto. Basura)",
           "type": "comedor",
           "unit": "m³",
           "weeklyData": [
@@ -630,7 +630,7 @@
         },
         {
           "id": "administrativo",
-          "name": "Administrativo",
+          "name": "Administrativo (Centrales Norte)",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -646,7 +646,7 @@
         },
         {
           "id": "biotecnologia",
-          "name": "Biotecnología",
+          "name": "Biotecnología-Laboratorios",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": [
@@ -742,7 +742,7 @@
         },
         {
           "id": "ciap_andatti",
-          "name": "Ciap-Andatti (Tim Horton)",
+          "name": "Ciap-Tim Hortons",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -758,7 +758,7 @@
         },
         {
           "id": "ciap_dc_jochos",
-          "name": "Ciap DC Jochos",
+          "name": "Ciap-DC Jochos",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -774,7 +774,7 @@
         },
         {
           "id": "crepaso",
-          "name": "Crepaso",
+          "name": "Ciap-Crepaso",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -790,7 +790,7 @@
         },
         {
           "id": "el_negro",
-          "name": "El Negro",
+          "name": "Ciap-El Negro",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -806,7 +806,7 @@
         },
         {
           "id": "aulas_5",
-          "name": "Aulas 5",
+          "name": "Biotecnología-Baños",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": [
@@ -870,7 +870,7 @@
         },
         {
           "id": "reflexion",
-          "name": "Reflexión",
+          "name": "Espacio de Reflexión",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -886,7 +886,7 @@
         },
         {
           "id": "comedor_2_residencias_10_15",
-          "name": "Comedor 2 - Residencias 10 y 15  (NO TOMAR LECTURA)",
+          "name": "Comedor 2 - Residencias 10 y 15  (No Operativo)",
           "type": "comedor",
           "unit": "m³",
           "noRead": true,
@@ -935,7 +935,7 @@
         },
         {
           "id": "residencias_10_15_llenado",
-          "name": "Residencias 10 y 15 llenado",
+          "name": "Residencias 10 y 15- Torres enfriamiento",
           "type": "residencia",
           "unit": "m³",
           "weeklyData": [
@@ -951,7 +951,7 @@
         },
         {
           "id": "comedor_2_caldera_2",
-          "name": "Comedor 2 - Caldera 2",
+          "name": "Comedor 2 - Caldera 2(No Operativo)",
           "type": "comedor",
           "unit": "m³",
           "noRead": true,
@@ -968,7 +968,7 @@
         },
         {
           "id": "la_choza",
-          "name": "La choza",
+          "name": "La choza(No operativo)",
           "type": "concesion",
           "unit": "m³",
           "noRead": true,
@@ -985,7 +985,7 @@
         },
         {
           "id": "cedes_cisterna",
-          "name": "Cedes (Cisterna)",
+          "name": "Cedes",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1001,7 +1001,7 @@
         },
         {
           "id": "san_huevito",
-          "name": "San Huevito",
+          "name": "Cedes-San Huevito",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1017,7 +1017,7 @@
         },
         {
           "id": "cedes_site",
-          "name": "Cedes Site",
+          "name": "Cedes Site-Tinaco",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1033,7 +1033,7 @@
         },
            {
           "id": "cedes_site_bomba",
-          "name": "Cedes Site Bomba",
+          "name": "Cedes Site-Bomba",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1133,7 +1133,7 @@
         
         {
           "id": "cedes_e2",
-          "name": "Cedes-E2",
+          "name": "E2-General",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1197,7 +1197,7 @@
         },
         {
           "id": "e2_bebedero_nube",
-          "name": "E2 bebedero Nube",
+          "name": "E2-Bebedero",
           "type": "bebedero",
           "unit": "m³",
           "weeklyData": [
@@ -1229,7 +1229,7 @@
         },
         {
           "id": "rectoria_norte",
-          "name": "Rectoría Norte",
+          "name": "Rectoría",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1261,7 +1261,7 @@
         },
         {
           "id": "rectoria_sur",
-          "name": "Rectoría Sur  (NO TOMAR LECTURA)",
+          "name": "Rectoría Sur  (No Operativo)",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1357,7 +1357,7 @@
         },
         {
           "id": "biblioteca_tim_horton",
-          "name": "Biblioteca-Tim Horton",
+          "name": "Biblioteca-Tim Hortons",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -1373,7 +1373,7 @@
         },
         {
           "id": "biblioteca_starbucks",
-          "name": "Biblioteca-Starbucks",
+          "name": "Biblioteca-Starbucks(No Operativo)",
           "type": "concesion",
           "unit": "m³",
           "noRead":true,
@@ -1406,7 +1406,7 @@
         },
         {
           "id": "basanti",
-          "name": "Basanti",
+          "name": "Aulas 3-Basanti",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -1438,7 +1438,7 @@
         },
         {
           "id": "aulas_3_starbucks",
-          "name": "Aulas 3 - Starbucks",
+          "name": "Aulas 3 - Starbucks(No Operativo)",
           "type": "concesion",
           "unit": "m³",
           "noRead": true,
@@ -1526,7 +1526,7 @@
         },
         {
           "id": "residencias_1_antiguo",
-          "name": "Residencias 1 (antiguo)  (NO TOMAR LECTURA)",
+          "name": "Residencias 1 (antiguo)  (No Operativo)",
           "type": "residencia",
           "unit": "m³",
           "noRead": true,
@@ -1543,7 +1543,7 @@
         },
         {
           "id": "residencias_2_ote",
-          "name": "Residencias 2 ote",
+          "name": "Residencias 2",
           "type": "residencia",
           "unit": "m³",
           "weeklyData": [
@@ -1559,7 +1559,7 @@
         },
         {
           "id": "residencias_2_pte",
-          "name": "Residencias 2 pte  (YA NO HAY MEDIDOR desde 29-Sep-25)",
+          "name": "Residencias 2 pte  (No Operativo)",
           "type": "residencia",
           "unit": "m³",
           "notes": "Medidor removido 29-Sep-25",
@@ -1592,7 +1592,7 @@
         },
         {
           "id": "residencias_4",
-          "name": "Residencias 4 (NO TOMAR LECTURA)",
+          "name": "Residencias 4 (No OPerativo)",
           "type": "residencia",
           "unit": "m³",
           "noRead": true,
@@ -1625,7 +1625,7 @@
         },
         {
           "id": "residencias_7",
-          "name": "Residencias 7 (NO TOMAR LECTURA)",
+          "name": "Residencias 7 (No Operativo)",
           "type": "residencia",
           "unit": "m³",
           "noRead": true,
@@ -1642,7 +1642,7 @@
         },
         {
           "id": "residencias_8",
-          "name": "Residencias 8 (NO TOMAR LECTURA)",
+          "name": "Residencias 8 (No Operativo)",
           "type": "residencia",
           "unit": "m³",
           "noRead": true,
@@ -1659,7 +1659,7 @@
         },
         {
           "id": "correos",
-          "name": "Correos Mr Heppy",
+          "name": "R2-Heppy Salads",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1675,7 +1675,7 @@
         },
         {
           "id": "alberca",
-          "name": "Alberca (NO TOMAR LECTURAS)",
+          "name": "Alberca (No Operativo)",
           "type": "instalacion_deportiva",
           "unit": "m³",
           "noRead": true,
@@ -1692,7 +1692,7 @@
         },
         {
           "id": "residencias_abc",
-          "name": "Residencias ABC (Residencias 1 Nuevas)",
+          "name": "Residencias 1",
           "type": "residencia",
           "unit": "m³",
           "weeklyData": [
@@ -1709,7 +1709,7 @@
        
         {
           "id": "residencias_abc_lavanderia",
-          "name": "Residencias ABC (Lavandería)",
+          "name": "Residencias1-Lavandería",
           "type": "residencia",
           "unit": "m³",
           "weeklyData": [
@@ -1725,7 +1725,7 @@
         },
         {
           "id": "mil_mascaras",
-          "name": "Mil Mascaras",
+          "name": "E3-Mil Caras",
           "type": "estacionamiento",
           "source": "ciudad",
           "unit": "m³",
@@ -1800,7 +1800,7 @@
         },
         {
           "id": "caldera_3",
-          "name": "Caldera 3 (NO TOMAR LECTURA)",
+          "name": "Aulas 7-Caldera 3 (No Operativo)",
           "type": "caldera",
           "unit": "m³",
           "weeklyData": [
@@ -1848,7 +1848,7 @@
         },
         {
           "id": "cdi_1",
-          "name": "CDI. 1",
+          "name": "CDI-Caseta Oficinas(Provisional)",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": [
@@ -1880,7 +1880,7 @@
         },
         {
           "id": "cdi_2",
-          "name": "CDI. 2",
+          "name": "CDI-Baños construcción(Provisional)",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": [
@@ -1912,7 +1912,7 @@
         },
         {
           "id": "jubileo",
-          "name": "Jubileo",
+          "name": "Comedor Jubileo",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1983,7 +1983,7 @@
         },
         {
           "id": "arquitectura_e1",
-          "name": "Arquitectura y E1 (NO TOMAR LECTURA)",
+          "name": "Arquitectura y E1 (No Operativo)",
           "type": "edificio_academico",
           "unit": "m³",
           "noRead": true,
@@ -2000,7 +2000,7 @@
         },
         {
           "id": "arquitectura_anexo",
-          "name": "Arquitectura Anexo (ya no existe)",
+          "name": "Arquitectura Anexo (No Operativo)",
           "type": "edificio_academico",
           "unit": "m³",
           "noRead": true,
@@ -2034,7 +2034,7 @@
         },
         {
           "id": "escamilla_banos_trabajadores",
-          "name": "Escamilla baños trabajadores  (revisar medidor, cambio)",
+          "name": "Escamilla baños (Cancha sintetica)",
           "type": "edificio",
           "unit": "m³",
           "notes": "Revisar medidor, requiere cambio",
@@ -2051,7 +2051,7 @@
         },
         {
           "id": "estadio_banorte",
-          "name": "Estadio Banorte (Estadio Borrego)",
+          "name": "Estadio Borregos",
           "type": "instalacion_deportiva",
           "unit": "m³",
           "weeklyData": [
@@ -2067,7 +2067,7 @@
         },
         {
           "id": "estadio_banorte_te",
-          "name": "Estadio Banorte Torre Enfriamiento",
+          "name": "Estadio Borregos Torre Enfriamiento",
           "type": "torre_enfriamiento",
           "unit": "m³",
           "weeklyData": [
@@ -2083,7 +2083,7 @@
         },
         {
           "id": "campus_norte_edificios_ciudad",
-          "name": "Campus Norte Edificios (agua de la ciudad) (NO TOMAR LECTURA)",
+          "name": "Campus Norte-Edificio D (Ciudad)",
           "type": "edificio",
           "source": "ciudad",
           "unit": "m³",
@@ -2157,7 +2157,7 @@
     },
     {
       "id": "riego_ptar",
-      "name": "Sistemas de Riego y PTAR",
+      "name": "PTAR(Riego)(No Operativo)",
       "description": "Sistemas de tratamiento y riego",
       "points": [
         {
@@ -2227,7 +2227,7 @@
         },
         {
           "id": "campus_norte_ciudad_riego",
-          "name": "Campus Norte (Ciudad \"riego\")",
+          "name": "Campus Norte-respaldo (No Operativo)",
           "type": "riego",
           "source": "ciudad",
           "unit": "m³",
@@ -2244,7 +2244,7 @@
         },
         {
           "id": "comedor_d_ciudad",
-          "name": "Comedor D (agua de la ciudad)",
+          "name": "Campus Norte-Comedor D",
           "type": "comedor",
           "source": "ciudad",
           "unit": "m³",
@@ -2263,7 +2263,7 @@
     },
     {
       "id": "purgas_evaporacion",
-      "name": "Purgas y Evaporación",
+      "name": "Estado Borregos (purga T.E.)",
       "description": "Sistemas de purga y evaporación de torres de enfriamiento",
       "points": [
         {
@@ -2285,7 +2285,7 @@
         },
         {
           "id": "wellness_cisterna_pluvial_purgas",
-          "name": "Wellnes Cisterna Pluvial purgas  (medidor dañado)",
+          "name": "Wellnes Cisterna Pluvial purgas  (No Operativo)",
           "type": "purga",
           "unit": "m³",
           "notes": "Medidor dañado",
@@ -2302,7 +2302,7 @@
         },
         {
           "id": "wellness_suavizador_purga",
-          "name": "Wellness Suavizador purga  (importante)",
+          "name": "Wellness-Suavizador (purga)",
           "type": "purga",
           "importance": "importante",
           "unit": "m³",
@@ -2319,7 +2319,7 @@
         },
         {
           "id": "wellness_te_purga",
-          "name": "Wellness T.E. purga (importante)",
+          "name": "Wellness (purga T.E.)",
           "type": "purga",
           "importance": "importante",
           "unit": "m³",
@@ -2336,7 +2336,7 @@
         },
         {
           "id": "wellness_te_rebosadero",
-          "name": "Wellness T.E. rebosadero",
+          "name": "Wellness (rebosadero T.E.)",
           "type": "purga",
           "unit": "m³",
           "weeklyData": [
@@ -2353,7 +2353,7 @@
         
         {
           "id": "cedes_tinaco_riego_pluvial",
-          "name": "Cedes Tinaco Riego SS2 pluvial  (fuera de servicio)",
+          "name": "Cedes Tinaco Riego SS2 pluvial  (No Operativo)",
           "type": "purga",
           "unit": "m³",
           "notes": "Fuera de servicio",
@@ -2371,7 +2371,7 @@
         },
         {
           "id": "megacentral_te_purgas",
-          "name": "Megacentral Torres Enfriamiento purgas",
+          "name": "Megacentral (purga T.E.)",
           "type": "purga",
           "unit": "m³",
           "weeklyData": [
@@ -2387,7 +2387,7 @@
         },
         {
           "id": "megacentral_suavizador_purga",
-          "name": "Megacentral Suavizador (purga) (fuera de servcicio provisional)",
+          "name": "Megacentral Suavizador Purga (No operativo)",
           "type": "purga",
           "unit": "m³",
           "notes": "Fuera de servicio provisional",
@@ -2404,7 +2404,7 @@
         },
         {
           "id": "cah3_te_purgas",
-          "name": "CAH3 Torre Enfriamiento purgas",
+          "name": "CAH3 (purga T.E.)",
           "type": "purga",
           "unit": "m³",
           "weeklyData": [
@@ -2420,7 +2420,7 @@
         },
         {
           "id": "residencias_10_15_te_purga",
-          "name": "Residencias 10 y 15 T.E. purga",
+          "name": "Residencias 10 y 15 (purga T.E.)",
           "type": "purga",
           "unit": "m³",
           "weeklyData": [
@@ -2436,7 +2436,7 @@
         },
         {
           "id": "estadio_borrego_pluvial",
-          "name": "Estadio Borrego pluvial al sanitario",
+          "name": "Estadio Borrego pluvial al sanitario(No Operativo)",
           "type": "pluvial",
           "unit": "m³",
           "noRead":true,
@@ -2453,7 +2453,7 @@
         },
         {
           "id": "ciap_cisterna_pluvial",
-          "name": "Ciap Cisterna Pluvial-Riego al sanitario 2\"",
+          "name": "Ciap Cisterna Pluvial",
           "type": "pluvial",
           "unit": "m³",
           "weeklyData": [
@@ -2476,7 +2476,7 @@
       "points": [
         {
           "id": "campo_soft_bol",
-          "name": "Campo Soft bol (Ciudad)",
+          "name": "Linea respaldo (Ciudad) Cisterna 1 y 2",
           "type": "instalacion_deportiva",
           "source": "ciudad",
           "unit": "m³",
@@ -2494,7 +2494,7 @@
         },
         {
           "id": "cedes_ciudad",
-          "name": "Cedes (Ciudad)",
+          "name": "Cedes (Ciudad)(No Operativo)",
           "type": "edificio",
           "source": "ciudad",
           "unit": "m³",
@@ -2513,7 +2513,7 @@
 
          {
           "id": "estacionamiento_e3",
-          "name": "Estacionamiento E3 (Ciudad)",
+          "name": "E3 (Ciudad)",
           "type": "estacionamiento",
           "source": "ciudad",
           "unit": "m³",
@@ -2582,7 +2582,7 @@
         },
         {
           "id": "escamilla_banos_alumnos",
-          "name": "Escamilla Baños Alumnos (Ciudad)",
+          "name": "Escamilla Baños Alumnos (Ciudad)(No Operativo)",
           "type": "edificio",
           "source": "ciudad",
           "unit": "m³",
@@ -2651,7 +2651,7 @@
         },
         {
           "id": "residencias_13_2_ciudad",
-          "name": "Estudiantes Residencias 13-2 (Ciudad) (ESTE NO JAVIER GZA)",
+          "name": "Estudiantes Residencias 13-2 (Ciudad) (No Operativo)",
           "type": "residencia",
           "source": "ciudad",
           "unit": "m³",
@@ -2669,7 +2669,7 @@
         },
         {
           "id": "residencias_13_3_ciudad",
-          "name": "Estudiantes Residencias 13-3 (Ciudad) (ESTE NO JAVIER GZA)",
+          "name": "Estudiantes Residencias 13-3 (Ciudad) (No Operativo)",
           "type": "residencia",
           "source": "ciudad",
           "unit": "m³",
@@ -2687,7 +2687,7 @@
         },
         {
           "id": "residencias_15_sotano",
-          "name": "Residencias 15 sótano (ESTE NO JAVIER GZA)",
+          "name": "Residencias 15 sótano (Entrada Cisterna)",
           "type": "residencia",
           "unit": "m³",
           "notes": "No tomar lectura - JAVIER GZA",
