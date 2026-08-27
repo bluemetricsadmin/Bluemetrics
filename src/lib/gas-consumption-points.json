@@ -45,63 +45,63 @@
         },
         {
           "id": "centrales_local",
-          "name": "1. Centrales Local",
+          "name": "Centrales General concesiones",
           "type": "local_comida",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "dona_tota",
-          "name": "1.1 Doña Tota",
+          "name": "Centrales-Doña Tota",
           "type": "restaurante",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "chilaquiles_tec",
-          "name": "1.2 Chilaquiles Tec",
+          "name": "Centrales-Chilaquiles Tec",
           "type": "restaurante",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "carls_junior",
-          "name": "1.3 Carl´s Junior",
+          "name": "Centrales-Carl´s Junior",
           "type": "restaurante",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "comedor_centrales_tec_food",
-          "name": "1.4 Comedor Centrales Tec Food",
+          "name": "Centrales-TecFood",
           "type": "comedor",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "davilas_grill_team",
-          "name": "1.5 Davila´s ( Grill Team )",
+          "name": "Centrales-Grill Team",
           "type": "restaurante",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "pizza_little_caesars",
-          "name": "1.6 Pizza Little Caesars",
+          "name": "Centrales-Little Caesars",
           "type": "restaurante",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "biotecnologia",
-          "name": "Biotecnología",
+          "name": "Biotecnología(Laboratorios)",
           "type": "laboratorio",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "caldera_1_leon",
-          "name": "Caldera 1 (Leon) MISMA LECTURA DESDE SEM 20 2025",
+          "name": "Biotecnología(Caldera)",
           "type": "caldera",
           "unit": "m³",
           "noRead": true,
@@ -109,35 +109,35 @@
         },
         {
           "id": "mega_calefaccion_1",
-          "name": "Mega Calefacción 1 MISMA LECTURA DESDE SEM 8 2025",
+          "name": "Mega Calefacción 1",
           "type": "calefaccion",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "mega_calefaccion_2",
-          "name": "Mega Calefacción 2 MISMA LECTURA DESDE SEM 8 2025",
+          "name": "Mega Calefacción 2",
           "type": "calefaccion",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "mega_calefaccion_3",
-          "name": "Mega Calefacción 3 MISMA LECTURA DESDE SEM 8 2025",
+          "name": "Mega Calefacción 3",
           "type": "calefaccion",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "mega_calefaccion_4",
-          "name": "Mega Calefacción 4 MISMA LECTURA DESDE SEM 8 2025",
+          "name": "Mega Calefacción 4",
           "type": "calefaccion",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "mega_calefaccion_5",
-          "name": "Mega Calefacción 5 MISMA LECTURA DESDE SEM 8 2025",
+          "name": "Mega Calefacción 5",
           "type": "calefaccion",
           "unit": "m³",
           "weeklyData": []
@@ -158,21 +158,21 @@
         },
         {
           "id": "biblioteca",
-          "name": "2. Biblioteca",
+          "name": "Biblioteca",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "nikkori",
-          "name": "2.1 Nikkori",
+          "name": "Biblioteca-Nikkori",
           "type": "restaurante",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "nectar_works",
-          "name": "2.2 Nectar Works",
+          "name": "Biblioteca Nectar Works",
           "type": "restaurante",
           "unit": "m³",
           "weeklyData": []
@@ -193,28 +193,28 @@
         },
         {
           "id": "calefaccion_1_bryan",
-          "name": "Calefacción 1 Bryan MISMA LECTURA DESDE SEM 8 2025",
+          "name": "Aulas 7 Sótano-Calefacción 1",
           "type": "calefaccion",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "calefaccion_2_aerco",
-          "name": "Calefacción 2 Aerco MISMA LECTURA DESDE 29-Dic-21",
+          "name": "Aulas 7 Sótano-Calefacción 2",
           "type": "calefaccion",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "caldera_3",
-          "name": "Caldera 3 MISMA LECTURA DESDE 29-Dic-21",
+          "name": "Aulas 7 Sótano-Calefacción 3(No Operativo)",
           "type": "caldera",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "aulas_7",
-          "name": "Aulas 7 MISMA LECTURA DESDE 29-Dic-21",
+          "name": "Aulas 7-Laboratorios(No Operativo",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": []
@@ -228,14 +228,14 @@
         },
         {
           "id": "aulas_4",
-          "name": "Aulas 4 MISMA LECTURA DESDE LA LECTURA DESDE 17-Nov",
+          "name": "Aulas 4-Laboratorios(No Operativo)",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "centro_congresos_vestidores",
-          "name": "Centro Congresos. Vestidores",
+          "name": "Centro congresos-Vestidores (No operativo)",
           "type": "vestidores",
           "unit": "m³",
           "weeklyData": []
@@ -270,21 +270,21 @@
         },
         {
           "id": "estudiantes_acometida_principal_digital",
-          "name": "Estudiantes Acometida Ppal digital",
+          "name": "Poligono residencias(1,2,3,4 y5)-Digital",
           "type": "medidor_digital",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "estudiantes_acometida_principal_analogico",
-          "name": "Estudientes Acometida Ppal analógico",
+          "name": "Poligono residencias(1,2,3,4 y5)-Analogico",
           "type": "medidor_analogico",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "cedes",
-          "name": "Cedes",
+          "name": "Cedes-Laboratorios",
           "type": "edificio_administrativo",
           "unit": "m³",
           "weeklyData": []
@@ -368,21 +368,21 @@
         },
         {
           "id": "residencias_abc_calefaccion",
-          "name": "Residencias ABC calefacción",
+          "name": "Residencias 1-Calefacción",
           "type": "calefaccion",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "residencias_abc_regaderas",
-          "name": "Residencias ABC regaderas",
+          "name": "Residencias 1-Regaderas",
           "type": "calentador",
           "unit": "m³",
           "weeklyData": []
         },
         {
           "id": "residencias_abc_locales_comida",
-          "name": "Residencias ABC locales comida",
+          "name": "Residencias 1-Locales Comida",
           "type": "local_comida",
           "unit": "m³",
           "weeklyData": []
