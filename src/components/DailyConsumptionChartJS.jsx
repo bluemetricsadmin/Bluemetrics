@@ -38,6 +38,14 @@ ChartJS.register(
 )
 
 // Funciones auxiliares
+const formatMX = (value) => {
+  if (value === null || value === undefined || isNaN(value)) return "0.00";
+  return Number(value).toLocaleString('es-MX', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 const formatearFecha = (fecha, vista) => {
   if (!fecha) return 'N/A'
   try {
@@ -441,7 +449,7 @@ const DailyConsumptionChartJS = ({
             return point ? `Fecha: ${construirFechaTooltip(point, vistaActual)}` : firstItem.label
           },
           label: function (context) {
-            let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString()} m³`
+            let label = `${context.dataset.label}: ${formatMX(context.parsed.y)} m³`
             if (useMultiYear && processedMultiYear[context.datasetIndex]) {
               const yearData = processedMultiYear[context.datasetIndex].processed
               if (context.dataIndex > 0 && yearData[context.dataIndex]) {
@@ -507,7 +515,7 @@ const DailyConsumptionChartJS = ({
         grid: { color: 'rgba(0, 0, 0, 0.05)' },
         ticks: {
           callback: function (value) {
-            return value.toLocaleString() + ' m³'
+            return formatMX(value) + ' m³'
           }
         }
       }
@@ -679,7 +687,7 @@ const DailyConsumptionChartJS = ({
                 }`}>
                   <p className="text-xs text-gray-500">Total {yt.year}</p>
                   <p className={`text-lg font-bold ${isLatest ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {yt.total.toLocaleString(undefined, { maximumFractionDigits: 1 })} m³
+                    {formatMX(yt.total)} m³
                   </p>
                 </div>
               )

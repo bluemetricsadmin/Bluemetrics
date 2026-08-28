@@ -118,8 +118,17 @@ export default function WeeklyComparisonTable({
     link.click()
   }
 
+  // Helper para forzar el formato mexicano en toda la tabla
+  const formatMX = (value) => {
+    if (value === null || value === undefined || isNaN(value)) return "0.00";
+    return Number(value).toLocaleString('es-MX', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
   // Obtener color basado en el cambio
-  const getChangeColor = (changeType, value) => {
+  const getChangeColor = (changeType) => {
     if (changeType === 'increase') {
       return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
     } else if (changeType === 'decrease') {
@@ -158,12 +167,12 @@ export default function WeeklyComparisonTable({
         <div className="grid grid-cols-3 gap-4 mt-4 p-4 bg-muted/30 rounded-lg">
           <div>
             <p className="text-xs text-muted-foreground">Consumo Total {year1}</p>
-            <p className="text-xl font-bold text-foreground">{totals.total2024.toLocaleString()} {unit}</p>
+            <p className="text-xl font-bold text-foreground">{formatMX(totals.total2024)} {unit}</p>
             <p className="text-xs text-muted-foreground mt-1">Suma de todas las semanas</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Consumo Total {year2}</p>
-            <p className="text-xl font-bold text-foreground">{totals.total2025.toLocaleString()} {unit}</p>
+            <p className="text-xl font-bold text-foreground">{formatMX(totals.total2025)} {unit}</p>
             <p className="text-xs text-muted-foreground mt-1">Suma de todas las semanas</p>
           </div>
           <div>
@@ -226,14 +235,14 @@ export default function WeeklyComparisonTable({
                   <td className={`p-3 text-right text-sm border-r ${
                     !row.hasData2024 ? 'text-muted-foreground italic' : ''
                   }`}>
-                    {row.hasData2024 ? row.consumption2024.toLocaleString() : 'Sin datos'}
+                    {row.hasData2024 ? formatMX(row.consumption2024) : 'Sin datos'}
                   </td>
 
                   {/* 2025 */}
                   <td className={`p-3 text-right text-sm border-r font-medium ${
                     !row.hasData2025 ? 'text-muted-foreground italic' : ''
                   }`}>
-                    {row.hasData2025 ? row.consumption2025.toLocaleString() : 'Sin datos'}
+                    {row.hasData2025 ? formatMX(row.consumption2025) : 'Sin datos'}
                   </td>
 
                   {/* Comparación */}
@@ -247,7 +256,7 @@ export default function WeeklyComparisonTable({
                           {showPercentages ? (
                             <>{row.change > 0 ? '+' : ''}{row.change.toFixed(1)}%</>
                           ) : (
-                            <>{(row.consumption2025 - row.consumption2024).toLocaleString()} {unit}</>
+                            <>{formatMX(row.consumption2025 - row.consumption2024)} {unit}</>
                           )}
                         </span>
                       </div>
@@ -262,10 +271,10 @@ export default function WeeklyComparisonTable({
               <tr className="border-t-2 border-muted bg-muted/50 font-bold">
                 <td className="p-3 text-sm border-r">TOTAL</td>
                 <td className="p-3 text-right text-sm border-r">
-                  {totals.total2024.toLocaleString()}
+                  {formatMX(totals.total2024)}
                 </td>
                 <td className="p-3 text-right text-sm border-r">
-                  {totals.total2025.toLocaleString()}
+                  {formatMX(totals.total2025)}
                 </td>
                 <td className="p-3 text-center">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${

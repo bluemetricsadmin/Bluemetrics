@@ -36,6 +36,15 @@ ChartJS.register(
   Filler
 )
 
+// Helper para forzar el formato mexicano en toda la gráfica
+const formatMX = (value) => {
+  if (value === null || value === undefined || isNaN(value)) return "0.00";
+  return Number(value).toLocaleString('es-MX', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 /**
  * Gráfica de comparación mensual con múltiples años
  * Adaptado de WeeklyComparisonChart para datos mensuales (12 meses)
@@ -273,7 +282,7 @@ export default function MonthlyComparisonChart({
       tooltip: {
         callbacks: {
           label: function (context) {
-            let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString()} ${unit}`
+            let label = `${context.dataset.label}: ${formatMX(context.parsed.y)} ${unit}`
             if (useMultiYear && processedMultiYear[context.datasetIndex]) {
               const monthData = processedMultiYear[context.datasetIndex].processed[context.dataIndex]
               if (monthData && monthData.vsLastMonthPercent !== 0) {
@@ -317,7 +326,7 @@ export default function MonthlyComparisonChart({
         },
         ticks: {
           callback: function(value) {
-            return value.toLocaleString() + ' ' + unit
+            return formatMX(value) + ' ' + unit
           }
         }
       }
@@ -387,7 +396,7 @@ export default function MonthlyComparisonChart({
                 }`}>
                   <p className="text-xs text-muted-foreground">Total {yearItem.year}</p>
                   <p className={`text-lg font-bold ${isLatest ? 'text-foreground' : 'text-muted-foreground'}`}>
-                    {yearTotal.toLocaleString()} {unit}
+                    {formatMX(yearTotal)} {unit}
                   </p>
                 </div>
               )
@@ -397,13 +406,13 @@ export default function MonthlyComparisonChart({
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
                 <p className="text-xs text-muted-foreground">Total {effectiveCurrentYear}</p>
                 <p className="text-lg font-bold text-foreground">
-                  {comparisonStats.currentTotal.toLocaleString()} {unit}
+                  {formatMX(comparisonStats.currentTotal)} {unit}
                 </p>
               </div>
               <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
                 <p className="text-xs text-muted-foreground">Total {effectivePreviousYear}</p>
                 <p className="text-lg font-bold text-muted-foreground">
-                  {comparisonStats.previousTotal.toLocaleString()} {unit}
+                  {formatMX(comparisonStats.previousTotal)} {unit}
                 </p>
               </div>
             </>

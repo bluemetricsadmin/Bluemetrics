@@ -20,7 +20,7 @@ export const construirEtiquetaYoY = ({ valorActual, valorAnterior, etiquetaPerio
   const pct = calcularCambioPct(valorActual, valorAnterior)
   if (pct === null) return ''
   const signo = pct > 0 ? '+' : ''
-  const valorFormateado = parseFloat(valorAnterior).toLocaleString(undefined, { maximumFractionDigits: 2 })
+  const valorFormateado = parseFloat(valorAnterior).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return `vs ${etiquetaPeriodo}: ${valorFormateado} ${unidad} (${signo}${pct.toFixed(1)}%)`
 }
 
