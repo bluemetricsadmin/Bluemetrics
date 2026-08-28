@@ -293,6 +293,16 @@ export default function ConsumptionTable({
     link.click()
   }
 
+
+  // Helper para forzar el formato mexicano en toda la tabla
+  const formatMX = (value) => {
+    if (value === null || value === undefined || isNaN(value)) return "0.00";
+    return Number(value).toLocaleString('es-MX', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
   // Icono de ordenamiento
   const SortIcon = ({ field }) => {
     if (sortField !== field) return <ArrowUpDownIcon className="h-4 w-4 ml-1 opacity-40" />
@@ -350,14 +360,14 @@ export default function ConsumptionTable({
         <div className="grid grid-cols-3 gap-4 mt-4 p-4 bg-muted/30 rounded-lg">
           <div>
             <p className="text-xs text-muted-foreground">Consumo Total Semana {weekNumber}</p>
-            <p className="text-xl font-bold text-foreground">{totals.currentWeek.toLocaleString()} m³</p>
+            <p className="text-xl font-bold text-foreground">{formatMX(totals.currentWeek)} m³</p>
             <p className="text-xs text-muted-foreground mt-1">Suma de todos los puntos</p>
           </div>
           {showComparison && weekNumber > 1 && (
             <>
               <div>
                 <p className="text-xs text-muted-foreground">Consumo Semana {weekNumber - 1}</p>
-                <p className="text-xl font-bold text-muted-foreground">{totals.previousWeek.toLocaleString()} m³</p>
+                <p className="text-xl font-bold text-muted-foreground">{formatMX(totals.currentWeek)} m³</p>
                 <p className="text-xs text-muted-foreground mt-1">Semana anterior</p>
               </div>
               <div>
@@ -498,10 +508,10 @@ export default function ConsumptionTable({
                       </div>
                     </td>
                     <td className="p-3 text-right text-sm text-muted-foreground">
-                      {previousReading.toLocaleString()}
+                      {formatMX(previousReading)}
                     </td>
                     <td className="p-3 text-right text-sm font-medium">
-                      {currentReading.toLocaleString()}
+                      {formatMX(currentReading)}
                     </td>
                     <td className="p-3 text-right">
                       <span className={`text-sm font-bold ${
@@ -509,7 +519,7 @@ export default function ConsumptionTable({
                         consumption > 1000 ? 'text-red-600' :
                         'text-primary'
                       }`}>
-                        {consumption.toLocaleString()}
+                        {formatMX(consumption)}
                       </span>
                     </td>
                     {showComparison && weekNumber > 1 && (
