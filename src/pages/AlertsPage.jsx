@@ -8,27 +8,19 @@ import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { 
   AlertTriangle, 
-  AlertCircle, 
   CheckCircle, 
   Bell, 
   Clock, 
   Activity,
   Search,
   Droplets,
-  TrendingUp,
-  TrendingDown,
-  Gauge,
   ShieldAlert,
   Loader2,
   RefreshCw,
   Waves
 } from "lucide-react"
 
-// Mapeo de well_id → nombre del pozo
-const WELL_NAMES = {
-  11: 'Pozo 11', 12: 'Pozo 12', 3: 'Pozo 3', 7: 'Pozo 7',
-  14: 'Pozo 14', 4: 'Pozo 4 (Riego)', 8: 'Pozo 8 (Riego)', 15: 'Pozo 15 (Riego)'
-}
+const ANOMALY_EVENT_TYPE = 'anomalia_sobreconsumo'
 
 // Convierte columna técnica → etiqueta legible
 // ej: "l_ciap_andatti" → "Ciap Andatti", "megacentral" → "Megacentral"
@@ -40,47 +32,26 @@ function formatMeterLabel(col) {
     .replace(/\b\w/g, c => c.toUpperCase())
 }
 
-// Obtiene la etiqueta de medidor para cualquier tipo de alerta
-function getAlertMeterLabel(evt) {
-  if (evt.event_type === 'posible_fuga') {
-    return formatMeterLabel(evt.meter_column) || 'Medidor desconocido'
+function getGranularityLabel(granularity) {
+  switch (granularity) {
+    case 'daily': return 'Diaria'
+    case 'weekly': return 'Semanal'
+    case 'monthly': return 'Mensual'
+    default: return null
   }
-  return WELL_NAMES[evt.well_id] || `Pozo ${evt.well_id}`
 }
 
-function getAlertVisual(event) {
-  const isCritical = event.severity === 'critica'
-  const isOverconsumption = event.event_type === 'sobreconsumo'
-  const isDropAlert = event.title?.includes('Caída')
-  const isLeakAlert = event.event_type === 'posible_fuga'
-
-  if (isLeakAlert) {
-    return {
-      icon: <Waves className="w-5 h-5" />,
-      colors: 'text-cyan-700 bg-cyan-50 border-cyan-200',
-      badgeClass: 'bg-cyan-100 text-cyan-800'
-    }
+function formatPeriod(evt) {
+  if (evt.alert_granularity === 'daily' && evt.alert_date) {
+    return new Date(evt.alert_date).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
   }
-
-  if (isCritical && isDropAlert) {
-    return {
-      icon: <TrendingDown className="w-5 h-5" />,
-      colors: 'text-orange-600 bg-orange-50 border-orange-200',
-      badgeClass: 'bg-orange-100 text-orange-800'
-    }
+  if (evt.alert_granularity === 'weekly' && evt.alert_week) {
+    return `Semana ${evt.alert_week}/${evt.alert_year}`
   }
-  if (isCritical) {
-    return {
-      icon: isOverconsumption ? <Gauge className="w-5 h-5" /> : <TrendingUp className="w-5 h-5" />,
-      colors: 'text-red-600 bg-red-50 border-red-200',
-      badgeClass: 'bg-red-100 text-red-800'
-    }
+  if (evt.alert_granularity === 'monthly' && evt.alert_month) {
+    return `${new Date(evt.alert_year, evt.alert_month - 1, 1).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}`
   }
-  return {
-    icon: <ShieldAlert className="w-5 h-5" />,
-    colors: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    badgeClass: 'bg-yellow-100 text-yellow-800'
-  }
+  return evt.title
 }
 
 function getStatusBadge(status) {
@@ -111,10 +82,8 @@ export default function AlertsPage() {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterSeverity, setFilterSeverity] = useState("all")
+  const [filterGranularity, setFilterGranularity] = useState("all")
   const [filterStatus, setFilterStatus] = useState("all")
-  const [filterType, setFilterType] = useState("all")
-  const [filterWell, setFilterWell] = useState("all")
 
   // Fetch inicial de alertas desde Supabase
   const fetchAlerts = async () => {
@@ -122,7 +91,7 @@ export default function AlertsPage() {
     const { data, error } = await supabase
       .from('well_events')
       .select('*')
-      .in('event_type', ['alerta_consumo', 'sobreconsumo', 'posible_fuga'])
+      .eq('event_type', ANOMALY_EVENT_TYPE)
       .order('created_at', { ascending: false })
       .limit(200)
 
@@ -150,7 +119,7 @@ export default function AlertsPage() {
 
           if (payload.eventType === 'INSERT') {
             const newEvent = payload.new
-            if (['alerta_consumo', 'sobreconsumo', 'posible_fuga'].includes(newEvent.event_type)) {
+            if (newEvent.event_type === ANOMALY_EVENT_TYPE) {
               setAlerts(prev => [newEvent, ...prev])
             }
           }
@@ -188,23 +157,20 @@ export default function AlertsPage() {
     const matchesSearch = !searchTerm || 
       a.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      WELL_NAMES[a.well_id]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (a.meter_column && formatMeterLabel(a.meter_column).toLowerCase().includes(searchTerm.toLowerCase()))
 
-    const matchesSeverity = filterSeverity === "all" || a.severity === filterSeverity
+    const matchesGranularity = filterGranularity === "all" || a.alert_granularity === filterGranularity
     const matchesStatus = filterStatus === "all" || a.event_status === filterStatus
-    const matchesType = filterType === "all" || a.event_type === filterType
-    const matchesWell = filterWell === "all" || String(a.well_id) === filterWell
 
-    return matchesSearch && matchesSeverity && matchesStatus && matchesType && matchesWell
+    return matchesSearch && matchesGranularity && matchesStatus
   })
 
   // Estadísticas
   const stats = {
     total: alerts.length,
     active: alerts.filter(a => a.event_status === 'activo').length,
-    critical: alerts.filter(a => a.severity === 'critica' && a.event_status === 'activo').length,
-    resolved: alerts.filter(a => a.event_status === 'completado').length
+    resolved: alerts.filter(a => a.event_status === 'completado').length,
+    discarded: alerts.filter(a => a.event_status === 'cancelado').length
   }
 
   return (
@@ -219,7 +185,7 @@ export default function AlertsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Centro de Alertas</h1>
                 <p className="text-muted-foreground">
-                  Alertas automáticas de consumo generadas en tiempo real
+                  Anomalías de sobreconsumo detectadas automáticamente
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={fetchAlerts} disabled={loading}>
@@ -261,12 +227,12 @@ export default function AlertsPage() {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <AlertTriangle className="w-5 h-5 text-red-600" />
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{stats.critical}</div>
-                      <div className="text-sm text-muted-foreground">Críticas Activas</div>
+                      <div className="text-2xl font-bold">{stats.resolved}</div>
+                      <div className="text-sm text-muted-foreground">Atendidas</div>
                     </div>
                   </div>
                 </CardContent>
@@ -275,12 +241,12 @@ export default function AlertsPage() {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <AlertTriangle className="w-5 h-5 text-gray-600" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{stats.resolved}</div>
-                      <div className="text-sm text-muted-foreground">Atendidas</div>
+                      <div className="text-2xl font-bold">{stats.discarded}</div>
+                      <div className="text-sm text-muted-foreground">Descartadas</div>
                     </div>
                   </div>
                 </CardContent>
@@ -296,7 +262,7 @@ export default function AlertsPage() {
                       <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
                       <input
                         type="text"
-                        placeholder="Buscar por título, descripción o pozo..."
+                        placeholder="Buscar por título, descripción o medidor..."
                         className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -306,12 +272,13 @@ export default function AlertsPage() {
                   
                   <select 
                     className="px-3 py-2 border border-border rounded-md bg-background"
-                    value={filterSeverity}
-                    onChange={(e) => setFilterSeverity(e.target.value)}
+                    value={filterGranularity}
+                    onChange={(e) => setFilterGranularity(e.target.value)}
                   >
-                    <option value="all">Toda severidad</option>
-                    <option value="critica">Crítica</option>
-                    <option value="preventiva">Preventiva</option>
+                    <option value="all">Toda periodicidad</option>
+                    <option value="daily">Diarias</option>
+                    <option value="weekly">Semanales</option>
+                    <option value="monthly">Mensuales</option>
                   </select>
 
                   <select 
@@ -323,28 +290,6 @@ export default function AlertsPage() {
                     <option value="activo">Activas</option>
                     <option value="completado">Atendidas</option>
                     <option value="cancelado">Descartadas</option>
-                  </select>
-
-                  <select 
-                    className="px-3 py-2 border border-border rounded-md bg-background"
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                  >
-                    <option value="all">Todo tipo</option>
-                    <option value="alerta_consumo">Alerta consumo</option>
-                    <option value="sobreconsumo">Sobreconsumo</option>
-                    <option value="posible_fuga">Posible fuga</option>
-                  </select>
-
-                  <select 
-                    className="px-3 py-2 border border-border rounded-md bg-background"
-                    value={filterWell}
-                    onChange={(e) => setFilterWell(e.target.value)}
-                  >
-                    <option value="all">Todos los pozos</option>
-                    {Object.entries(WELL_NAMES).map(([id, name]) => (
-                      <option key={id} value={id}>{name}</option>
-                    ))}
                   </select>
                 </div>
               </CardContent>
@@ -363,51 +308,53 @@ export default function AlertsPage() {
           {!loading && (
             <div className="grid gap-4">
               {filteredAlerts.map((evt) => {
-                const visual = getAlertVisual(evt)
                 const statusBadge = getStatusBadge(evt.event_status)
                 const isLoadingAction = actionLoading === evt.id
+                const granularityLabel = getGranularityLabel(evt.alert_granularity)
+                const meterLabel = formatMeterLabel(evt.meter_column) || 'Medidor desconocido'
 
                 return (
-                  <Card key={evt.id} className={`border ${visual.colors}`}>
+                  <Card key={evt.id} className="border border-cyan-200">
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-4 flex-1">
-                          <div className="flex-shrink-0 mt-1">
-                            {visual.icon}
+                          <div className="flex-shrink-0 mt-1 text-cyan-700">
+                            <Waves className="w-5 h-5" />
                           </div>
                           
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <h3 className="font-semibold text-base">{evt.title}</h3>
-                              <Badge className={visual.badgeClass}>
-                                {evt.severity === 'critica' ? 'Crítica' : 'Preventiva'}
-                              </Badge>
+                              {granularityLabel && (
+                                <Badge className="bg-cyan-100 text-cyan-800">
+                                  <ShieldAlert className="w-3 h-3 mr-1" />
+                                  {granularityLabel}
+                                </Badge>
+                              )}
                               <Badge variant={statusBadge.variant}>
                                 {statusBadge.label}
                               </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                <Droplets className="w-3 h-3 mr-1" />
-                                {getAlertMeterLabel(evt)}
-                              </Badge>
                             </div>
 
-                            <p className="text-sm text-muted-foreground mb-2">{evt.description}</p>
+                            <p className="text-sm text-muted-foreground mb-1">{evt.description}</p>
+
+                            {evt.recommendation && (
+                              <p className="text-xs text-muted-foreground mb-2">💡 {evt.recommendation}</p>
+                            )}
 
                             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Droplets className="w-3 h-3" />
+                                <span>{meterLabel}</span>
+                              </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 <span>{timeAgo(evt.created_at)}</span>
                               </div>
-                              {evt.event_type && (
+                              {evt.alert_granularity && (
                                 <div className="flex items-center gap-1">
                                   <Activity className="w-3 h-3" />
-                                  <span>
-                                    {evt.event_type === 'alerta_consumo' ? 'Alerta de consumo'
-                                      : evt.event_type === 'sobreconsumo' ? 'Sobreconsumo'
-                                      : evt.event_type === 'posible_fuga'
-                                        ? `Posible fuga · ${evt.alert_granularity === 'weekly' ? 'Semanal' : evt.alert_granularity === 'monthly' ? 'Mensual' : 'Diario'}`
-                                      : evt.event_type}
-                                  </span>
+                                  <span>Anomalía de sobreconsumo · {formatPeriod(evt)}</span>
                                 </div>
                               )}
                               {evt.end_date && (
@@ -458,7 +405,7 @@ export default function AlertsPage() {
                 <h3 className="text-lg font-semibold mb-2">No hay alertas</h3>
                 <p className="text-muted-foreground">
                   {alerts.length === 0
-                    ? 'Aún no se han generado alertas automáticas. Las alertas aparecerán aquí cuando el sistema detecte anomalías de consumo.'
+                    ? 'Aún no se han generado alertas automáticas. Las alertas aparecerán aquí cuando el sistema detecte anomalías de sobreconsumo.'
                     : 'No se encontraron alertas que coincidan con los filtros seleccionados.'}
                 </p>
               </CardContent>

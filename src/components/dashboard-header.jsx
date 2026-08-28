@@ -48,7 +48,7 @@ export function DashboardHeader() {
       const { count, error } = await supabase
         .from('well_events')
         .select('*', { count: 'exact', head: true })
-        .in('event_type', ['alerta_consumo', 'sobreconsumo', 'posible_fuga'])
+        .eq('event_type', 'anomalia_sobreconsumo')
         .eq('event_status', 'activo')
       if (!error) setActiveAlertCount(count || 0)
     }

@@ -1,15 +1,19 @@
 -- ============================================================
--- Migración: Vistas SQL para Alertas de Posible Fuga
--- Fecha: 2026-05-07
+-- Vistas SQL para Alertas de Anomalía de Sobreconsumo
+-- Fecha: 2026-08-28 (actualizada desde posibles fugas)
 --
 -- Requisito previo:
---   - supabase_fuga_alerts_semanal.sql (columnas alert_granularity, alert_month)
+--   - supabase_unifica_alertas_anomalia.sql
+--     (tabla columna meter_column, alert_granularity, alert_month, alert_date)
 --
 -- Contenido:
 --   1. vista_fugas_semanales
 --   2. vista_fugas_mensuales
 --   3. vista_fugas_diarias
 --   4. vista_fugas_activas (consolidada, todas las granularidades)
+--
+-- Nota: se conservan los nombres de vista originales por compatibilidad,
+-- pero filtran el tipo único 'anomalia_sobreconsumo'.
 -- ============================================================
 
 -- ============================================================
@@ -34,7 +38,8 @@ SELECT
   we.author_name
 FROM well_events we
 LEFT JOIN well_config wc ON wc.column_name = we.meter_column
-WHERE we.event_type       = 'posible_fuga'
+  OR wc.daily_column_name = we.meter_column
+WHERE we.event_type       = 'anomalia_sobreconsumo'
   AND we.alert_granularity = 'weekly'
   AND we.is_automatic     = true;
 
@@ -67,7 +72,8 @@ SELECT
   we.author_name
 FROM well_events we
 LEFT JOIN well_config wc ON wc.column_name = we.meter_column
-WHERE we.event_type       = 'posible_fuga'
+  OR wc.daily_column_name = we.meter_column
+WHERE we.event_type       = 'anomalia_sobreconsumo'
   AND we.alert_granularity = 'monthly'
   AND we.is_automatic     = true;
 
@@ -93,7 +99,8 @@ SELECT
   we.author_name
 FROM well_events we
 LEFT JOIN well_config wc ON wc.column_name = we.meter_column
-WHERE we.event_type       = 'posible_fuga'
+  OR wc.daily_column_name = we.meter_column
+WHERE we.event_type       = 'anomalia_sobreconsumo'
   AND we.alert_granularity = 'daily'
   AND we.is_automatic     = true;
 
@@ -121,7 +128,8 @@ SELECT
   we.created_at
 FROM well_events we
 LEFT JOIN well_config wc ON wc.column_name = we.meter_column
-WHERE we.event_type    = 'posible_fuga'
+  OR wc.daily_column_name = we.meter_column
+WHERE we.event_type    = 'anomalia_sobreconsumo'
   AND we.event_status  = 'activo'
   AND we.is_automatic  = true
 ORDER BY we.created_at DESC;

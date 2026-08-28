@@ -639,7 +639,7 @@ export default function WellsPage() {
   }
 
   const getAlertWellLabel = (alert) => {
-    if (alert.event_type === 'posible_fuga') {
+    if (alert.meter_column) {
       return formatMeterLabel(alert.meter_column) || 'Medidor desconocido'
     }
 
@@ -1087,8 +1087,7 @@ export default function WellsPage() {
                         const wellName = getAlertWellLabel(alert)
                         const isCritical = alert.severity === 'critica'
                         const isPreventive = alert.severity === 'preventiva'
-                        const isConsumo = alert.event_type === 'alerta_consumo'
-                        const isSobreconsumo = alert.event_type === 'sobreconsumo'
+                        const isAnomalia = alert.event_type === 'anomalia_sobreconsumo'
 
                         const borderColor = isCritical ? 'border-red-400' : isPreventive ? 'border-yellow-400' : 'border-blue-400'
                         const bgColor = isCritical ? 'bg-red-50' : isPreventive ? 'bg-yellow-50' : 'bg-blue-50'
@@ -1119,7 +1118,9 @@ export default function WellsPage() {
                                   {isCritical ? 'Crítica' : 'Preventiva'}
                                 </Badge>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  {isConsumo ? 'Consumo' : isSobreconsumo ? 'Sobreconsumo' : alert.event_type}
+                                  {isAnomalia
+                                    ? `Anomalía ${alert.alert_granularity === 'weekly' ? 'Semanal' : alert.alert_granularity === 'monthly' ? 'Mensual' : alert.alert_granularity === 'daily' ? 'Diaria' : ''}`
+                                    : alert.event_type}
                                 </Badge>
                               </div>
                               <p className={`text-xs ${descColor} mt-1 line-clamp-2`}>

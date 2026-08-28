@@ -41,9 +41,7 @@ export default function WellEventsHistory({ wellId }) {
     { value: 'parado', label: 'Parado', color: 'red' },
     { value: 'reparacion', label: 'Reparación', color: 'orange' },
     { value: 'inspeccion', label: 'Inspección', color: 'blue' },
-    { value: 'otro', label: 'Otro', color: 'gray' },
-    { value: 'alerta_consumo', label: 'Alerta de Consumo', color: 'red' },
-    { value: 'sobreconsumo', label: 'Sobreconsumo', color: 'purple' }
+    { value: 'otro', label: 'Otro', color: 'gray' }
   ]
 
   const eventStatuses = [

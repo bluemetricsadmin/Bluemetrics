@@ -1,170 +1,311 @@
 /**
  * wellAlertEvaluator.js
- * Funciones puras para evaluar reglas de negocio de alertas automáticas de pozos.
- * 
- * Reglas:
- * 1. Incremento anormal: consumo actual > promedio últimas 3 semanas × 1.30
- * 2. Caída fuerte: consumo actual < promedio últimas 3 semanas × 0.60
- * 3. Sobreconsumo crítico: % real > % esperado + 20%
- * 4. Sobreconsumo preventivo: % real > % esperado + 10%
+ * Evaluación de anomalías de sobreconsumo con las 3 reglas simultáneas (AND).
+ *
+ * Para cada lectura (diaria / semanal / mensual) se evalúa cada medidor
+ * (columna) y se genera UNA sola alerta consolidada por lectura, usando
+ * el medidor con mayor consumo entre los que incumplen las reglas.
+ *
+ * Reglas (deben cumplirse las 3 a la vez, >30% sobre la referencia):
+ *   R1: consumo actual > promedio móvil de los 10 periodos anteriores
+ *   R2: consumo actual > periodo inmediatamente anterior
+ *   R3: consumo actual > mismo periodo del año anterior
  */
 
-/**
- * Evalúa si hay un pico o caída anormal de consumo semanal.
- * @param {number[]} lastConsumptions - Consumos de las últimas 3+ semanas (más reciente primero)
- * @param {number} currentConsumption - Consumo de la semana actual
- * @returns {object|null} Alerta generada o null
- */
-export function evaluateConsumptionSpike(lastConsumptions, currentConsumption) {
-  // Necesitamos al menos 3 semanas previas para calcular promedio
-  if (!lastConsumptions || lastConsumptions.length < 3) return null
-  if (currentConsumption === 0 && lastConsumptions.every(c => c === 0)) return null
-  // Si el consumo actual es 0, no alertar - es normal que un pozo no se use en una semana
-  if (currentConsumption === 0) return null
+const MES_ES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+]
 
-  const last3 = lastConsumptions.slice(0, 3)
-  const average = last3.reduce((sum, val) => sum + val, 0) / 3
+const MES_NUM = Object.fromEntries(MES_ES.map((name, i) => [name, i + 1]))
 
-  // Evitar división por cero - si el promedio es 0 y hay consumo, es un incremento significativo
-  if (average === 0) {
-    if (currentConsumption > 0) {
-      return {
-        event_type: 'alerta_consumo',
-        severity: 'critica',
-        title: `Incremento anormal de consumo`,
-        description: `El consumo de esta semana (${currentConsumption.toFixed(2)} m³) es significativo cuando el promedio de las últimas 3 semanas era 0 m³.`,
-        recommendation: 'Revisar posibles fugas en líneas cercanas o válvulas abiertas.',
-        metric_value: 100,
-        threshold_value: 30
-      }
-    }
-    return null
-  }
+const METADATA_KEYS = new Set([
+  'id', 'mes_anio', 'mes', 'anio', 'dia_hora',
+  'l_numero_semana', 'semana', 'l_numero_mes',
+  'created_at', 'updated_at'
+])
 
-  const changePercent = ((currentConsumption - average) / average) * 100
+const toNum = (v) => {
+  const n = parseFloat(v)
+  return Number.isFinite(n) ? n : 0
+}
 
-  // Regla 1: Incremento anormal (+30%)
-  if (changePercent >= 30) {
-    return {
-      event_type: 'alerta_consumo',
-      severity: 'critica',
-      title: `Incremento anormal de consumo (+${changePercent.toFixed(1)}%)`,
-      description: `El consumo de esta semana (${currentConsumption.toFixed(2)} m³) supera en ${changePercent.toFixed(1)}% al promedio de las últimas 3 semanas (${average.toFixed(2)} m³).`,
-      recommendation: 'Revisar posibles fugas en líneas cercanas o válvulas abiertas.',
-      metric_value: parseFloat(changePercent.toFixed(2)),
-      threshold_value: 30
+export function getMeasurementColumns(row) {
+  if (!row) return []
+  return Object.keys(row).filter((key) => (
+    !METADATA_KEYS.has(key) && Number.isFinite(parseFloat(row[key]))
+  ))
+}
+
+function movingAverage(values, index, column) {
+  let sum = 0
+  let count = 0
+  for (let i = index - 1; i >= 0 && count < 10; i--) {
+    const v = toNum(values[i]?.[column])
+    if (v > 0) {
+      sum += v
+      count++
     }
   }
+  return count >= 3 ? { avg: sum / count, count } : { avg: 0, count }
+}
 
-  // Regla 2: Caída fuerte (< -40%)
-  if (changePercent <= -40) {
-    return {
-      event_type: 'alerta_consumo',
-      severity: 'critica',
-      title: `Caída fuerte de consumo (${changePercent.toFixed(1)}%)`,
-      description: `El consumo de esta semana (${currentConsumption.toFixed(2)} m³) cayó ${Math.abs(changePercent).toFixed(1)}% respecto al promedio de las últimas 3 semanas (${average.toFixed(2)} m³).`,
-      recommendation: 'Validar operación del pozo o funcionamiento del medidor.',
-      metric_value: parseFloat(changePercent.toFixed(2)),
-      threshold_value: -40
-    }
+function findReading(values, predicate) {
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (predicate(values[i])) return values[i]
   }
-
   return null
 }
 
-/**
- * Evalúa si hay sobreconsumo respecto al ritmo esperado del año.
- * @param {number} totalConsumption - Consumo acumulado del año
- * @param {number} annualLimit - Límite anual de m³ (m3ParaConsumir)
- * @param {Date} currentDate - Fecha actual
- * @returns {object|null} Alerta generada o null
- */
-export function evaluateOverconsumption(totalConsumption, annualLimit, currentDate) {
-  if (annualLimit <= 0) return null
-  if (totalConsumption <= 0) return null
-
-  const startOfYear = new Date(currentDate.getFullYear(), 0, 1)
-  const dayOfYear = Math.floor((currentDate - startOfYear) / (1000 * 60 * 60 * 24)) + 1
-  const expectedPercent = dayOfYear / 365
-  const realPercent = totalConsumption / annualLimit
-
-  // Regla 3: Sobreconsumo crítico (% real > % esperado + 20%)
-  if (realPercent > expectedPercent + 0.20) {
-    return {
-      event_type: 'sobreconsumo',
-      severity: 'critica',
-      title: `Sobreconsumo crítico (${(realPercent * 100).toFixed(1)}% usado en ${(expectedPercent * 100).toFixed(1)}% del año)`,
-      description: `Se ha utilizado el ${(realPercent * 100).toFixed(1)}% del volumen anual (${totalConsumption.toLocaleString('es-MX', { maximumFractionDigits: 2 })} de ${annualLimit.toLocaleString('es-MX', { maximumFractionDigits: 2 })} m³) cuando solo ha transcurrido el ${(expectedPercent * 100).toFixed(1)}% del año (día ${dayOfYear} de 365).`,
-      recommendation: `Consumo acelerado: se ha utilizado el ${(realPercent * 100).toFixed(1)}% del volumen anual en solo el ${(expectedPercent * 100).toFixed(1)}% del año.`,
-      metric_value: parseFloat((realPercent * 100).toFixed(2)),
-      threshold_value: parseFloat(((expectedPercent + 0.20) * 100).toFixed(2))
-    }
+function parseDailyDate(mesAnio, diaHora) {
+  const [mes, anio] = (mesAnio || ' ').split(' ')
+  const day = parseInt((diaHora || '').substring(3, 5), 10)
+  const hour = (diaHora || '').substring(6)
+  if (!mes || !anio || !day) return null
+  return {
+    mes,
+    anio: parseInt(anio, 10),
+    day,
+    hour,
+    date: new Date(parseInt(anio, 10), MES_NUM[mes] - 1, day)
   }
+}
 
-  // Regla 4: Sobreconsumo preventivo (% real > % esperado + 10%)
-  if (realPercent > expectedPercent + 0.10) {
-    return {
-      event_type: 'sobreconsumo',
-      severity: 'preventiva',
-      title: `Consumo por encima del ritmo esperado (${(realPercent * 100).toFixed(1)}% vs ${(expectedPercent * 100).toFixed(1)}% esperado)`,
-      description: `Se ha consumido el ${(realPercent * 100).toFixed(1)}% del volumen anual cuando el ritmo esperado sería ${(expectedPercent * 100).toFixed(1)}%. Diferencia de ${((realPercent - expectedPercent) * 100).toFixed(1)} puntos porcentuales.`,
-      recommendation: 'El consumo está por encima del ritmo esperado. Existe riesgo de sobrepasar el límite anual.',
-      metric_value: parseFloat((realPercent * 100).toFixed(2)),
-      threshold_value: parseFloat(((expectedPercent + 0.10) * 100).toFixed(2))
-    }
+function dayKey(d) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function buildAlert({ granularity, column, value, reference, period }) {
+  return {
+    event_type: 'anomalia_sobreconsumo',
+    severity: 'preventiva',
+    title: `Anomalía de sobreconsumo detectada — ${period} (${value.toFixed(2)} m³)`,
+    description:
+      `El consumo del ${period} supera en más del 30% los valores de referencia ` +
+      `en las 3 reglas simultáneas (promedio móvil 10 periodos, periodo anterior y ` +
+      `mismo periodo del año anterior). Medidor con mayor consumo: ${column} ` +
+      `(${value.toFixed(2)} m³, referencia ${reference.toFixed(2)} m³).`,
+    recommendation:
+      'Revisar el medidor y las líneas de distribución del periodo reportado. ' +
+      'Verificar fugas, válvulas abiertas o mal funcionamiento del medidor.',
+    metric_value: value,
+    threshold_value: 0,
+    alert_granularity: granularity,
+    is_automatic: true,
+    well_id: null,
+    event_status: 'activo',
+    author_name: 'Sistema Automático'
   }
+}
 
-  return null
+function consolidate(column, alert, best) {
+  if (!alert) return best
+  if (toNum(alert.metric_value) <= (best?.metric_value || 0)) return best
+  let periodTxt = ''
+  if (alert.alert_date) periodTxt = alert.alert_date
+  else if (alert.alert_granularity === 'weekly') periodTxt = `Semana ${alert.alert_week}/${alert.alert_year}`
+  else if (alert.alert_granularity === 'monthly') periodTxt = `Mes ${alert.alert_month}/${alert.alert_year}`
+  return {
+    ...alert,
+    meter_column: column,
+    title: alert.title.replace(/detectada — .* \(/, `detectada — ${periodTxt} (`)
+  }
 }
 
 /**
- * Evalúa todas las reglas de alertas para un pozo.
- * @param {object} params
- * @param {number} params.wellId - ID del pozo
- * @param {number[]} params.weeklyConsumptions - Consumos semanales (más reciente primero, incluye semana actual)
- * @param {number} params.totalConsumption - Consumo acumulado del año
- * @param {number} params.annualLimit - Límite anual (m3ParaConsumir)
- * @param {number} params.currentWeek - Número de semana actual
- * @param {number} params.currentYear - Año actual
- * @param {Date} params.currentDate - Fecha actual
- * @returns {object[]} Array de alertas a crear
+ * Evalúa una lectura diaria.
+ * @param {object[]} readings - Filas de lecturas_diarias_consumo ordenadas de más antigua a más reciente.
+ * @param {object} [currentReading] - Fila a evaluar (por defecto la última).
+ * @returns {object|null} Alerta consolidada o null.
  */
-export function evaluateAllAlerts({ wellId, weeklyConsumptions, totalConsumption, annualLimit, currentWeek, currentYear, currentDate }) {
-  const alerts = []
+export function evaluateDailyAnomaly(readings, currentReading) {
+  if (!readings || readings.length === 0) return null
 
-  // Evaluación de pico/caída de consumo
-  if (weeklyConsumptions && weeklyConsumptions.length >= 4) {
-    const currentWeekConsumption = weeklyConsumptions[0]
-    const previousWeeks = weeklyConsumptions.slice(1)
-    const spikeAlert = evaluateConsumptionSpike(previousWeeks, currentWeekConsumption)
-    if (spikeAlert) {
-      alerts.push({
-        well_id: wellId,
-        ...spikeAlert,
-        is_automatic: true,
-        alert_week: currentWeek,
-        alert_year: currentYear,
-        start_date: currentDate.toISOString(),
-        event_status: 'activo',
-        author_name: 'Sistema Automático'
-      })
+  const current = currentReading || readings[readings.length - 1]
+  const index = readings.lastIndexOf(current) === -1 ? readings.length - 1 : readings.lastIndexOf(current)
+  if (index < 0) return null
+
+  const curDate = parseDailyDate(current.mes_anio, current.dia_hora)
+  if (!curDate) return null
+
+  const prevDate = new Date(curDate.date)
+  prevDate.setDate(prevDate.getDate() - 7)
+  const prevWeekKey = `${MES_ES[prevDate.getMonth()]} ${prevDate.getFullYear()}`
+  const prevWeekDay = String(prevDate.getDate()).padStart(2, '0')
+  const prevYear = curDate.anio - 1
+
+  let best = null
+
+  for (const column of getMeasurementColumns(current)) {
+    const curVal = toNum(current[column])
+    if (curVal <= 0) continue
+
+    const { avg } = movingAverage(readings, index, column)
+    if (!(avg > 0 && curVal > avg * 1.3)) continue
+
+    const prevWeekReading = findReading(
+      readings,
+      (r) => r.mes_anio === prevWeekKey &&
+        (r.dia_hora || '').substring(3, 5) === prevWeekDay &&
+        (r.dia_hora || '').substring(6) === curDate.hour
+    )
+    const prevWeekVal = prevWeekReading ? toNum(prevWeekReading[column]) : 0
+    if (!(prevWeekVal > 0 && curVal > prevWeekVal * 1.3)) continue
+
+    const prevYearReading = findReading(
+      readings,
+      (r) => r.mes === curDate.mes &&
+        String(r.anio) === String(prevYear) &&
+        (r.dia_hora || '').substring(3, 5) === String(curDate.day).padStart(2, '0') &&
+        (r.dia_hora || '').substring(6) === curDate.hour
+    )
+    const prevYearVal = prevYearReading ? toNum(prevYearReading[column]) : 0
+    if (!(prevYearVal > 0 && curVal > prevYearVal * 1.3)) continue
+
+    const alert = {
+      ...buildAlert({
+        granularity: 'daily',
+        column,
+        value: curVal,
+        reference: avg,
+        period: `${current.dia_hora} ${current.mes_anio}`
+      }),
+      alert_date: dayKey(curDate.date)
     }
+    best = consolidate(column, alert, best)
   }
 
-  // Evaluación de sobreconsumo
-  const overAlert = evaluateOverconsumption(totalConsumption, annualLimit, currentDate)
-  if (overAlert) {
-    alerts.push({
-      well_id: wellId,
-      ...overAlert,
-      is_automatic: true,
-      alert_week: currentWeek,
-      alert_year: currentYear,
-      start_date: currentDate.toISOString(),
-      event_status: 'activo',
-      author_name: 'Sistema Automático'
-    })
+  return best
+}
+
+/**
+ * Evalúa una lectura semanal.
+ * @param {object[]} readings - Filas de lecturas_semana_agua_consumo_{anio} (con l_numero_semana) ordenadas.
+ * @param {object} [currentReading] - Fila a evaluar (por defecto la última).
+ * @returns {object|null} Alerta consolidada o null.
+ */
+export function evaluateWeeklyAnomaly(readings, currentReading) {
+  if (!readings || readings.length === 0) return null
+
+  const current = currentReading || readings[readings.length - 1]
+  const index = readings.lastIndexOf(current) === -1 ? readings.length - 1 : readings.lastIndexOf(current)
+  if (index < 0) return null
+
+  const week = toNum(current.l_numero_semana)
+  const year = toNum(current.anio || current.l_anio)
+  if (!week || !year) return null
+
+  const prevWeek = week - 1
+  const prevYearReading = findReading(readings, (r) => toNum(r.l_numero_semana) === week && toNum(r.anio || r.l_anio) === year - 1)
+
+  let best = null
+
+  for (const column of getMeasurementColumns(current)) {
+    const curVal = toNum(current[column])
+    if (curVal <= 0) continue
+
+    const { avg } = movingAverage(readings, index, column)
+    if (!(avg > 0 && curVal > avg * 1.3)) continue
+
+    const prevReading = findReading(readings, (r) => toNum(r.l_numero_semana) === prevWeek)
+    const prevWeekVal = prevReading ? toNum(prevReading[column]) : 0
+    if (!(prevWeekVal > 0 && curVal > prevWeekVal * 1.3)) continue
+
+    const samePrevYearVal = prevYearReading ? toNum(prevYearReading[column]) : 0
+    if (!(samePrevYearVal > 0 && curVal > samePrevYearVal * 1.3)) continue
+
+    const alert = {
+      ...buildAlert({
+        granularity: 'weekly',
+        column,
+        value: curVal,
+        reference: avg,
+        period: `Semana ${week}/${year}`
+      }),
+      alert_week: week,
+      alert_year: year
+    }
+    best = consolidate(column, alert, best)
   }
 
-  return alerts
+  return best
+}
+
+/**
+ * Evalúa una lectura mensual.
+ * @param {object[]} readings - Filas de lecturas_mensuales_agua_consumo (con anio, mes) ordenadas.
+ * @param {object} [currentReading] - Fila a evaluar (por defecto la última).
+ * @returns {object|null} Alerta consolidada o null.
+ */
+export function evaluateMonthlyAnomaly(readings, currentReading) {
+  if (!readings || readings.length === 0) return null
+
+  const current = currentReading || readings[readings.length - 1]
+  const index = readings.lastIndexOf(current) === -1 ? readings.length - 1 : readings.lastIndexOf(current)
+  if (index < 0) return null
+
+  const month = toNum(current.mes)
+  const year = toNum(current.anio)
+  if (!month || !year) return null
+
+  const prevMonthReading = findReading(
+    readings,
+    (r) => toNum(r.anio) === year && toNum(r.mes) === month - 1
+  ) || findReading(
+    readings,
+    (r) => toNum(r.anio) === year - 1 && toNum(r.mes) === 12 && month === 1
+  )
+  const samePrevYearReading = findReading(readings, (r) => toNum(r.anio) === year - 1 && toNum(r.mes) === month)
+
+  let best = null
+
+  for (const column of getMeasurementColumns(current)) {
+    const curVal = toNum(current[column])
+    if (curVal <= 0) continue
+
+    const { avg } = movingAverage(readings, index, column)
+    if (!(avg > 0 && curVal > avg * 1.3)) continue
+
+    const prevMonthVal = prevMonthReading ? toNum(prevMonthReading[column]) : 0
+    if (!(prevMonthVal > 0 && curVal > prevMonthVal * 1.3)) continue
+
+    const samePrevYearVal = samePrevYearReading ? toNum(samePrevYearReading[column]) : 0
+    if (!(samePrevYearVal > 0 && curVal > samePrevYearVal * 1.3)) continue
+
+    const alert = {
+      ...buildAlert({
+        granularity: 'monthly',
+        column,
+        value: curVal,
+        reference: avg,
+        period: `Mes ${month}/${year}`
+      }),
+      alert_year: year,
+      alert_month: month
+    }
+    best = consolidate(column, alert, best)
+  }
+
+  return best
+}
+
+/**
+ * Evalúa una lectura según su granularidad.
+ * @param {'daily'|'weekly'|'monthly'} granularity - Granularidad de la lectura.
+ * @param {object[]} readings - Lecturas ordenadas de más antigua a más reciente.
+ * @param {object} [currentReading] - Lectura a evaluar (por defecto la última).
+ * @returns {object|null} Alerta consolidada o null.
+ */
+export function evaluateAnomaly(granularity, readings, currentReading) {
+  switch (granularity) {
+    case 'daily':
+      return evaluateDailyAnomaly(readings, currentReading)
+    case 'weekly':
+      return evaluateWeeklyAnomaly(readings, currentReading)
+    case 'monthly':
+      return evaluateMonthlyAnomaly(readings, currentReading)
+    default:
+      return null
+  }
 }
