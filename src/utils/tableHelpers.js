@@ -115,3 +115,21 @@ export const getMonthName = (monthNumber) => {
   const month = MONTHS.find(m => m.value === monthNumber)
   return month ? month.label : ''
 }
+
+/**
+ * Obtener el mes correspondiente a un número de semana (ISO) del año
+ * El mapeo indica el mes en el que inicia cada semana
+ * @param {number} weekNumber - Número de semana (1-52)
+ * @returns {string} - Nombre del mes
+ */
+export const getMonthForWeek = (weekNumber) => {
+  if (weekNumber < 1 || weekNumber > 52) return getMonthName(1)
+
+  let month = 1
+  const boundaries = [5, 9, 14, 19, 23, 28, 32, 36, 41, 45, 49]
+  boundaries.forEach((b, i) => {
+    if (weekNumber >= b) month = i + 2
+  })
+
+  return getMonthName(month)
+}

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Line, Bar } from 'react-chartjs-2'
 import { getColorForYear } from '../utils/chartColors'
+import { getMonthForWeek } from '../utils/tableHelpers'
 import { getPreviousYearData, construirEtiquetaYoY } from '../utils/yearOverYear'
 import {
   TrendingUpIcon,
@@ -324,7 +325,13 @@ export default function WeeklyComparisonChart({
         }
       },
       tooltip: {
+        titleFont: { size: 12, weight: 'bold' },
         callbacks: {
+          title: function(tooltipItems) {
+            if (!tooltipItems || tooltipItems.length === 0) return ''
+            const weekNum = tooltipItems[0].dataIndex + 1
+            return `Sem ${weekNum} — ${getMonthForWeek(weekNum)}`
+          },
           label: function(context) {
             const dataIndex = context.dataIndex
             let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString()} ${unit}`
