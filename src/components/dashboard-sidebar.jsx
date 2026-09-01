@@ -83,14 +83,14 @@ export function DashboardSidebar() {
 
   // Estructura de menú completa con roles permitidos
   const allMenuSections = [
-   /* {
+    {
       id: 'general',
       label: 'General',
       allowedRoles: ['admin', 'datos', 'ejecutivo', 'gas', 'ptar', 'user'],
       items: [
         { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", icon: LayoutDashboard, allowedRoles: ['admin', 'datos', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] }
       ]
-    }*/,
+    },
     {
       id: 'data',
       label: 'Administración de Datos',

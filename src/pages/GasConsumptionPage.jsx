@@ -41,7 +41,7 @@ export default function GasConsumptionPage() {
   const [chartType, setChartType] = useState('bar')
   const [viewMode, setViewMode] = useState('Consumo Total') // 'servicios', 'riego', 'conjunto'
   const [periodView, setPeriodView] = useState('monthly') // 'monthly', 'yearly'
-  const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2025', '2026']) // Años para comparar
+  const [selectedYearsComparison, setSelectedYearsComparison] = useState(['2026']) // Años para comparar
   const [selectedYearForReadings, setSelectedYearForReadings] = useState(DEFAULT_YEAR) // Año para lecturas semanales
   
   // Estados para el nuevo sistema de tablas detalladas
@@ -65,7 +65,7 @@ export default function GasConsumptionPage() {
 
   // Estados para filtros de gráficas de comparación
   const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
-  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2025', '2026']) // Array de años para comparar
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2026']) // Array de años para comparar
   const [availableYearsForComparison] = useState(['2023', '2024', '2025', '2026']) // Años disponibles para comparación
 
   // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas

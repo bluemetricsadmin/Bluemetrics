@@ -53,7 +53,7 @@ export default function ConsumptionPage() {
 
   // Estados para filtros de gráficas de comparación
   const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
-  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2025', '2026']) // Array de años para comparar
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2026']) // Array de años para comparar
   const [availableYears] = useState(['2023', '2024', '2025', '2026']) // Años disponibles para comparación
 
   // Cargar semanas disponibles desde Supabase cuando cambia el año de consumo

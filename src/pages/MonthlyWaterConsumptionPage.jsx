@@ -45,7 +45,7 @@ export default function MonthlyWaterConsumptionPage() {
 
   // Estados para controles de gráfica (estilo ConsumptionPage)
   const [comparisonChartType, setComparisonChartType] = useState('line')
-  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2025', '2026'])
+  const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2026'])
   const [availableYears] = useState(['2023', '2024', '2025', '2026'])
   
   // Estado para punto de medición seleccionado

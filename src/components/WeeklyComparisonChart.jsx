@@ -37,7 +37,7 @@ export default function WeeklyComparisonChart({
   const [internalChartType, setInternalChartType] = useState('line') // 'line' o 'bar'
   const [internalComparisonMode, setInternalComparisonMode] = useState('both') // 'current', 'previous', 'both'
   const [wellFilter, setWellFilter] = useState('total') // 'total', 'riego', 'servicios'
-  const [selectedYears, setSelectedYears] = useState(['2023','2024','2025', '2026']) // Últimos 2 años por default
+  const [selectedYears, setSelectedYears] = useState(['2026']) // Últimos 2 años por default
   
   // Usar props externos si se proporcionan, sino usar estados internos
   const chartType = externalChartType !== null ? externalChartType : internalChartType
