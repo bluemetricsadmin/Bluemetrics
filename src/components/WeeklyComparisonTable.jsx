@@ -1,13 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
+import { supabase } from '../supabaseClient'
+import { useAuth } from '../contexts/AuthContextNew'
 import { 
   ArrowUpIcon,
   ArrowDownIcon,
   MinusIcon,
   DownloadIcon,
   TrendingUpIcon,
-  TrendingDownIcon
+  TrendingDownIcon,
+  Loader2Icon,
+  EditIcon,
+  MessageSquarePlusIcon
 } from 'lucide-react'
 
 /**
@@ -22,10 +27,113 @@ export default function WeeklyComparisonTable({
   pointName = "Punto de Medición",
   unit = "m³",
   year1 = "2024",
-  year2 = "2025"
+  year2 = "2025",
+  sourceType = "agua"
 }) {
 
   const [showPercentages, setShowPercentages] = useState(true)
+
+  const { user } = useAuth()
+
+  // Comentarios semanales por recurso: { [week_number]: { id, comment, author, authorName, created_at, updated_at } }
+  const [comments, setComments] = useState({})
+  const [loadingComments, setLoadingComments] = useState(false)
+  const [editingWeek, setEditingWeek] = useState(null)
+  const [draft, setDraft] = useState('')
+  const [savingComment, setSavingComment] = useState(false)
+
+  useEffect(() => {
+    fetchComments()
+  }, [sourceType])
+
+  const fetchComments = async () => {
+    try {
+      setLoadingComments(true)
+      const { data, error } = await supabase
+        .from('weekly_comments')
+        .select('*, profiles(full_name)')
+        .eq('source_type', sourceType)
+
+      if (error) {
+        console.error('❌ Error cargando comentarios semanales:', error)
+        return
+      }
+
+      const commentsMap = {}
+      data?.forEach(comment => {
+        commentsMap[comment.week_number] = {
+          id: comment.id,
+          comment: comment.comment,
+          author: comment.author,
+          authorName: comment.profiles?.full_name || null,
+          created_at: comment.created_at,
+          updated_at: comment.updated_at
+        }
+      })
+      setComments(commentsMap)
+      console.log('✅ Comentarios semanales cargados:', data?.length || 0)
+    } catch (err) {
+      console.error('❌ Error al cargar comentarios semanales:', err)
+    } finally {
+      setLoadingComments(false)
+    }
+  }
+
+  const saveComment = async (week) => {
+    if (!draft.trim()) {
+      alert('Por favor ingresa un comentario')
+      return
+    }
+
+    if (!user?.id) {
+      alert('Sesión no disponible. Inicia sesión para comentar.')
+      return
+    }
+
+    try {
+      setSavingComment(true)
+
+      // El author (UUID de la sesión activa) se manda automáticamente a la BD
+      const { data, error } = await supabase
+        .from('weekly_comments')
+        .upsert({
+          week_number: week,
+          source_type: sourceType,
+          comment: draft.trim(),
+          author: user.id
+        }, {
+          onConflict: 'week_number,source_type'
+        })
+        .select('*')
+
+      if (error) {
+        console.error('❌ Error guardando comentario semanal:', error)
+        alert('Error al guardar el comentario: ' + error.message)
+        return
+      }
+
+      setComments(prev => ({
+        ...prev,
+        [week]: {
+          id: data[0]?.id,
+          comment: draft.trim(),
+          author: user.id,
+          authorName: user.name !== 'Usuario' ? user.name : null,
+          created_at: data[0]?.created_at,
+          updated_at: data[0]?.updated_at
+        }
+      }))
+
+      setEditingWeek(null)
+      setDraft('')
+      console.log('✅ Comentario semanal guardado:', week)
+    } catch (err) {
+      console.error('❌ Error al guardar comentario semanal:', err)
+      alert('Error al guardar el comentario')
+    } finally {
+      setSavingComment(false)
+    }
+  }
 
   // Los datos ya vienen como consumo desde las tablas Lecturas_Semana_Agua_consumo
   // No necesitamos calcular diferencias, solo extraer el consumo directamente
@@ -94,21 +202,22 @@ export default function WeeklyComparisonTable({
 
   // Exportar a CSV
   const exportToCSV = () => {
-    const headers = ['Semana', `${year1} (m³)`, `${year2} (m³)`, 'Cambio (%)', 'Diferencia (m³)']
+    const headers = ['Semana', `${year1} (m³)`, `${year2} (m³)`, 'Cambio (%)', 'Diferencia (m³)', 'Comentarios']
     const rows = weekRows.map(row => [
       row.week,
       row.consumption2024.toFixed(2),
       row.consumption2025.toFixed(2),
       row.change.toFixed(1),
-      (row.consumption2025 - row.consumption2024).toFixed(2)
+      (row.consumption2025 - row.consumption2024).toFixed(2),
+      (comments[row.week]?.comment || '').replace(/"/g, '""')
     ])
     
     // Agregar fila de totales
-    rows.push(['TOTAL', totals.total2024.toFixed(2), totals.total2025.toFixed(2), totals.avgChange.toFixed(1), (totals.total2025 - totals.total2024).toFixed(2)])
+    rows.push(['TOTAL', totals.total2024.toFixed(2), totals.total2025.toFixed(2), totals.avgChange.toFixed(1), (totals.total2025 - totals.total2024).toFixed(2), ''])
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.join(','))
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -216,6 +325,13 @@ export default function WeeklyComparisonTable({
                   <div>Variación</div>
                   <div className="text-xs font-normal text-muted-foreground">({year2} vs {year1})</div>
                 </th>
+                <th className="p-3 text-left font-semibold text-sm border-l bg-violet-50 dark:bg-violet-900/20">
+                  <div className="flex items-center gap-1">
+                    <span>Comentarios</span>
+                    {loadingComments && <Loader2Icon className="h-3 w-3 animate-spin text-muted-foreground" />}
+                  </div>
+                  <div className="text-xs font-normal text-muted-foreground">(por semana)</div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -264,6 +380,74 @@ export default function WeeklyComparisonTable({
                       <span className="text-xs text-muted-foreground">-</span>
                     )}
                   </td>
+
+                  {/* Comentarios */}
+                  <td className="p-3 text-sm border-l">
+                    {editingWeek === row.week ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={draft}
+                          onChange={(e) => setDraft(e.target.value)}
+                          rows={2}
+                          placeholder="Escribe un comentario sobre esta semana..."
+                          className="w-full px-2 py-1 border border-muted rounded text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => saveComment(row.week)}
+                            disabled={savingComment || !draft.trim()}
+                          >
+                            {savingComment && <Loader2Icon className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                            Guardar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => { setEditingWeek(null); setDraft('') }}
+                            disabled={savingComment}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : comments[row.week] ? (
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 text-left">
+                          <p className="text-xs text-foreground whitespace-pre-wrap">{comments[row.week].comment}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            - {comments[row.week].authorName || 'Usuario'}
+                          </p>
+                          {comments[row.week].updated_at && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              Última edición: {new Date(comments[row.week].updated_at).toLocaleString('es-MX')}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="h-8 px-2.5 flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                          title="Editar comentario"
+                          onClick={() => { setEditingWeek(row.week); setDraft(comments[row.week].comment) }}
+                        >
+                          <EditIcon className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-xs"
+                          onClick={() => { setEditingWeek(row.week); setDraft('') }}
+                        >
+                          <MessageSquarePlusIcon className="h-3.5 w-3.5 mr-1" />
+                          Comentar
+                        </Button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
               
@@ -285,6 +469,7 @@ export default function WeeklyComparisonTable({
                     {totals.avgChange > 0 ? '+' : ''}{totals.avgChange.toFixed(1)}%
                   </span>
                 </td>
+                <td className="p-3 border-l"></td>
               </tr>
             </tbody>
           </table>

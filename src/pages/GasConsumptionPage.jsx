@@ -66,6 +66,7 @@ export default function GasConsumptionPage() {
   // Estados para filtros de gráficas de comparación
   const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
   const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2026']) // Array de años para comparar
+  const [tableCompareYears, setTableCompareYears] = useState(['2025', '2026']) // Años para la tabla comparativa (desacoplado del gráfico)
   const [availableYearsForComparison] = useState(['2023', '2024', '2025', '2026']) // Años disponibles para comparación
 
   // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
@@ -1154,10 +1155,10 @@ export default function GasConsumptionPage() {
                 <span className="text-sm font-semibold">Comparar años en tabla:</span>
                 <div className="flex items-center gap-2">
                   <select
-                    value={comparisonYearsToShow[0] || '2025'}
+                    value={tableCompareYears[0]}
                     onChange={(e) => {
                       const newYear1 = e.target.value
-                      setComparisonYearsToShow(prev => [newYear1, prev[1] || '2026'])
+                      setTableCompareYears(prev => [newYear1, prev[1]])
                     }}
                     className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
@@ -1167,10 +1168,10 @@ export default function GasConsumptionPage() {
                   </select>
                   <span className="text-sm font-medium">vs</span>
                   <select
-                    value={comparisonYearsToShow[1] || '2026'}
+                    value={tableCompareYears[1]}
                     onChange={(e) => {
                       const newYear2 = e.target.value
-                      setComparisonYearsToShow(prev => [prev[0] || '2025', newYear2])
+                      setTableCompareYears(prev => [prev[0], newYear2])
                     }}
                     className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
@@ -1185,13 +1186,14 @@ export default function GasConsumptionPage() {
             {/* Tabla tipo Excel de comparación */}
             <div className="mb-6">
               <WeeklyComparisonTable
-                title={`Tabla Comparativa Semanal ${comparisonYearsToShow.join(' vs ')} - Consumo de Gas`}
-                data2024={multiYearData.find(d => d.year === comparisonYearsToShow[0])?.data || []}
-                data2025={multiYearData.find(d => d.year === comparisonYearsToShow[1])?.data || []}
+                title={`Tabla Comparativa Semanal ${tableCompareYears.join(' vs ')} - Consumo de Gas`}
+                data2024={multiYearData.find(d => d.year === tableCompareYears[0])?.data || []}
+                data2025={multiYearData.find(d => d.year === tableCompareYears[1])?.data || []}
                 pointName={selectedPoint === 'todos' ? 'Todos los Medidores (Suma Total)' : (consumptionPoints.flatMap(c => c.points).find(p => p.id === selectedPoint)?.name || "Medidor de Gas")}
                 unit="m³"
-                year1={comparisonYearsToShow[0] || '2025'}
-                year2={comparisonYearsToShow[1] || '2026'}
+                year1={tableCompareYears[0]}
+                year2={tableCompareYears[1]}
+                sourceType="gas"
               />
             </div>
           </div>
