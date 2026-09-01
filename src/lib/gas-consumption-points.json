@@ -242,7 +242,7 @@
         },
         {
           "id": "jubileo",
-          "name": "Jubileo",
+          "name": "Cocina Jubileo",
           "type": "edificio_especial",
           "unit": "m³",
           "weeklyData": []
@@ -331,7 +331,7 @@
         },
         {
           "id": "residencias_2",
-          "name": "Residencias 2 MISMA LECTURA DESDE 8-Nov-22-23 NO EXISTE",
+          "name": "Residencias 2",
           "type": "residencia",
           "unit": "m³",
           "weeklyData": []
@@ -401,6 +401,13 @@
           "unit": "m³",
           "weeklyData": []
         },
+         {
+          "id": "campus_norte_edificio_d_calefaccion",
+          "name": "Campus Norte-Comedor D",
+          "type": "calefaccion",
+          "unit": "m³",
+          "weeklyData": []
+        },
         {
           "id": "campus_norte_comedor_d",
           "name": "Campus Norte-Edificio D Calefacción",
@@ -408,13 +415,7 @@
           "unit": "m³",
           "weeklyData": []
         },
-        {
-          "id": "campus_norte_edificio_d_calefaccion",
-          "name": "Campus Norte-Comedor D",
-          "type": "calefaccion",
-          "unit": "m³",
-          "weeklyData": []
-        },
+       
         {
           "id": "estadio_borrego_acometida_digital",
           "name": "Estadio Borrego Acometida digital",
