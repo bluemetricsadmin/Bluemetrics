@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
@@ -16,7 +16,10 @@ import {
   TableIcon,
   Loader2Icon,
   RefreshCwIcon,
-  AlertCircleIcon
+  AlertCircleIcon,
+  SearchIcon,
+  XIcon,
+  ChevronDownIcon
 } from 'lucide-react'
 
 import MonthlyComparisonChart from '../components/MonthlyComparisonChart'
@@ -50,6 +53,51 @@ export default function GasComsumptionMonthlyPage() {
   const [selectedPoint, setSelectedPoint] = useState('todos')
   
   const [activeTab, setActiveTab] = useState('todos_los_puntos')
+
+  // Estados para el combobox de búsqueda de medidor de gas
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef(null)
+
+  // Puntos filtrados por término de búsqueda (excluye noRead)
+  const filteredPoints = useMemo(() => {
+    const categories = consumptionPointsData.categories.map(cat => ({
+      ...cat,
+      points: cat.points.filter(p => !p.noRead)
+    }))
+    if (!searchTerm.trim()) return categories
+    const term = searchTerm.toLowerCase()
+    return categories
+      .map(cat => ({
+        ...cat,
+        points: cat.points.filter(p =>
+          p.name.toLowerCase().includes(term) ||
+          p.id.toLowerCase().includes(term)
+        )
+      }))
+      .filter(cat => cat.points.length > 0)
+  }, [searchTerm])
+
+  // Nombre del punto seleccionado para mostrar en el input
+  const selectedPointName = useMemo(() => {
+    const allPoints = consumptionPointsData.categories.flatMap(c => c.points)
+    if (selectedPoint === 'todos') return 'Todos los Puntos'
+    return allPoints.find(p => p.id === selectedPoint)?.name || 'Seleccionar punto...'
+  }, [selectedPoint])
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false)
+        setSearchTerm('')
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showDropdown])
 
   useEffect(() => {
     fetchMonthlyData()
@@ -395,18 +443,84 @@ export default function GasComsumptionMonthlyPage() {
                 <Card className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
                   <CardContent className="p-6">
                     <div className="flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 relative" ref={dropdownRef}>
                         <label className="text-sm font-semibold text-foreground whitespace-nowrap">Punto de Medicion:</label>
-                        <select
-                          value={selectedPoint}
-                          onChange={(e) => setSelectedPoint(e.target.value)}
-                          className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
-                        >
-                          <option value="todos">Todos los Puntos</option>
-                          {consumptionPointsData.categories?.flatMap(c => c.points).map(point => (
-                            <option key={point.id} value={point.id}>{point.name}</option>
-                          ))}
-                        </select>
+                        <div className="relative min-w-[500px] flex-1 max-w-[700px]">
+                          <div
+                            className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-transparent transition-colors cursor-pointer flex items-center gap-2"
+                            onClick={() => setShowDropdown(!showDropdown)}
+                          >
+                            <SearchIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <input
+                              type="text"
+                              value={showDropdown ? searchTerm : (selectedPointName !== 'Todos los Puntos' && selectedPointName !== 'Seleccionar punto...' ? selectedPointName : '')}
+                              placeholder={showDropdown ? 'Buscar punto...' : selectedPointName}
+                              readOnly={!showDropdown}
+                              onFocus={() => setShowDropdown(true)}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="flex-1 bg-transparent outline-none text-sm min-w-0 placeholder:text-muted-foreground"
+                            />
+                            {selectedPoint !== 'todos' && !showDropdown && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedPoint('todos')
+                                  setSearchTerm('')
+                                }}
+                                className="text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                <XIcon className="h-4 w-4" />
+                              </button>
+                            )}
+                            <ChevronDownIcon className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                          </div>
+                          {showDropdown && (
+                            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border border-muted rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
+                              <button
+                                onClick={() => {
+                                  setSelectedPoint('todos')
+                                  setShowDropdown(false)
+                                  setSearchTerm('')
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 ${
+                                  selectedPoint === 'todos' ? 'bg-orange-500/10 text-orange-600 font-medium' : 'text-foreground'
+                                }`}
+                              >
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${selectedPoint === 'todos' ? 'bg-orange-500' : 'bg-muted-foreground/30'}`}></span>
+                                <span className="truncate">Todos los Puntos</span>
+                              </button>
+                              {filteredPoints.length === 0 ? (
+                                <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                                  No se encontraron puntos
+                                </div>
+                              ) : (
+                                filteredPoints.map(cat => (
+                                  <div key={cat.id}>
+                                    <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/30 sticky top-0">
+                                      {cat.name}
+                                    </div>
+                                    {cat.points.map(point => (
+                                      <button
+                                        key={point.id}
+                                        onClick={() => {
+                                          setSelectedPoint(point.id)
+                                          setShowDropdown(false)
+                                          setSearchTerm('')
+                                        }}
+                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 ${
+                                          selectedPoint === point.id ? 'bg-orange-500/10 text-orange-600 font-medium' : 'text-foreground'
+                                        }`}
+                                      >
+                                        <span className={`w-2 h-2 rounded-full shrink-0 ${selectedPoint === point.id ? 'bg-orange-500' : 'bg-muted-foreground/30'}`}></span>
+                                        <span className="truncate">{point.name}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div className="h-8 w-px bg-gray-300"></div>

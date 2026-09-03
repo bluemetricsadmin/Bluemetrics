@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
@@ -28,7 +28,10 @@ import {
   Waves,
   Factory,
   TableIcon,
-  Loader2Icon
+  Loader2Icon,
+  SearchIcon,
+  XIcon,
+  ChevronDownIcon
 } from 'lucide-react'
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
@@ -68,6 +71,51 @@ export default function GasConsumptionPage() {
   const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2026']) // Array de años para comparar
   const [tableCompareYears, setTableCompareYears] = useState(['2025', '2026']) // Años para la tabla comparativa (desacoplado del gráfico)
   const [availableYearsForComparison] = useState(['2023', '2024', '2025', '2026']) // Años disponibles para comparación
+
+  // Estados para el combobox de búsqueda de medidor de gas
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef(null)
+
+  // Puntos filtrados por término de búsqueda (excluye noRead)
+  const filteredPoints = useMemo(() => {
+    const categories = gasConsumptionPointsData.categories.map(cat => ({
+      ...cat,
+      points: cat.points.filter(p => !p.noRead)
+    }))
+    if (!searchTerm.trim()) return categories
+    const term = searchTerm.toLowerCase()
+    return categories
+      .map(cat => ({
+        ...cat,
+        points: cat.points.filter(p =>
+          p.name.toLowerCase().includes(term) ||
+          p.id.toLowerCase().includes(term)
+        )
+      }))
+      .filter(cat => cat.points.length > 0)
+  }, [searchTerm])
+
+  // Nombre del punto seleccionado para mostrar en el input
+  const selectedPointName = useMemo(() => {
+    const allPoints = gasConsumptionPointsData.categories.flatMap(c => c.points)
+    if (selectedPoint === 'todos') return 'TODOS LOS MEDIDORES'
+    return allPoints.find(p => p.id === selectedPoint)?.name || 'Seleccionar punto...'
+  }, [selectedPoint])
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false)
+        setSearchTerm('')
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showDropdown])
 
   // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
   useEffect(() => {
@@ -880,83 +928,86 @@ export default function GasConsumptionPage() {
                */} 
                 <CardContent className='p-6'>
                   <div className="flex flex-wrap items-center gap-4">
-                    {/* Medidor de Gas */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-semibold text-foreground mb-2 block">Medidor de Gas</label>
-                      <select
-                        value={selectedPoint}
-                        onChange={(e) => setSelectedPoint(e.target.value)}
-                        className="w-full border border-muted rounded-lg px-3 py-2.5 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
-                      >
-                        <option value="todos">TODOS LOS MEDIDORES</option>
-                        <optgroup label="Todos los Puntos de Gas">
-                          <option value="campus_acometida_principal_digital">Campus Acometida Ppal digital</option>
-                          <option value="campus_acometida_principal_analogica">Campus Acometida Ppal analógica</option>
-                          <option value="domo_cultural">Domo Cultural</option>
-                          <option value="centrales_local">Centrales General concesiones</option>
-                          <option value="dona_tota">Centrales-Doña Tota</option>
-                          <option value="chilaquiles_tec">Centrales-Chilaquiles Tec</option>
-                          <option value="carls_junior">Centrales-Carl´s Junior</option>
-                          <option value="comedor_centrales_tec_food">Centrales-TecFood</option>
-                          <option value="davilas_grill_team">Centrales-Grill Team</option>
-                          <option value="pizza_little_caesars">Centrales-Little Caesars</option>
-                          <option value="biotecnologia">Biotecnología(Laboratorios)</option>
-                          <option value="mega_calefaccion_1">Mega Calefacción 1</option>
-                          <option value="mega_calefaccion_2">Mega Calefacción 2</option>
-                          <option value="mega_calefaccion_3">Mega Calefacción 3</option>
-                          <option value="mega_calefaccion_4">Mega Calefacción 4</option>
-                          <option value="mega_calefaccion_5">Mega Calefacción 5</option>
-                          <option value="ciap_super_salads">Ciap-Super Salads</option>
-                          <option value="aulas_1">Aulas 1</option>
-                          <option value="biblioteca">Biblioteca</option>
-                          <option value="nikkori">Biblioteca-Nikkori</option>
-                          <option value="nectar_works">Biblioteca Nectar Works</option>
-                          <option value="sr_latino">Sr. Latino</option>
-                          <option value="arena_borrego">Arena Borrego</option>
-                          <option value="calefaccion_1_bryan">Aulas 7 Sótano-Calefacción 1</option>
-                          <option value="calefaccion_2_aerco">Aulas 7 Sótano-Calefacción 2</option>
-                          <option value="caldera_3">Aulas 7 Sótano-Calefacción 3(No Operativo)</option>
-                          <option value="aulas_7">Aulas 7-Laboratorios(No Operativo)</option>
-                          <option value="la_dia">La Dia</option>
-                          <option value="aulas_4">Aulas 4-Laboratorios(No Operativo)</option>
-                          <option value="centro_congresos_vestidores">Centro congresos-Vestidores (No operativo)</option>
-                          <option value="jubileo">Cocina Jubileo</option>
-                          <option value="expedition">Expedition</option>
-                          <option value="bread_expedition">Bread Expedition</option>
-                          <option value="matthew_expedition">Matthew Expedition</option>
-                          <option value="estudiantes_acometida_principal_digital">Poligono residencias(1,2,3,4 y5)-Digital</option>
-                          <option value="estudiantes_acometida_principal_analogico">Poligono residencias(1,2,3,4 y5)-Analogico</option>
-                          <option value="cedes">Cedes-Laboratorios</option>
-                          <option value="residencias_2">Residencias 2 </option>
-                          <option value="residencias_5">Residencias 5</option>
-                          <option value="residencias_3">Residencias 3</option>
-                          <option value="residencias_abc_calefaccion">Residencias 1-Calefacción</option>
-                          <option value="residencias_abc_regaderas">Residencias 1-Regaderas</option>
-                          <option value="residencias_abc_locales_comida">Residencias 1-Locales Comida</option>
-                          <option value="campus_norte_acometida_externa">Campus Norte Acometida externa</option>
-                          <option value="campus_norte_acometida_interna">Campus Norte Acometida interna</option>
-                          <option value="campus_norte_edificio_d_calefaccion">Campus Norte-Comedor D</option>
-                          <option value="campus_norte_comedor_d">Campus Norte-Edificio D Calefacción</option>
-                          <option value="estadio_borrego_acometida_digital">Estadio Borrego Acometida digital</option>
-                          <option value="estadio_borrego_acometida_analogica">Estadio Borrego Acometida analógica</option>
-                          <option value="estadio_yarda">Estadio Yarda</option>
-                          <option value="wellness_acometida_digital">Wellness Acometida digital</option>
-                          <option value="wellness_acometida_analogica">Wellness Acometida analógica</option>
-                          <option value="wellness_supersalads">Wellness SuperSalads</option>
-                          <option value="wellness_general_calefaccion">Wellness General (Calefacción)</option>
-                          <option value="wellness_calentador_sotano_regaderas">Wellness Calentador Sotano (Regaderas)</option>
-                          <option value="wellness_alberca">Wellness Alberca</option>
-                          <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
-                          <option value="pabellon_tec_cocina_estudiantes_2do_piso">Pabellon Tec Cocina Estudiantes 2do. Piso</option>
-                          <option value="guarderia">Guardería</option>
-                          <option value="escamilla">Escamilla (CDB1)</option>
-                          <option value="casa_solar">Casa solar</option>
-                          <option value="estudiantes_11">Estudiantes 11</option>
-                          <option value="estudiantes_12">Estudiantes 12</option>
-                          <option value="estudiantes_13">Estudiantes 13</option>
-                          <option value="estudiantes_15_y_10">Estudiantes 15 y 10</option>
-                        </optgroup>
-                      </select>
+                    {/* Medidor de Gas - Combobox con búsqueda */}
+                    <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+                      <label className="text-sm font-semibold text-foreground whitespace-nowrap">Medidor de Gas:</label>
+                      <div className="relative min-w-[500px] flex-1 max-w-[700px]">
+                        <div
+                          className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-transparent transition-colors cursor-pointer flex items-center gap-2"
+                          onClick={() => setShowDropdown(!showDropdown)}
+                        >
+                          <SearchIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <input
+                            type="text"
+                            value={showDropdown ? searchTerm : (selectedPointName !== 'TODOS LOS MEDIDORES' && selectedPointName !== 'Seleccionar punto...' ? selectedPointName : '')}
+                            placeholder={showDropdown ? 'Buscar medidor...' : selectedPointName}
+                            readOnly={!showDropdown}
+                            onFocus={() => setShowDropdown(true)}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="flex-1 bg-transparent outline-none text-sm min-w-0 placeholder:text-muted-foreground"
+                          />
+                          {selectedPoint !== 'todos' && !showDropdown && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedPoint('todos')
+                                setSearchTerm('')
+                              }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <XIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                          <ChevronDownIcon className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                        </div>
+                        {showDropdown && (
+                          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border border-muted rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
+                            {/* Opción TODOS */}
+                            <button
+                              onClick={() => {
+                                setSelectedPoint('todos')
+                                setShowDropdown(false)
+                                setSearchTerm('')
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 ${
+                                selectedPoint === 'todos' ? 'bg-orange-500/10 text-orange-600 font-medium' : 'text-foreground'
+                              }`}
+                            >
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${selectedPoint === 'todos' ? 'bg-orange-500' : 'bg-muted-foreground/30'}`}></span>
+                              <span className="truncate">TODOS LOS MEDIDORES</span>
+                            </button>
+                            {filteredPoints.length === 0 ? (
+                              <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                                No se encontraron medidores
+                              </div>
+                            ) : (
+                              filteredPoints.map(cat => (
+                                <div key={cat.id}>
+                                  <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/30 sticky top-0">
+                                    {cat.name}
+                                  </div>
+                                  {cat.points.map(point => (
+                                    <button
+                                      key={point.id}
+                                      onClick={() => {
+                                        setSelectedPoint(point.id)
+                                        setShowDropdown(false)
+                                        setSearchTerm('')
+                                      }}
+                                      className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 ${
+                                        selectedPoint === point.id ? 'bg-orange-500/10 text-orange-600 font-medium' : 'text-foreground'
+                                      }`}
+                                    >
+                                      <span className={`w-2 h-2 rounded-full shrink-0 ${selectedPoint === point.id ? 'bg-orange-500' : 'bg-muted-foreground/30'}`}></span>
+                                      <span className="truncate">{point.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                      {/* Separador */}
                   <div className="h-8 w-px bg-gray-300"></div>

@@ -411,7 +411,6 @@ export default function MonthlyWaterConsumptionPage() {
                                 }}
                                 className="text-muted-foreground hover:text-foreground transition-colors"
                               >
-                                <XIcon className="h-4 w-4" />
                               </button>
                             )}
                             <ChevronDownIcon className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
