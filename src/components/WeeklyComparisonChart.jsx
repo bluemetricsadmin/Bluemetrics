@@ -76,6 +76,12 @@ export default function WeeklyComparisonChart({
   const effectivePreviousYear = useMultiYear && filteredMultiYearData.length > 1
     ? filteredMultiYearData[filteredMultiYearData.length - 2].year
     : previousYear
+
+  // El Cambio Anual solo tiene sentido al comparar 2 o más años.
+  // En modo multi-año se necesita al menos un año previo; en modo de 2 años siempre existe.
+  const canCompareYearOverYear = useMultiYear
+    ? filteredMultiYearData.length > 1
+    : true
   
   // Función para alternar selección de año
   const toggleYear = (year) => {
@@ -518,31 +524,33 @@ export default function WeeklyComparisonChart({
           )}
 
           {/* Cambio año sobre año */}
-          <div className={`p-3 rounded-lg border ${
-            comparisonStats.yearOverYear > 0 
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200' 
-              : comparisonStats.yearOverYear < 0
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200'
-              : 'bg-gray-50 dark:bg-gray-800 border-gray-200'
-          }`}>
-            <p className="text-xs text-muted-foreground">Cambio Anual</p>
-            <div className="flex items-center gap-1">
-              {comparisonStats.yearOverYear > 0 ? (
-                <TrendingUpIcon className="h-4 w-4 text-red-600" />
-              ) : comparisonStats.yearOverYear < 0 ? (
-                <TrendingDownIcon className="h-4 w-4 text-green-600" />
-              ) : (
-                <MinusIcon className="h-4 w-4 text-gray-600" />
-              )}
-              <p className={`text-lg font-bold ${
-                comparisonStats.yearOverYear > 0 ? 'text-red-600' : 
-                comparisonStats.yearOverYear < 0 ? 'text-green-600' : 
-                'text-gray-600'
-              }`}>
-                {comparisonStats.yearOverYear > 0 ? '+' : ''}{comparisonStats.yearOverYear.toFixed(1)}%
-              </p>
+          {canCompareYearOverYear && (
+            <div className={`p-3 rounded-lg border ${
+              comparisonStats.yearOverYear > 0 
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200' 
+                : comparisonStats.yearOverYear < 0
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200'
+                : 'bg-gray-50 dark:bg-gray-800 border-gray-200'
+            }`}>
+              <p className="text-xs text-muted-foreground">Cambio Anual</p>
+              <div className="flex items-center gap-1">
+                {comparisonStats.yearOverYear > 0 ? (
+                  <TrendingUpIcon className="h-4 w-4 text-red-600" />
+                ) : comparisonStats.yearOverYear < 0 ? (
+                  <TrendingDownIcon className="h-4 w-4 text-green-600" />
+                ) : (
+                  <MinusIcon className="h-4 w-4 text-gray-600" />
+                )}
+                <p className={`text-lg font-bold ${
+                  comparisonStats.yearOverYear > 0 ? 'text-red-600' : 
+                  comparisonStats.yearOverYear < 0 ? 'text-green-600' : 
+                  'text-gray-600'
+                }`}>
+                  {comparisonStats.yearOverYear > 0 ? '+' : ''}{comparisonStats.yearOverYear.toFixed(1)}%
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Semana actual vs anterior */}
 
