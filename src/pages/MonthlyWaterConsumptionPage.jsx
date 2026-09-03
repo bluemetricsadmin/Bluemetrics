@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
@@ -15,7 +15,10 @@ import {
   TableIcon,
   Loader2Icon,
   RefreshCwIcon,
-  AlertCircleIcon
+  AlertCircleIcon,
+  SearchIcon,
+  XIcon,
+  ChevronDownIcon
 } from 'lucide-react'
 
 import MonthlyComparisonChart from '../components/MonthlyComparisonChart'
@@ -53,6 +56,64 @@ export default function MonthlyWaterConsumptionPage() {
   
   // Tab activa para tablas detalladas
   const [activeTab, setActiveTab] = useState('pozos_servicios')
+
+  // Estados para el combobox de búsqueda de punto de medición
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef(null)
+
+  // Labels legibles para las categorías del combobox
+  const categoryLabels = useMemo(() => ({
+    pozos_servicios: 'Pozos de Servicios',
+    pozos_riego: 'Pozos de Riego',
+    circuito_8_campus: 'Circuito 8 Campus',
+    circuito_6_residencias: 'Circuito 6 Residencias',
+    circuito_4_a7_ce: 'Circuito 4 A7-CE',
+    circuito_planta_fisica: 'Circuito Planta Física',
+    circuito_megacentral: 'Circuito Megacentral',
+    riego_ptar: 'Sistemas de Riego y PTAR',
+    purgas_evaporacion: 'Purgas y Evaporación',
+    agua_ciudad: 'Agua de la Ciudad'
+  }), [])
+
+  // Puntos filtrados por término de búsqueda (excluye noRead)
+  const filteredPoints = useMemo(() => {
+    const categories = consumptionPointsData.categories.map(cat => ({
+      ...cat,
+      points: cat.points.filter(p => !p.noRead)
+    }))
+    if (!searchTerm.trim()) return categories
+    const term = searchTerm.toLowerCase()
+    return categories
+      .map(cat => ({
+        ...cat,
+        points: cat.points.filter(p =>
+          p.name.toLowerCase().includes(term) ||
+          p.id.toLowerCase().includes(term)
+        )
+      }))
+      .filter(cat => cat.points.length > 0)
+  }, [searchTerm])
+
+  // Nombre del punto seleccionado para mostrar en el input
+  const selectedPointName = useMemo(() => {
+    const allPoints = consumptionPointsData.categories.flatMap(c => c.points)
+    return allPoints.find(p => p.id === selectedPoint)?.name || 'Seleccionar punto...'
+  }, [selectedPoint])
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false)
+        setSearchTerm('')
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showDropdown])
 
   // Cargar datos cuando cambia el año
   useEffect(() => {
@@ -323,177 +384,72 @@ export default function MonthlyWaterConsumptionPage() {
                 <Card className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
                   <CardContent className="p-6">
                     <div className="flex flex-wrap items-center gap-4">
-                      {/* Punto de Medición */}
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-semibold text-foreground whitespace-nowrap">Punto de Medición:</label>
-                        <select
-                          value={selectedPoint}
-                          onChange={(e) => setSelectedPoint(e.target.value)}
-                          className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors min-w-[200px]"
-                        >
-                          <optgroup label="Pozos de Servicios">
-                        <option value="medidor_general_pozos">Medidor General de los pozos 7,12,11 y 14 / TOTAL POZOS</option>
-                        <option value="pozo_11">Pozo de agua potable 11</option>
-                        <option value="pozo_14">Pozo de agua potable 14</option>
-                        <option value="pozo_12">Pozo de agua potable 12</option>
-                        <option value="pozo_7">Pozo de agua potable 7</option>
-                        <option value="pozo_3">Pozo de agua potable 3</option>
-                      </optgroup>
-                      <optgroup label="Pozos de Riego">
-                        <option value="pozo_4_riego">Pozo de riego 4</option>
-                        <option value="pozo_8_riego">Pozo de riego 8</option>
-                        <option value="pozo_15_riego">Pozo de riego 15</option>
-                      </optgroup>
-                      <optgroup label="Circuito 8 Campus">
-                        <option value="circuito_8_campus">Circuito 8 Campus</option>
-                        <option value="auditorio_luis_elizondo">Auditorio Luis Elizondo</option>
-                        <option value="cdb2">CDB2</option>
-                        <option value="cdb2_banos_nuevos_2025">CDB2 Baños</option>
-                        <option value="arena_borrego">Arena Borrego</option>
-                        <option value="lago_aulas_7_llenado">Lago Aulas 7</option>
-                        <option value="farnville">Farmville</option>
-                        <option value="em_box">Em Box</option>
-                        <option value="edificio_negocios_daf">Edificio de Negocios (DAF)</option>
-                        <option value="aulas_6">Aulas 6</option>
-                        <option value="domo_cultural">Domo Cultural</option>
-                        <option value="wellness_parque_central_tunel">Wellness Edificio Wellnes + PC (No operativo)</option>
-                        <option value="wellness_registro">Wellness tunel A6(Edificio Wellness + PC)</option>
-                        <option value="parque_central_registro">Parque Central General</option>
-                        <option value="wellness_edificio">Wellness edificio</option>
-                        <option value="wellness_super_salads">Wellness-Super Salads</option>
-                        <option value="wellness_torre_enfriamiento">Wellness-Torre de Enfriamiento</option>
-                        <option value="wellness_alberca">Wellness-Alberca</option>
-                        <option value="centrales_comedor_1_principal">Centrales Comedor Concesiones</option>
-                        <option value="centrales_dona_tota">Centrales Comedor-Doña Tota</option>
-                        <option value="centrales_subway">Centrales Comedor-Subway</option>
-                        <option value="centrales_carls_jr">Centrales Comedor-Carls Jr.</option>
-                        <option value="centrales_little_cesars">Centrales Comedor-Pizza Little Cesars</option>
-                        <option value="centrales_grill_team">Centrales Comedor-Grill Team (Davila´s, GRILL)</option>
-                        <option value="centrales_chilaquiles">Centrales Comedor-Chilaquiles</option>
-                        <option value="centrales_tec_food">Centrales Comedor-Tec Food</option>
-                        <option value="centrales_oxxo">Centrales Comedor-Oxxo</option>
-                        <option value="comedor_central_tunel">Centrales tunel (llave cto. Basura)</option>
-                        <option value="administrativo">Administrativo (Centrales Norte)</option>
-                        <option value="biotecnologia">Biotecnología-Laboratorios</option>
-                        <option value="escuela_arte_caldera_1">Escuela de Arte y Caldera 1</option>
-                        <option value="ciap_oriente">Ciap-Oriente</option>
-                        <option value="ciap_centro">Ciap-Centro</option>
-                        <option value="ciap_poniente">Ciap-Poniente</option>
-                        <option value="ciap_green_shake">Ciap-Green Shake</option>
-                        <option value="ciap_andatti">Ciap-Tim Hortons</option>
-                        <option value="ciap_dc_jochos">Ciap-DC Jochos</option>
-                        <option value="crepaso">Ciap-Crepaso</option>
-                        <option value="el_negro">Ciap-El Negro</option>
-                        <option value="aulas_5">Biotecnología-Baños</option>
-                        <option value="ciap_starbucks">Ciap-Starbucks</option>
-                        <option value="ciap_super_salads">Ciap-Super Salads</option>
-                        <option value="ciap_sotano">Ciap-sótano</option>
-                        <option value="reflexion">Espacio de Reflexión</option>
-                        <option value="residencias_10_15">Residencias 10 y 15</option>
-                        <option value="residencias_10_15_llenado">Residencias 10 y 15- Torres enfriamiento</option>
-                        <option value="cedes_cisterna">Cedes</option>
-                        <option value="cedes_site">Cedes Site-Tinaco</option>
-                        <option value="cedes_site_bomba">Cedes Site-Bomba</option>
-                        <option value="nucleo">Nucleo</option>
-                        <option value="expedition">Expedition</option>
-                        <option value="expedition_bread">Expedition Bread</option>
-                        <option value="expedition_matthew">Expedition Matthew</option>
-                        <option value="caffenio">Caffenio</option>
-                        <option value="san_huevito">Cedes-San Huevito</option>
-                        <option value="hub">HUB</option>
-                        <option value="cedes_e2">E2-General</option>
-                        <option value="e2_beiker">E2-Beiker</option>
-                        <option value="e2_evobike">E2-Evobike</option>
-                        <option value="e2_pancho_de_rigo">E2-Pancho de Rigo</option>
-                        <option value="e2_bebedero_nube">E2-Bebedero</option>
-                        <option value="aulas_1">Aulas 1</option>
-                        <option value="rectoria_norte">Rectoría</option>
-                        <option value="pabellon_la_carreta">Pabellon La Carreta</option>
-                        <option value="rectoria_sur">Rectoría Sur  (No Operativo)</option>
-                        <option value="aulas_2">Aulas 2</option>
-                        <option value="cetec">Cetec</option>
-                        <option value="biblioteca">Biblioteca</option>
-                        <option value="biblioteca_nikkori">Biblioteca-Nikkori</option>
-                        <option value="biblioteca_nectar_works">Biblioteca-Nectar Works</option>
-                        <option value="biblioteca_tim_horton">Biblioteca-Tim Hortons</option>
-                        <option value="aulas_3">Aulas 3</option>
-                        <option value="basanti">Aulas 3-Basanti</option>
-                        <option value="aulas_3_sr_latino">Aulas 3 - Sr. Latino</option>
-                        <option value="centrales_sur">Centrales Sur</option>
-                        <option value="aulas_4_norte">Aulas 4 Norte</option>
-                        <option value="aulas_4_centro">Aulas 4 Centro</option>
-                      </optgroup>
-                      <optgroup label="Circuito 6 Residencias">
-                        <option value="circuito_6_residencias">Circuito 6 Residencias</option>
-                        <option value="residencias_2_ote">Residencias 2</option>
-                        <option value="residencias_2_pte">Residencias 2 pte  (No Operativo)</option>
-                        <option value="residencias_3">Residencias 3</option>
-                        <option value="residencias_5">Residencias 5</option>
-                        <option value="correos">R2-Heppy Salads</option>
-                        <option value="residencias_abc">Residencias 1</option>
-                        <option value="residencias_abc_lavanderia">Residencias1-Lavandería</option>
-                        <option value="mil_mascaras">E3-Mil Caras</option>
-                      </optgroup>
-                      <optgroup label="Circuito 4 A7-CE">
-                        <option value="circuito_4_a7_ce">Circuito 4 A7-CE</option>
-                        <option value="aulas_7">Aulas 7</option>
-                        <option value="cah3_torre_enfriamiento">CAH 3 Torre de Enfriamiento</option>
-                        <option value="caldera_3">Aulas 7-Caldera 3 (No Operativo)</option>
-                        <option value="la_dia">La Dia</option>
-                        <option value="cdi_1">CDI-Caseta Oficinas(Provisional)</option>
-                        <option value="cdi_2">CDI-Baños construcción(Provisional)</option>
-                        <option value="aulas_4_sur">Aulas 4 sur</option>
-                        <option value="aulas_4_maestros">Aulas 4 maestros</option>
-                        <option value="centro_congresos">Centro Congresos</option>
-                        <option value="jubileo">Comedor Jubileo</option>
-                        <option value="aulas_4_oxxo">Aulas 4 OXXO</option>
-                      </optgroup>
-                      <optgroup label="Circuito Planta Física">
-                        <option value="circuito_planta_fisica">Circuito Planta Física</option>
-                        <option value="estacionamiento_e1">Estacionamiento E1</option>
-                        <option value="megacentral_te_2">Megacentral Torres de Enfriamiento 2</option>
-                        <option value="escamilla_banos_trabajadores">Escamilla baños (Cancha sintetica)</option>
-                        <option value="estadio_banorte">Estadio Borregos</option>
-                        <option value="estadio_banorte_te">Estadio Borregos Torre Enfriamiento</option>
-                        <option value="campus_norte_edificios_ciudad">Campus Norte-Edificio D (Ciudad)</option>
-                        <option value="estadio_azul">Estadio Azul</option>
-                      </optgroup>
-                      <optgroup label="Circuito Megacentral">
-                        <option value="circuito_megacentral">Circuito Megacentral</option>
-                        <option value="megacentral_te_4">Megacentral Torre Enfriamiento 4</option>
-                      </optgroup>
-                      <optgroup label="Sistemas de Riego y PTAR">
-                        <option value="pozo_4_riego_alt">Pozo 4 (Riego)</option>
-                        <option value="pozo_8_riego_alt">Pozo 8 (Riego)</option>
-                        <option value="pozo_15_riego_alt">Pozo 15 (Riego)</option>
-                        <option value="campus_norte_ciudad_riego">Campus Norte-respaldo (No Operativo)</option>
-                        <option value="comedor_d_ciudad">Campus Norte-Comedor D</option>
-                      </optgroup>
-                      <optgroup label="Purgas y Evaporación">
-                        <option value="estadio_banorte_purgas">Estadio Banorte purgas (Estadio Borrego Torre Enfriamiento purgas  (importante))</option>
-                        <option value="wellness_cisterna_pluvial_purgas">Wellnes Cisterna Pluvial purgas  (No Operativo)</option>
-                        <option value="wellness_suavizador_purga">Wellness-Suavizador (purga)</option>
-                        <option value="wellness_te_rebosadero">Wellness (rebosadero T.E.)</option>
-                        <option value="wellness_te_purga">Wellness (purga T.E.)</option>
-                        <option value="megacentral_te_purgas">Megacentral (purga T.E.)</option>
-                        <option value="megacentral_suavizador_purga">Megacentral Suavizador Purga (No operativo)</option>
-                        <option value="cah3_te_purgas">CAH3 (purga T.E.)</option>
-                        <option value="residencias_10_15_te_purga">Residencias 10 y 15 (purga T.E.)</option>
-                        <option value="ciap_cisterna_pluvial">Ciap Cisterna Pluvial</option>
-                      </optgroup>
-                      <optgroup label="Agua de la Ciudad">
-                        <option value="estacionamiento_e3">E3 (Ciudad)</option>
-                        <option value="guarderia">Guardería (Ciudad)</option>
-                        <option value="naranjos">Naranjos (Ciudad-Guardería)</option>
-                        <option value="casa_solar">Casa Solar (Ciudad)</option>
-                        <option value="residencias_11_ciudad">Estudiantes Residencias 11 (Ciudad)</option>
-                        <option value="residencias_12_ciudad">Estudiantes Residencias 12 (Ciudad)</option>
-                        <option value="residencias_13_1_ciudad">Estudiantes Residencias 13(Ciudad)</option>
-                        <option value="residencias_13_2_ciudad">Estudiantes Residencias 13-2 (Ciudad) (No Operativo)</option>
-                        <option value="residencias_13_3_ciudad">Estudiantes Residencias 13-3 (Ciudad) (No Operativo)</option>
-                        <option value="residencias_15_sotano">Residencias 15 sótano (Entrada Cisterna)</option>
-                      </optgroup>
-                        </select>
+                      {/* Punto de Medición - Combobox con búsqueda */}
+                      <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+                        <label className="text-sm font-semibold text-foreground whitespace-nowrap">Seleccionar Punto de Medición:</label>
+                        <div className="relative min-w-[500px] flex-1 max-w-[700px]">
+                          <div
+                            className="border border-muted rounded-lg px-3 py-2 text-sm bg-background hover:bg-muted/50 focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent transition-colors cursor-pointer flex items-center gap-2"
+                            onClick={() => setShowDropdown(!showDropdown)}
+                          >
+                            <SearchIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <input
+                              type="text"
+                              value={showDropdown ? searchTerm : (selectedPointName !== 'Seleccionar punto...' ? selectedPointName : '')}
+                              placeholder={showDropdown ? 'Buscar punto...' : selectedPointName}
+                              readOnly={!showDropdown}
+                              onFocus={() => setShowDropdown(true)}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="flex-1 bg-transparent outline-none text-sm min-w-0 placeholder:text-muted-foreground"
+                            />
+                            {selectedPoint && !showDropdown && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedPoint('')
+                                  setSearchTerm('')
+                                }}
+                                className="text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                <XIcon className="h-4 w-4" />
+                              </button>
+                            )}
+                            <ChevronDownIcon className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                          </div>
+                          {showDropdown && (
+                            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border border-muted rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
+                              {filteredPoints.length === 0 ? (
+                                <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+                                  No se encontraron puntos
+                                </div>
+                              ) : (
+                                filteredPoints.map(cat => (
+                                  <div key={cat.id}>
+                                    <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/30 sticky top-0">
+                                      {categoryLabels[cat.id] || cat.name}
+                                    </div>
+                                    {cat.points.map(point => (
+                                      <button
+                                        key={point.id}
+                                        onClick={() => {
+                                          setSelectedPoint(point.id)
+                                          setShowDropdown(false)
+                                          setSearchTerm('')
+                                        }}
+                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 ${
+                                          selectedPoint === point.id ? 'bg-primary/10 text-primary font-medium' : 'text-foreground'
+                                        }`}
+                                      >
+                                        <span className={`w-2 h-2 rounded-full shrink-0 ${selectedPoint === point.id ? 'bg-primary' : 'bg-muted-foreground/30'}`}></span>
+                                        <span className="truncate">{point.name}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Separador */}

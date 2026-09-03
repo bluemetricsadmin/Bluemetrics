@@ -181,7 +181,7 @@
       "points": [
         {
           "id": "circuito_8_campus",
-          "name": "Circuito 8\" Campus",
+          "name": "Circuito 8 Campus",
           "type": "circuito_principal",
           "unit": "m³",
           "weeklyData": [
@@ -2018,7 +2018,7 @@
         },
         {
           "id": "megacentral_te_2",
-          "name": "Megacentral Torres de Enfriamiento 2\"",
+          "name": "Megacentral Torres de Enfriamiento 2",
           "type": "torre_enfriamiento",
           "unit": "m³",
           "weeklyData": [
@@ -2139,7 +2139,7 @@
         },
         {
           "id": "megacentral_te_4",
-          "name": "Megacentral Torre Enfriamiento 4\"",
+          "name": "Megacentral Torre Enfriamiento 4",
           "type": "torre_enfriamiento",
           "unit": "m³",
           "weeklyData": [
