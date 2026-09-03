@@ -1,7 +1,7 @@
 # Documentación Completa de Bluemetrics
 
-> **Versión:** 1.0  
-> **Última actualización:** Junio 2026  
+> **Versión:** 2.0  
+> **Última actualización:** Septiembre 2026  
 > **Stack:** React 19 + Supabase + Vite 7 + TailwindCSS 4  
 > **Propósito:** Plataforma de monitoreo de consumo de agua, gas y PTAR para campus universitario
 
@@ -67,6 +67,8 @@
 
      Sección Análisis (cualquier usuario autenticado):
      /alertas  /predicciones  /analisis
+     (Desde v2.0, en el sidebar solo /alertas está visible;
+      /predicciones y /analisis siguen siendo accesibles por URL)
 
      Admin:
      /correos
@@ -203,16 +205,20 @@ Public (sin guardián)
 
 ### 1.4 Estructura del Sidebar
 
-El sidebar (`dashboard-sidebar.jsx`) es un panel lateral fijo (`w-64`) con 6 secciones colapsables cuyo estado se persiste en `localStorage`.
+El sidebar (`dashboard-sidebar.jsx`) es un panel lateral fijo (`w-64`) con **6 secciones** colapsables cuyo estado se persiste en `localStorage` bajo la clave `sidebar-expanded-sections`.
 
 | Sección | Roles Permitidos | Items |
 |---------|-----------------|-------|
 | **General** | admin, datos, ejecutivo, gas, ptar, user | Dashboard Principal |
 | **Administración de Datos** | admin, datos | 12 items (lecturas semanales/mensuales/diarias/PTAR agua y gas + ediciones) |
 | **Importación Excel/SQL** | admin, datos | 8 items (agua 2023-2025, gas 2023-2025, agua mensual) |
-| **Gestión Hídrica** | admin, ejecutivo, water, user | Pozos, Consumo Semanal, Consumo Mensual, Lecturas Diarias |
-| **Gestión de Gas** | admin, ejecutivo, water, gas, user | Consumo Semanal de Gas, Consumo Mensual de Gas |
-| **Análisis** | admin, ejecutivo, gas, ptar, user | Centro de Análisis, Predicciones, Alertas |
+| **Gestión Hídrica** | admin, ejecutivo, water, user | Pozos, Consumo Semanal Agua, Consumo Mensual Agua, Lecturas Diarias |
+| **Gestión de Gas** | admin, ejecutivo, **water**, gas, user | Consumo Semanal de Gas, Consumo Mensual de Gas |
+| **Análisis** | admin, ejecutivo, gas, ptar, user, **water** | **Solo Alertas** (Centro de Análisis y Predicciones están comentados) |
+
+> **Nota (v2.0):** El rol `water` fue **añadido** a las secciones "Gestión de Gas" y "Análisis" del sidebar. Los ítems "Centro de Análisis" y "Predicciones" del menú Análisis están **comentados** en el código, dejando únicamente "Alertas" visible. El ítem "Consumo Mensual de Gas" está limitado a roles `admin`, `ejecutivo`, `water` y `gas` (sin `user`).
+
+> **Nota (v2.0):** Aunque `PTARPage` existe y está enrutada en `App.jsx`, el ítem "PTAR" y "Balance Hídrico" están **comentados** en el sidebar; el acceso a `/ptar` solo es posible vía URL directa.
 
 #### Mecanismo de filtrado del sidebar
 
@@ -272,12 +278,28 @@ Bluemetrics/
 │   ├── components/                     # Componentes reutilizables
 │   │   ├── dashboard-sidebar.jsx       # Sidebar de navegación
 │   │   ├── dashboard-header.jsx        # Header del dashboard
+│   │   ├── dashboard-summary.jsx       # Tarjetas resumen dashboard
 │   │   ├── Route guards (6 archivos)   # Protección de rutas
-│   │   ├── Charts (9 archivos)         # Gráficas (Chart.js, Recharts)
+│   │   ├── Charts                       # Gráficas comparativas (Chart.js, Recharts)
+│   │   │   ├── WeeklyComparisonChart.jsx      # Comparación semanal multiaño
+│   │   │   ├── WeeklyComparisonTable.jsx      # Tabla comparativa semanal
+│   │   │   ├── MonthlyComparisonChart.jsx     # Comparación mensual multiaño
+│   │   │   ├── AdvancedConsumptionChart.jsx   # Consumo avanzado
+│   │   │   ├── DailyConsumptionChartJS.jsx    # Consumo diario (Chart.js)
+│   │   │   ├── PTARComparisonChart.jsx        # Comparación PTAR
+│   │   │   ├── WellsGeneralCharts.jsx         # Gráficas generales pozos
+│   │   │   ├── ChartComponent.jsx / DashboardChart.jsx
+│   │   │   └── main-consumption-metrics.jsx
 │   │   ├── WellComments.jsx            # Sistema de comentarios
 │   │   ├── WellEventsHistory.jsx       # Historial de eventos
 │   │   ├── alerts-recommendations-system.jsx  # Sistema de alertas (UI)
 │   │   ├── ExcelToSqlConverter.jsx     # Convertidor Excel a SQL
+│   │   ├── ConsumptionTable.jsx        # Tabla de consumo reutilizable (agua/gas)
+│   │   ├── MetricCard.jsx              # Tarjeta de métrica
+│   │   ├── water-balance-flow.jsx      # Balance hídrico
+│   │   ├── BrevoForm.jsx               # Formulario de contacto (Brevo)
+│   │   ├── PointsOrderModal.jsx        # Modal orden de puntos
+│   │   ├── predictive-analytics-panel.jsx  # Panel de predicción
 │   │   ├── analysis/                   # Componentes de análisis
 │   │   │   ├── ChartCard.jsx
 │   │   │   ├── ChartModal.jsx
@@ -296,17 +318,23 @@ Bluemetrics/
 │   ├── hooks/
 │   │   ├── usePermissions.js          # Hook de permisos por rol
 │   │   ├── usePersistedState.js       # Estado persistido en localStorage
+│   │   ├── usePredictions.js          # Hook de predicciones (API ML)
 │   │   └── useUserRole.js             # Obtener rol desde profiles
+│   │
+│   ├── services/                       # ⬅ NUEVO en v2.0
+│   │   └── predictionService.js        # Cliente HTTP de la API de ML
 │   │
 │   ├── config/
 │   │   ├── excelToSqlConfigs.js       # 15+ configuraciones Excel-to-SQL
-│   │   └── permissions.js             # Matriz de 7 roles x 10 permisos
+│   │   └── permissions.js             # Matriz de roles x permisos
 │   │
 │   ├── lib/                           # Datos estáticos/locales
 │   │   ├── consumption-points.json    # 100+ puntos de consumo de agua
 │   │   ├── gas-consumption-points.json # Puntos de consumo de gas
 │   │   ├── dashboard-data.js          # Datos mock/estáticos del dashboard
 │   │   ├── datos_pozo_*.json          # Datos históricos de pozos
+│   │   ├── pozoLabels.js              # Etiquetas de pozos para predicción
+│   │   ├── predictionMapping.js       # Mapeo Supabase→API de predicción
 │   │   ├── charts-registry.js         # Registro de gráficas
 │   │   └── utils.js                   # Utilidades
 │   │
@@ -325,7 +353,7 @@ Bluemetrics/
 │   │   ├── PredictionsPage.jsx
 │   │   ├── AnalysisSectionPage.jsx
 │   │   ├── LandingPage.jsx
-│   │   ├── LoginPageNew.jsx
+│   │   ├── LoginPageNew.jsx            # + LoginPage heredado
 │   │   ├── ContactPage.jsx
 │   │   ├── NosotrosPage.jsx
 │   │   ├── ConfirmationPage.jsx
@@ -351,9 +379,12 @@ Bluemetrics/
 │   │   └── DEPRECATED/               # Componentes deprecados
 │   │
 │   └── utils/
-│       ├── wellAlertEvaluator.js      # Lógica de evaluación de alertas
+│       ├── wellAlertEvaluator.js      # Evaluador de anomalías de sobreconsumo
 │       ├── wellAlertSync.js           # Sincronización de alertas con Supabase
-│       ├── tableHelpers.js
+│       ├── chartColors.js             # Colores fijos por año para gráficas
+│       ├── consumptionHelpers.js      # Helpers puros de cálculo de consumo
+│       ├── yearOverYear.js            # Utilidades comparativas año a año
+│       ├── tableHelpers.js            # Helpers de tablas por año/gas
 │       ├── clearAuthCache.js          # Debug: limpiar caché de auth
 │       └── testSupabaseConnection.js  # Debug: probar conexión Supabase
 │
@@ -371,6 +402,9 @@ El proyecto sigue una **arquitectura SPA (Single Page Application)** con los sig
 - **Data fetching directo**: Las páginas hacen fetch directamente en `useEffect` al montar, sin capa de caché (React Query, SWR, etc.)
 - **Estados de UI**: Cada página maneja sus propios estados loading/error/empty de forma individual
 - **Config-driven**: El sistema Excel-to-SQL se basa completamente en configuraciones (15 configs) que impulsan un solo componente genérico
+- **Formato de fecha mexicano**: El sistema aplica `toLocaleString('es-MX')` de forma consistente en todas las métricas (herramientas de formato en `utils/`)
+- **Comparación multiaño con colores fijos**: `chartColors.js` asigna un color determinista por año calendario (2023 naranja, 2024 púrpura, 2025 verde, 2026 azul) usado en todas las gráficas comparativas
+- **Gráficas comparativas reutilizables**: `WeeklyComparisonChart`, `MonthlyComparisonChart` y `WeeklyComparisonTable` aceptan datos multiaño para visualizar un mismo periodo contra todos los años disponibles
 
 ### 2.3 Árbol de Componentes
 
@@ -418,7 +452,7 @@ El proyecto sigue una **arquitectura SPA (Single Page Application)** con los sig
 
 ## 3. Migraciones de Datos
 
-### 3.1 Inventario Completo (48 archivos SQL)
+### 3.1 Inventario Completo (51+ archivos SQL)
 
 Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). Se organizan en 7 categorías:
 
@@ -438,6 +472,8 @@ Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). 
 | Varios archivos con nombre `lecturas_semanales_gas_2023.sql` a `lecturas_semanales_gas_2026.sql` | `lecturas_semanales_gas_2023`, `lecturas_semanales_gas_2024`, `lecturas_semanales_gas_2025`, `lecturas_semanales_gas_2026` | Lecturas semanales de gas con ~60 columnas DECIMAL(15,3) |
 | `consumo_gas_tablas.sql` | `lecturas_semanales_gas_consumo_2023`, `lecturas_semanales_gas_consumo_2024`, `lecturas_semanales_gas_consumo_2025`, `lecturas_semanales_gas_consumo_2026` | Consumo semanal de gas |
 | `supabase_consumo_mensual_gas.sql` | `lecturas_mensuales_gas`, `lecturas_mensuales_gas_consumo` | Consumo mensual de gas |
+| `supabase_lecturas_gas_mensual.sql` | `lecturas_mensuales_gas` | Lecturas mensuales de gas |
+| `supabase_lecturas_gas_semana2025.sql` | `lecturas_semanales_gas_2025` | Lecturas semanales de gas 2025 |
 
 #### Categoría 3: Tablas de PTAR
 
@@ -480,13 +516,24 @@ Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). 
 
 | Archivo | Tablas Creadas | Descripción |
 |---------|---------------|-------------|
-| `supabase_reading_comments.sql` | `reading_comments` | Comentarios en lecturas (id, year, week_number, point_id, comment, author) |
+| `supabase_reading_comments.sql` / `supabase-migration-reading-comments.sql` | `reading_comments` | Comentarios en lecturas (id, year, week_number, point_id, comment, author) |
 | `supabase_comentarios_pozos.sql` | `well_comments` | Comentarios en pozos |
-| `supabase_correos.sql` | `correos` | Bandeja de entrada de formulario de contacto |
+| `supabase_correos.sql` / `supabase_correos_table.sql` | `correos` | Bandeja de entrada de formulario de contacto |
 | `supabase_factores_agua.sql` | `factores_agua` | Factores de conversión de agua |
+| `supabase_weekly_comments.sql` | `weekly_comments` | **NUEVO (v2.0):** Comentarios semanales por recurso (agua/gas), únicos por (week_number, source_type), autor referencia a profiles.id |
 | Varios archivos de columnas | Migraciones de columnas | `add_caffenio_migration.sql`, `add_agua_columns_2023_2026.sql`, `migration_fix_gas_unique.sql`, `migracion_ptar_columnas.sql` |
 
-### 3.2 Resumen de Tablas Creadas (37 tablas)
+#### Categoría 8: Alertas Unificadas (NUEVO en v2.0)
+
+| Archivo | Descripción |
+|---------|-------------|
+| `supabase_unifica_alertas_anomalia.sql` (1027 líneas) | Reemplaza los 3 tipos automáticos anteriores (`alerta_consumo`, `sobreconsumo`, `posible_fuga`) por **un único tipo `anomalia_sobreconsumo`**. Evalúa cada lectura con 3 reglas AND simultáneas y deduplica por periodo mediante índices únicos. Limpia los triggers pg_cron antiguos. |
+| `add_l_lago_aulas_7_llenado_column.sql` | Añade columna `l_lago_aulas_7_llenado` a tablas de agua |
+| `add_l_sedes_site_boma_column.sql` | Añade columna `l_sedes_site_boma` a tablas de agua |
+
+> **Nota v2.0:** El archivo `supabase_unifica_alertas_anomalia.sql` es la migración más relevante del periodo. Unifica todo el sistema de alertas automáticas bajo un solo tipo de evento con la misma lógica de evaluación (3 reglas simultáneas) para lecturas diarias, semanales y mensuales.
+
+### 3.2 Resumen de Tablas Creadas (38 tablas)
 
 | Tabla | Tipo | Filas Aprox. |
 |-------|------|-------------|
@@ -524,6 +571,7 @@ Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). 
 | `well_config` | Única | Configuración de pozos |
 | `alert_scan_state` | Única | Estado de escaneo de alertas |
 | `bienvenida` | Única | Eventos de bienvenida |
+| `weekly_comments` | Única | **NUEVO (v2.0):** Comentarios semanales por recurso |
 | `_prisma_migrations` | Única | Migraciones de Prisma (legacy) |
 
 ### 3.3 Convención de Nombres
@@ -557,20 +605,25 @@ Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). 
 | `ptar` | Gestión de PTAR + alertas + análisis |
 | `user` | Acceso de solo lectura básico |
 
+> **Nota (v2.0):** El rol `user` no aparece explícitamente en `PERMISSIONS` del archivo `src/config/permissions.js`; `getRolePermissions('user')` cae en el fallback `{}` (sin permisos). No obstante, las rutas se protegen por guardián (`PermissionRoute`, `DataRoute`, etc.) y el sidebar controla el acceso por `allowedRoles`.
+
 ### 4.2 Matriz de Permisos
 
-| Permiso | admin | ejecutivo | datos | water | gas | ptar | user |
-|---------|-------|-----------|-------|-------|-----|------|------|
-| dashboard | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
-| water | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ |
-| gas | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ |
-| ptar | ✓ | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ |
-| alerts | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ |
-| predictions | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ |
-| analysis | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ |
-| addData | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| excelToSql | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| correos | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+La matriz real del código (`src/config/permissions.js`) incluye **6 roles definidos** (sin `user` explícito) y **11 permisos** (incluye `contact`). Los permisos no listados adicionales a la siguiente tabla son `contact` y `correos`:
+
+| Permiso | admin | ejecutivo | datos | water | gas | ptar |
+|---------|-------|-----------|-------|-------|-----|------|
+| dashboard | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ |
+| water | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
+| gas | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
+| ptar | ✓ | ✓ | ✗ | ✓ | ✗ | ✓ |
+| alerts | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ |
+| predictions | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ |
+| analysis | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ |
+| addData | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| excelToSql | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| correos | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| contact | ✓ | ✓ | ✗ | ✗ | ✓ | ✓ |
 
 ### 4.3 Archivo de Permisos (`src/config/permissions.js`)
 
@@ -582,57 +635,66 @@ export const ROLES = {
   WATER: 'water',
   GAS: 'gas',
   PTAR: 'ptar',
-  USER: 'user'
-}
+  USER: 'user',
+};
 
 export const PERMISSIONS = {
   admin: {
-    dashboard: true, water: true, gas: true, ptar: true,
-    alerts: true, predictions: true, analysis: true,
-    addData: true, excelToSql: true, correos: true
+    water: true, gas: true, ptar: true, alerts: true,
+    predictions: true, analysis: true, contact: true,
+    addData: true, correos: true, excelToSql: true, dashboard: true,
   },
   ejecutivo: {
-    dashboard: true, water: true, gas: true, ptar: true,
-    alerts: true, predictions: true, analysis: true,
-    addData: false, excelToSql: false, correos: false
+    water: true, gas: true, ptar: true, alerts: true,
+    predictions: true, analysis: true, contact: true,
+    addData: false, correos: false, excelToSql: false, dashboard: true,
   },
   datos: {
-    dashboard: true, water: true, gas: true, ptar: false,
-    alerts: false, predictions: false, analysis: false,
-    addData: true, excelToSql: true, correos: false
+    water: true, gas: true, ptar: false,
+    alerts: false, predictions: false, analysis: false, contact: false,
+    addData: true, correos: false, excelToSql: true, dashboard: true,
   },
   water: {
-    dashboard: false, water: true, gas: true, ptar: true,
-    alerts: false, predictions: false, analysis: false,
-    addData: false, excelToSql: false, correos: false
+    water: true, gas: true, ptar: true,
+    alerts: false, predictions: false, analysis: false, contact: false,
+    addData: false, correos: false, excelToSql: false, dashboard: false,
   },
   gas: {
-    dashboard: true, water: true, gas: true, ptar: false,
-    alerts: true, predictions: true, analysis: true,
-    addData: false, excelToSql: false, correos: false
+    water: true, gas: true, ptar: false,
+    alerts: true, predictions: true, analysis: true, contact: true,
+    addData: false, correos: false, excelToSql: false, dashboard: true,
   },
   ptar: {
-    dashboard: true, water: false, gas: false, ptar: true,
-    alerts: true, predictions: false, analysis: true,
-    addData: false, excelToSql: false, correos: false
-  }
-}
+    water: false, gas: false, ptar: true,
+    alerts: true, predictions: false, analysis: true, contact: true,
+    addData: false, correos: false, excelToSql: false, dashboard: true,
+  },
+};
 ```
 
 ### 4.4 Hook de Permisos (`src/hooks/usePermissions.js`)
 
 ```javascript
-export function usePermissions() {
-  const { user } = useAuth()
-  const role = user?.role || 'user'
-  const permissions = PERMISSIONS[role] || {}
+import { useAuth } from '../contexts/AuthContextNew';
+import { hasPermission, getRolePermissions } from '../config/permissions';
 
-  const can = (permission) => {
-    return permissions[permission] === true
-  }
-
-  return { role, can, permissions }
-}
+export const usePermissions = () => {
+  const { user } = useAuth();
+  const role = user?.role || 'user';
+  const can = (permission) => hasPermission(role, permission);
+  const permissions = getRolePermissions(role);
+  return {
+    can,
+    permissions,
+    role,
+    canViewWater: can('water'),
+    canViewGas: can('gas'),
+    canViewPTAR: can('ptar'),
+    canAddData: can('addData'),
+    canViewCorreos: can('correos'),
+    canUseExcelToSql: can('excelToSql'),
+  };
+};
 ```
 
 ### 4.5 Redirección post-login por rol
@@ -702,7 +764,11 @@ export default defineConfig({
 VITE_SUPABASE_URL=https://nunpwqrbgutkelhuwyfy.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOi...  # Anon key (pública)
 VITE_APP_SCRIPT_URL=https://script.google.com/macros/s/AKfycb.../exec  # Google Apps Script para formulario de contacto
+VITE_SCRIPT_PREDICT_URL=...            # Script de predicción
+VITE_ML_API_URL=...                    # ⬅ NUEVO (v2.0): URL base de la API de Machine Learning para predicciones
 ```
+
+> **Nota (v2.0):** Se añadieron `VITE_SCRIPT_PREDICT_URL` y `VITE_ML_API_URL`. La API de ML se consume desde `src/services/predictionService.js` (endpoints: `/health`, `/info`, `/predict`).
 
 ### 5.5 Despliegue
 
@@ -905,18 +971,20 @@ CREATE POLICY "Users can update own profile"
 CREATE TABLE "well_events" (
     "id" SERIAL PRIMARY KEY,
     "well_id" VARCHAR(100),
-    "event_type" VARCHAR(50) NOT NULL
-        CHECK (event_type IN ('mantenimiento', 'parado', 'reparacion', 'inspeccion',
-                              'otro', 'alerta_consumo', 'sobreconsumo', 'posible_fuga')),
+    "event_type" VARCHAR(50) NOT NULL,
     "event_status" VARCHAR(20) DEFAULT 'activo'
         CHECK (event_status IN ('activo', 'completado', 'cancelado')),
     "severity" VARCHAR(20) CHECK (severity IN ('critica', 'preventiva', 'informativa')),
     "title" VARCHAR(255),
     "description" TEXT,
-    "alert_granularity" VARCHAR(20),
+    "alert_granularity" VARCHAR(20),     -- daily | weekly | monthly
     "alert_week" INTEGER,
     "alert_month" INTEGER,
     "alert_year" INTEGER,
+    "alert_date" DATE,                      -- ⬅ NUEVO: fecha para alertas diarias
+    "meter_column" VARCHAR(100),            -- ⬅ NUEVO: columna del medidor
+    "metric_value" DECIMAL(15,3),           -- ⬅ NUEVO: valor de la métrica
+    "threshold_value" DECIMAL(15,3),        -- ⬅ NUEVO: valor de referencia
     "is_automatic" BOOLEAN DEFAULT false,
     "start_date" TIMESTAMPTZ,
     "end_date" TIMESTAMPTZ,
@@ -925,14 +993,45 @@ CREATE TABLE "well_events" (
     "updated_at" TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- CHECK de event_type (v2.0): reemplaza el antiguo; ya NO incluye
+-- 'alerta_consumo', 'sobreconsumo' ni 'posible_fuga'
+ALTER TABLE well_events DROP CONSTRAINT IF EXISTS well_events_event_type_check;
+ALTER TABLE well_events ADD CONSTRAINT well_events_event_type_check
+  CHECK (event_type IN (
+    'mantenimiento', 'parado', 'reparacion', 'inspeccion', 'otro',
+    'anomalia_sobreconsumo'
+  ));
+
 -- Índices
 CREATE INDEX idx_well_events_well_id ON well_events(well_id);
 CREATE INDEX idx_well_events_status ON well_events(event_status);
 CREATE INDEX idx_well_events_type ON well_events(event_type);
 
+-- Índices únicos parciales para deduplicación por periodo (v2.0)
+-- Garantizan UNA sola alerta automática por lectura
+CREATE UNIQUE INDEX idx_well_events_anomalia_daily
+  ON well_events (alert_date)
+  WHERE event_type = 'anomalia_sobreconsumo'
+    AND alert_granularity = 'daily'
+    AND is_automatic = true;
+
+CREATE UNIQUE INDEX idx_well_events_anomalia_weekly
+  ON well_events (alert_week, alert_year)
+  WHERE event_type = 'anomalia_sobreconsumo'
+    AND alert_granularity = 'weekly'
+    AND is_automatic = true;
+
+CREATE UNIQUE INDEX idx_well_events_anomalia_monthly
+  ON well_events (alert_year, alert_month)
+  WHERE event_type = 'anomalia_sobreconsumo'
+    AND alert_granularity = 'monthly'
+    AND is_automatic = true;
+
 -- Realtime habilitado con REPLICA IDENTITY FULL
 ALTER TABLE well_events REPLICA IDENTITY FULL;
 ```
+
+> **Nota (v2.0):** Se añadieron `alert_date`, `meter_column`, `metric_value` y `threshold_value` a `well_events`. El CHECK de `event_type` ahora permite `anomalia_sobreconsumo` y **elimina** los antiguos `alerta_consumo`, `sobreconsumo` y `posible_fuga`. Los **índices únicos parciales** garantizan una sola alerta automática por lectura (diaria por `alert_date`, semanal por `(alert_week, alert_year)`, mensual por `(alert_year, alert_month)`).
 
 #### `well_comments`
 
@@ -984,6 +1083,39 @@ CREATE TABLE "correos" (
 );
 ```
 
+### 6.9b Tabla de Comentarios Semanales (NUEVO en v2.0)
+
+#### `weekly_comments`
+
+```sql
+CREATE TABLE public.weekly_comments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    week_number INTEGER NOT NULL,
+    source_type TEXT NOT NULL DEFAULT 'agua',   -- agua | gas
+    comment TEXT NOT NULL,
+    author UUID REFERENCES public.profiles(id),  -- FK al UUID de la sesión autenticada
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT unique_weekly_comment UNIQUE (week_number, source_type)
+);
+```
+
+- Un solo comentario por (semana, recurso)
+- Índices en `week_number`, `source_type`, `created_at`
+- RLS: CRUD permitido a todos los usuarios autenticados
+- Trigger para actualizar `updated_at`
+
+### 6.9c Columnas Nuevas de Agua (v2.0)
+
+Se añadieron dos nuevas columnas a las tablas de agua (semanales y mensuales, lecturas y consumo):
+
+| Columna | Tipo | Tablas |
+|---------|------|--------|
+| `l_lago_aulas_7_llenado` | `NUMERIC(15,3)` | `lecturas_semana_agua_{año}`, `lecturas_semana_agua_consumo_{año}` (2023-2026), `lecturas_mensuales_agua`, `lecturas_mensuales_agua_consumo` |
+| `l_sedes_site_boma` | `NUMERIC(15,3)` | Mismas tablas |
+
+Estas columnas se agregan vía `add_l_lago_aulas_7_llenado_column.sql` y `add_l_sedes_site_boma_column.sql` y se incluyen en los flujos de alta/edición de lecturas (`AddWeeklyReadingsPage`, `EditWeeklyReadingsPage`, `AddMonthlyWaterReadingsPage`, `EditMonthlyWaterReadingsPage`).
+
 ### 6.10 Políticas RLS (Row Level Security)
 
 Se aplican aproximadamente 30 políticas RLS en las tablas del sistema. Las principales son:
@@ -995,6 +1127,7 @@ Se aplican aproximadamente 30 políticas RLS en las tablas del sistema. Las prin
 | `well_events` | SELECT: autenticados | Todos los usuarios autenticados pueden ver |
 | `well_events` | INSERT: autenticados | Usuarios autenticados pueden crear |
 | `well_comments` | CRUD: autenticados | Control de acceso a comentarios |
+| `weekly_comments` | CRUD: autenticados | **NUEVO (v2.0):** Todos los autenticados pueden leer/insertar/actualizar/eliminar |
 | `correos` | Admin-only | Solo admin puede leer correos |
 
 ### 6.11 Triggers y Funciones
@@ -1002,13 +1135,17 @@ Se aplican aproximadamente 30 políticas RLS en las tablas del sistema. Las prin
 Existen aproximadamente 35 triggers y 30 funciones en la base de datos. Los más importantes:
 
 - **Triggers de timestamp**: Actualizan `updated_at` automáticamente en cada tabla
-- **Funciones de alerta**: Escanean patrones de fugas y sobreconsumo
+- **Funciones de alerta**: Escanean patrones de sobreconsumo (sistema unificado desde v2.0)
 - **Función `insert_bulk_data`**: Permite inserciones masivas con `SECURITY DEFINER` para bypass RLS
-- **Jobs de pg_cron**: 4 jobs programados para escaneo periódico de alertas (diario, semanal, mensual, sobreconsumo)
+- **Jobs de pg_cron**: Los 4 jobs de alertas antiguos fueron **desprogramados** por la migración `supabase_unifica_alertas_anomalia.sql` (el nuevo sistema usa triggers sobre las tablas de consumo)
+
+> **Nota (v2.0):** La migración `supabase_unifica_alertas_anomalia.sql` limpia de forma idempotente todos los jobs pg_cron y triggers/event triggers anteriores, unificando el sistema de alertas bajo `anomalia_sobreconsumo`.
 
 ---
 
 ## 7. Alertas en Tiempo Real
+
+> **Cambio mayor en v2.0:** El sistema de alertas fue **completamente unificado**. Los 3 tipos automáticos anteriores (`alerta_consumo`, `sobreconsumo`, `posible_fuga`) fueron reemplazados por **un único tipo `anomalia_sobreconsumo`**. Esto afecta tanto a la base de datos (migración `supabase_unifica_alertas_anomalia.sql`) como al frontend (`wellAlertEvaluator.js`, `wellAlertSync.js`, `AlertsPage.jsx`).
 
 ### 7.1 Arquitectura General (3 Capas)
 
@@ -1017,9 +1154,10 @@ Existen aproximadamente 35 triggers y 30 funciones en la base de datos. Los más
 |   Capa Lógica     |       |  Capa Sync       |       |  Capa UI         |
 | (wellAlertEval)   |       | (wellAlertSync)  |       | (AlertsPage)     |
 |                   |       |                  |       |                  |
-| evaluateSpike()   | ----> | alertKey()       | ----> | Realtime sub     |
-| evaluateOvercon() |       | dedup + insert   |       | INSERT/UPDATE    |
-| evaluateAll()     |       | updateStatus()   |       | filtros + acc.   |
+| evaluateDaily     | ----> | getExistingAuto  | ----> | Realtime sub     |
+| evaluateWeekly    |       | alertKey()       |       | INSERT/UPDATE    |
+| evaluateMonthly   |       | dedup + insert   |       | filtros + acc.   |
+| evaluateAnomaly() |       | updateStatus()   |       |                  |
 +-------------------+       +------------------+       +------------------+
                                     |
                                     v
@@ -1030,34 +1168,60 @@ Existen aproximadamente 35 triggers y 30 funciones en la base de datos. Los más
                             +------------------+
 ```
 
-### 7.2 Reglas de Evaluación
+### 7.2 Reglas de Evaluación (NUEVO: 3 reglas unificadas AND)
 
-Las alertas se evalúan mediante 4 reglas en `src/utils/wellAlertEvaluator.js`:
+Cada lectura (diaria / semanal / mensual) se evalúa en `src/utils/wellAlertEvaluator.js` con **las mismas 3 reglas simultáneas** (condición AND). Se requiere que **todas** se cumplan y que el consumo actual supere **>30%** los valores de referencia:
 
-| # | Regla | Función | Condición | Severidad | Tipo de Evento |
-|---|-------|---------|-----------|-----------|----------------|
-| 1 | Pico anormal | `evaluateConsumptionSpike` | actual > promedio(últimos 3) × 1.30 | `critica` | `alerta_consumo` |
-| 2 | Caída brusca | `evaluateConsumptionSpike` | actual < promedio(últimos 3) × 0.60 | `critica` | `alerta_consumo` |
-| 3 | Sobreconsumo crítico | `evaluateOverconsumption` | %real > %esperado + 20% | `critica` | `sobreconsumo` |
-| 4 | Sobreconsumo preventivo | `evaluateOverconsumption` | %real > %esperado + 10% | `preventiva` | `sobreconsumo` |
+| # | Regla | Condición |
+|---|-------|-----------|
+| R1 | vs promedio móvil | consumo actual > promedio móvil de los **10 periodos anteriores** × 1.30 |
+| R2 | vs periodo anterior | consumo actual > periodo inmediatamente anterior × 1.30 |
+| R3 | vs mismo periodo del año anterior | consumo actual > mismo periodo del año anterior × 1.30 |
 
-#### Cálculo de sobreconsumo
+**Severidad:** Siempre `preventiva`.  
+**Tipo de evento:** Siempre `anomalia_sobreconsumo`.  
+**Consolidación:** Si varios medidores incumplen las 3 reglas, se genera **UNA sola alerta** por periodo, guardando en `meter_column`/`metric_value` al medidor con **mayor consumo**.
+
+#### Funciones del evaluador
+
+| Función | Granularidad | Descripción |
+|---------|-------------|-------------|
+| `evaluateDailyAnomaly(readings, current?)` | `daily` | Evalúa una lectura diaria, comparando contra 7 días atrás y mismo día del año anterior |
+| `evaluateWeeklyAnomaly(readings, current?)` | `weekly` | Evalúa una lectura semanal, comparando contra semana anterior y misma semana del año anterior |
+| `evaluateMonthlyAnomaly(readings, current?)` | `monthly` | Evalúa una lectura mensual, comparando contra mes anterior y mismo mes del año anterior |
+| `evaluateAnomaly(granularity, readings, current?)` | — | Dispatcher principal por granularidad |
+
+#### Estructura de la alerta generada
 
 ```javascript
-const dayOfYear = Math.floor((currentDate - startOfYear) / (1000 * 60 * 60 * 24)) + 1
-const expectedPercent = dayOfYear / 365           // Ej: 50% del año transcurrido
-const realPercent = totalConsumption / annualLimit // Ej: 70% del volumen anual usado
-// Alerta si: realPercent > expectedPercent + 0.20 (crítica)
-// Alerta si: realPercent > expectedPercent + 0.10 (preventiva)
+{
+  event_type: 'anomalia_sobreconsumo',
+  severity: 'preventiva',
+  title: 'Anomalía de sobreconsumo detectada — Semana 12/2026 (42.3 m³)',
+  description: 'El consumo ... supera en más del 30% los valores de referencia en las 3 reglas...',
+  recommendation: 'Revisar el medidor y las líneas de distribución del periodo reportado...',
+  metric_value: 42.3,
+  threshold_value: 0,
+  alert_granularity: 'weekly',   // 'daily' | 'weekly' | 'monthly'
+  alert_week / alert_month / alert_year / alert_date,  // según granularidad
+  meter_column: 'l_pozo_3',
+  is_automatic: true,
+  well_id: null,
+  event_status: 'activo',
+  author_name: 'Sistema Automático'
+}
 ```
 
-### 7.3 Sincronización (Deduplicación)
+### 7.3 Sincronización (Deduplicación por periodo)
 
-El sistema evita alertas duplicadas mediante una clave compuesta:
+El sistema garantiza **UN solo evento por periodo** (granularidad + periodo), no por medidor:
 
 ```javascript
 function alertKey(alert) {
-  return `${alert.well_id}_${alert.event_type}_${alert.severity}_${alert.alert_week}_${alert.alert_year}`
+  const granularity = alert.alert_granularity
+  if (granularity === 'daily')   return `anomalia_sobreconsumo_daily_${alert.alert_date}`
+  if (granularity === 'weekly')  return `anomalia_sobreconsumo_weekly_${alert.alert_year}_${alert.alert_week}`
+  if (granularity === 'monthly') return `anomalia_sobreconsumo_monthly_${alert.alert_year}_${alert.alert_month}`
 }
 
 // Filtra solo alertas nuevas
@@ -1065,9 +1229,14 @@ const existingKeys = new Set(existing.map(alertKey))
 const newAlerts = alerts.filter(alert => !existingKeys.has(alertKey(alert)))
 ```
 
-### 7.4 Canales Realtime de Supabase
+La función `syncAutomaticAlerts(alerts)` en `src/utils/wellAlertSync.js`:
+1. Consulta alertas existentes (`getExistingAutoAlerts(year)`)
+2. Filtra las que ya existen por periodo
+3. Inserta solo las nuevas
+4. Nunca sobrescribe alertas que el usuario ya marcó como `completado` o `cancelado`
+5. Maneja conflictos `23505` (índice único) sin duplicar
 
-Existen **tres suscripciones Realtime** activas en la aplicación:
+### 7.4 Canales Realtime de Supabase
 
 | Ubicación | Channel | Tabla | Eventos |
 |-----------|---------|-------|---------|
@@ -1075,7 +1244,7 @@ Existen **tres suscripciones Realtime** activas en la aplicación:
 | `AlertsPage.jsx` | `alerts-page-realtime` | `well_events` | INSERT, UPDATE, DELETE |
 | `WellDetailPage.jsx` | (implícito) | `well_events` | Según implementación |
 
-#### Patrón de suscripción Realtime
+#### Patrón de suscripción Realtime (AlertsPage.jsx)
 
 ```javascript
 useEffect(() => {
@@ -1085,35 +1254,32 @@ useEffect(() => {
       { event: '*', schema: 'public', table: 'well_events' },
       (payload) => {
         if (payload.eventType === 'INSERT') {
-          setAlerts(prev => [payload.new, ...prev])    // Nueva alerta al inicio
+          const newEvent = payload.new
+          if (newEvent.event_type === 'anomalia_sobreconsumo') {
+            setAlerts(prev => [newEvent, ...prev])
+          }
         }
         if (payload.eventType === 'UPDATE') {
-          setAlerts(prev => prev.map(a =>
-            a.id === payload.new.id ? payload.new : a
-          ))
+          setAlerts(prev => prev.map(a => a.id === payload.new.id ? payload.new : a))
         }
         if (payload.eventType === 'DELETE') {
-          setAlerts(prev => prev.filter(a =>
-            a.id !== payload.old.id
-          ))
+          setAlerts(prev => prev.filter(a => a.id !== payload.old.id))
         }
       }
     )
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') console.log('Conectado a Realtime')
-    })
+    .subscribe((status) => console.log('📡 AlertsPage Realtime status:', status))
 
-  return () => { supabase.removeChannel(channel) }      // Cleanup al desmontar
+  return () => { supabase.removeChannel(channel) }
 }, [])
 ```
 
 ### 7.5 Carga Inicial de Alertas
 
 ```javascript
-const { data } = await supabase
+const { data, error } = await supabase
   .from('well_events')
   .select('*')
-  .in('event_type', ['alerta_consumo', 'sobreconsumo', 'posible_fuga'])
+  .eq('event_type', 'anomalia_sobreconsumo')
   .order('created_at', { ascending: false })
   .limit(200)
 ```
@@ -1122,30 +1288,35 @@ const { data } = await supabase
 
 | Acción | Función | Descripción |
 |--------|---------|-------------|
-| Atender | `updateAlertStatus(id, 'completado')` | Marca alerta como resuelta |
+| Atender | `updateAlertStatus(id, 'completado')` | Marca alerta como resuelta y registra `end_date` |
 | Descartar | `updateAlertStatus(id, 'cancelado')` | Descarta alerta |
-| Reactivar | `updateAlertStatus(id, 'activo')` | Reactiva alerta |
 
-### 7.7 Mapa Visual de Alertas
+### 7.7 Interfaz de AlertsPage (v2.0)
 
-| Tipo de Alerta | Severidad | Icono | Color |
-|---------------|-----------|-------|-------|
-| `posible_fuga` | — | `Droplet` | Cyan/Teal |
-| `alerta_consumo` (caída) | `critica` | `TrendingDown` | Naranja |
-| `alerta_consumo` (pico) | `critica` | `TrendingUp` | Rojo |
-| `sobreconsumo` | `critica` | `Gauge` | Rojo |
-| `sobreconsumo` | `preventiva` | `ShieldAlert` | Amarillo |
+La página de alertas (`AlertsPage.jsx`) muestra **estadísticas** (Total, Activas, Atendidas, Descartadas), **búsqueda** (título, descripción, medidor), y **filtros por periodicidad** (diaria/semanal/mensual) y **estado** (activo/completado/cancelado).
+
+Cada tarjeta de alerta muestra:
+- Título (`evt.title`)
+- Descripción (`evt.description`)
+- Recomendación (`evt.recommendation`) con prefijo 💡
+- Medidor responsable (`meter_column` formateado, ej: "Ciap Andatti")
+- Periodicidad (Diaria/Semanal/Mensual)
+- Periodo (`formatPeriod`: fecha, `Semana X/Y` o mes/año)
+- Tiempo relativo de creación (`timeAgo`)
+- Fecha de cierre si está atendida
+- Botones Atender (verde) / Descartar (gris) solo si está activa
 
 ### 7.8 Alertas Automáticas (pg_cron)
 
-Existen **4 jobs programados** en la base de datos:
+La migración `supabase_unifica_alertas_anomalia.sql` **desprograma todos los jobs pg_cron antiguos** (`scan_fuga_alerts_diario`, `scan_fuga_alerts_semanal`, `scan_fuga_alerts_mensual`, `scan_consumption_alerts`, `scan_anomalia_diario/semanal/mensual`) y elimina las funciones/triggers automáticos legacy. El nuevo sistema se basa en triggers sobre las tablas de consumo:
 
-| Job | Frecuencia | Propósito |
-|-----|-----------|-----------|
-| `scan_fugas_diarias` | Diaria | Escanea fugas en lecturas diarias |
-| `scan_fugas_semanales` | Semanal | Escanea fugas en lecturas semanales |
-| `scan_fugas_mensuales` | Mensual | Escanea fugas en lecturas mensuales |
-| `scan_sobreconsumo` | Según configuración | Escanea patrones de sobreconsumo |
+| Trigger | Tabla | Propósito |
+|---------|-------|-----------|
+| (nuevo sistema unificado) | `lecturas_diarias_consumo` | Evalúa lecturas diarias al insertar |
+| (nuevo sistema unificado) | `lecturas_semana_agua_consumo_{año}` | Evalúa lecturas semanales |
+| (nuevo sistema unificado) | `lecturas_mensuales_agua_consumo` | Evalúa lecturas mensuales |
+
+> **Nota:** El sistema también puede ejecutarse de forma manual desde el frontend vía `evaluateAnomaly()` + `syncAutomaticAlerts()`. Las columnas `meter_column` y `metric_value` se agregaron a `well_events` para el nuevo sistema unificado. La función `consolidate` garantiza que cada periodo tenga solo una alerta (la del medidor de mayor consumo).
 
 ---
 
@@ -1189,25 +1360,19 @@ Todas las páginas siguen un patrón consistente:
 [Render condicional: loading ? <Spinner /> : error ? <ErrorMsg /> : empty ? <EmptyState /> : <DataView />]
 ```
 
-#### Ejemplo: DashboardPage.jsx
+#### Ejemplo: DashboardPage.jsx (refactorizado v2.0)
+
+Antes consultaba 4 tablas en paralelo (`Promise.all`). Ahora carga **una única tabla** (`lecturas_semana_agua_consumo_2026`) y deriva top/bottom consumidores de la semana seleccionada:
 
 ```javascript
-const fetchAllDashboardData = async () => {
-  setDataLoading(true)
-  try {
-    const [waterRes, gasRes, ptarRes, dailyRes] = await Promise.all([
-      supabase.from('lecturas_semana_agua_consumo_2025').select('*').order('l_numero_semana').limit(12),
-      supabase.from('lecturas_semanales_gas_consumo_2025').select('*').order('numero_semana').limit(12),
-      supabase.from('ptar_lecturas').select('*').order('semana').limit(12),
-      supabase.from('lecturas_diarias').select('*').order('fecha').limit(30)
-    ])
-    // Transformación y asignación a estados
-  } catch (err) {
-    console.error(err)
-  } finally {
-    setDataLoading(false)
-  }
-}
+const CONSUMPTION_TABLE = 'lecturas_semana_agua_consumo_2026'
+const { data, error: fetchError } = await supabase
+  .from(CONSUMPTION_TABLE)
+  .select('*')
+  .order('l_numero_semana', { ascending: true })
+
+// Top/bottom consumidores con helpers extraídos
+const { top5, bottom5 } = getTopAndBottomConsumers(points, weekNumber, 5)
 ```
 
 #### Tablas dinámicas por año (ConsumptionPage)
@@ -1333,7 +1498,105 @@ const config = {
 <ExcelToSqlConverter config={config} />
 ```
 
-### 8.5 Flujo de Autenticación Completo
+### 8.5 Flujo de Predicciones (NUEVO en v2.0)
+
+La sección de predicciones (`/predicciones`, `PredictionsPage.jsx`) se conecta a una **API externa de Machine Learning** para predecir consumo de agua.
+
+```
+[PredictionsPage monta]
+       |
+       v
+[usePredictions() hook]
+       |
+       +--> predictionService.getInfo()            → /info  (metadata, pozos soportados)
+       |
+       +--> fetchRecentHistoricalData(supabase,
+              'lecturas_semana_agua_consumo_2026', 12)   → últimos 12 periodos
+       |         (src/lib/predictionMapping.js)
+       |
+       v
+[predictionService.predict(historico)]   → POST /predict
+       |
+       v
+[predictions, historicalData, apiInfo]  → se renderizan
+```
+
+#### Servicio de predicción (`src/services/predictionService.js`)
+
+```javascript
+const API_URL = import.meta.env.VITE_ML_API_URL
+
+async function request(endpoint, options = {}) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: response.statusText }))
+    throw new Error(errorData.detail || `Error ${response.status}`)
+  }
+  return response.json()
+}
+
+export const predictionService = {
+  getHealth()  => request('/health'),
+  getInfo()    => request('/info'),
+  predict(historicoReciente) => request('/predict', {
+    method: 'POST',
+    body: JSON.stringify({ historico_reciente: historicoReciente }),
+  }),
+}
+```
+
+#### Mapeo de datos (`src/lib/predictionMapping.js`)
+
+Convierte filas de `lecturas_semana_agua_consumo_{año}` al formato que espera la API de ML:
+
+```javascript
+const COLUMN_MAP = {
+  l_pozo_3: 'l_pozo_3',
+  l_pozo_7: 'l_pozo_7',
+  l_pozo_11: 'l_pozo_11',
+  l_pozo_12: 'l_pozo_12',
+  l_pozo_14: 'l_pozo_14',
+  l_medidor_general_pozos: 'medidor_general',
+}
+```
+
+Pozos soportados por defecto: `pozo_3`, `pozo_7`, `pozo_11`, `pozo_12`, `pozo_14` (pero la API puede indicar cuáles soporta vía `/info`).
+
+### 8.6 Gráficas Comparativas Multiaño (NUEVO en v2.0)
+
+Se introdujeron **componentes reutilizables de comparación multiaño** con colores fijos deterministas por año (`src/utils/chartColors.js`):
+
+| Año | Color |
+|-----|-------|
+| 2022 | Gris |
+| 2023 | Naranja `rgb(245,158,11)` |
+| 2024 | Púrpura `rgb(139,92,246)` |
+| 2025 | Verde `rgb(34,197,94)` |
+| 2026 | Azul `rgb(59,130,246)` (año actual) |
+| Futuros | Paleta determinista (hash por año) |
+
+#### Componentes
+
+| Componente | Descripción |
+|------------|-------------|
+| `WeeklyComparisonChart.jsx` | Gráfica de líneas/barras comparando consumo semanal entre múltiples años. Controles: filtro pozos (todos/riego/servicios), tipo de gráfico, selector de años. Colores de puntos indican aumento >5% (rojo), estable (azul), disminución <0% (verde). Tooltip muestra mes de la semana y % vs semana anterior y YoY. |
+| `WeeklyComparisonTable.jsx` | Tabla comparativa semanal lado a lado por año. |
+| `MonthlyComparisonChart.jsx` | Gráfica mensual equivalente (12 meses) con formato mexicano (`es-MX`). Usa `MultiYearData` de `{ year, month, monthName, consumption, reading }`. |
+
+Estos componentes se usan en `ConsumptionPage`, `GasConsumptionPage`, `MonthlyWaterConsumptionPage` y `GasComsuptionMontlyPage`.
+
+#### Helpers de comparación
+
+| Util | Propósito |
+|------|-----------|
+| `src/utils/chartColors.js` | Color fijo por año calendario |
+| `src/utils/yearOverYear.js` | `getPreviousYearData`, `calcularCambioPct`, `construirEtiquetaYoY`, `extraerDiaDeDiaHora`, `derivarMesDeLectura` |
+| `src/utils/consumptionHelpers.js` | `getPointReading`, `getPointConsumption`, `getTopAndBottomConsumers` |
+
+### 8.7 Flujo de Autenticación Completo
 
 ```
 [App init] → BrowserRouter → AuthProvider
@@ -1357,18 +1620,21 @@ const config = {
            [Context value: user, isAuthenticated, login, logout]
 ```
 
-### 8.6 Mapa de Estados por Página
+### 8.8 Mapa de Estados por Página
 
 | Componente | Loading | Error | Empty | Patrón |
 |-----------|---------|-------|-------|--------|
-| `DashboardPage` | Por tarjeta | Silencio (console.error) | "No hay datos disponibles" | Per-card |
+| `DashboardPage` | Spinner global | `setError(msg)` | "No hay datos" | Página (refactorizado v2.0) |
 | `ConsumptionPage` | Spinner en selector | `setError(msg)` + mock fallback | "No hay datos" | Página |
 | `PTARPage` | Página completa | Card con AlertCircle | "No hay datos" | Página |
 | `WellsPage` | Por fila de tabla | Por fila | "No hay datos disponibles" | Por tabla |
-| `AlertsPage` | Spinner inicial | Mensaje de error | "No hay alertas" | Página |
+| `AlertsPage` | Spinner inicial | console.error | "No hay alertas" | Página |
 | `AddWeeklyReadingsPage` | Por paso del wizard | Toast/notificación | N/A | Por paso |
+| `PredictionsPage` | Spinner inicial | Mensaje de error | N/A | vía usePredictions |
 
-### 8.7 Resumen de Patrones de Datos
+> **Nota (v2.0):** `DashboardPage` fue reescrito y ya no usa el `Promise.all` multitarjeta anterior. Ahora carga únicamente la tabla `lecturas_semana_agua_consumo_2026` y presenta los top/bottom consumidores de la semana seleccionada (usando `getTopAndBottomConsumers` de `consumptionHelpers`). Además, redirige automáticamente a usuarios con rol `datos` a `/agregar-lecturas`.
+
+### 8.9 Resumen de Patrones de Datos
 
 | Patrón | Descripción | Ejemplos |
 |--------|-------------|----------|
@@ -1381,6 +1647,9 @@ const config = {
 | **Realtime subscription** | Suscripción a cambios en BD | WellsPage, AlertsPage |
 | **Views de BD** | Agregaciones en servidor | PTARPage (vistas anual/mensual/trimestral) |
 | **Dinamic table names** | Nombre de tabla construido con año | ConsumptionPage, WellsPage |
+| **Multi-year comparison** | Comparar un mismo periodo contra múltiples años con colores fijos | WeeklyComparisonChart, MonthlyComparisonChart, WeeklyComparisonTable |
+| **External ML API** | Fetch a API externa de predicción (VITE_ML_API_URL) | PredictionsPage vía usePredictions + predictionService |
+| **Pure helpers** | Lógica de cálculo extraída a funciones puras reutilizables | consumptionHelpers, yearOverYear, chartColors |
 
 ---
 
