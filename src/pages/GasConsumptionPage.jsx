@@ -76,6 +76,7 @@ export default function GasConsumptionPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef(null)
+  const searchInputRef = useRef(null)
 
   // Puntos filtrados por término de búsqueda (excluye noRead)
   const filteredPoints = useMemo(() => {
@@ -103,18 +104,21 @@ export default function GasConsumptionPage() {
     return allPoints.find(p => p.id === selectedPoint)?.name || 'Seleccionar punto...'
   }, [selectedPoint])
 
-  // Cerrar dropdown al hacer click fuera
+  // Cerrar dropdown al hacer click fuera + enfocar input y limpiar búsqueda al abrir
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowDropdown(false)
-        setSearchTerm('')
-      }
-    }
     if (showDropdown) {
+      setSearchTerm('')
+      searchInputRef.current?.focus()
+
+      const handleClickOutside = (e) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+          setShowDropdown(false)
+          setSearchTerm('')
+        }
+      }
       document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showDropdown])
 
   // Cargar semanas disponibles desde Supabase cuando cambia el año de lecturas
@@ -939,10 +943,12 @@ export default function GasConsumptionPage() {
                           <SearchIcon className="h-4 w-4 text-muted-foreground shrink-0" />
                           <input
                             type="text"
+                            ref={searchInputRef}
                             value={showDropdown ? searchTerm : (selectedPointName !== 'TODOS LOS MEDIDORES' && selectedPointName !== 'Seleccionar punto...' ? selectedPointName : '')}
                             placeholder={showDropdown ? 'Buscar medidor...' : selectedPointName}
                             readOnly={!showDropdown}
                             onFocus={() => setShowDropdown(true)}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="flex-1 bg-transparent outline-none text-sm min-w-0 placeholder:text-muted-foreground"
                           />
