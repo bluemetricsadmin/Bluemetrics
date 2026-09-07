@@ -12,7 +12,8 @@ import {
   TrendingDownIcon,
   Loader2Icon,
   EditIcon,
-  MessageSquarePlusIcon
+  MessageSquarePlusIcon,
+  TrashIcon
 } from 'lucide-react'
 
 /**
@@ -132,6 +133,44 @@ export default function WeeklyComparisonTable({
       alert('Error al guardar el comentario')
     } finally {
       setSavingComment(false)
+    }
+  }
+
+  const deleteComment = async (week) => {
+    if (!user?.id) {
+      alert('Sesión no disponible. Inicia sesión para eliminar.')
+      return
+    }
+
+    if (!confirm('¿Estás seguro de eliminar este comentario?')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('weekly_comments')
+        .delete()
+        .eq('week_number', week)
+        .eq('source_type', sourceType)
+        .eq('author', user.id)
+        .select()
+
+      if (error) {
+        console.error('❌ Error eliminando comentario semanal:', error)
+        alert('Error al eliminar el comentario: ' + error.message)
+        return
+      }
+
+      setComments(prev => {
+        const updated = { ...prev }
+        delete updated[week]
+        return updated
+      })
+
+      console.log('✅ Comentario semanal eliminado:', week)
+    } catch (err) {
+      console.error('❌ Error al eliminar comentario semanal:', err)
+      alert('Error al eliminar el comentario')
     }
   }
 
@@ -424,15 +463,29 @@ export default function WeeklyComparisonTable({
                             </p>
                           )}
                         </div>
-                        <Button
-                          size="sm"
-                          className="h-8 px-2.5 flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                          title="Editar comentario"
-                          onClick={() => { setEditingWeek(row.week); setDraft(comments[row.week].comment) }}
-                        >
-                          <EditIcon className="h-4 w-4 mr-1" />
-                          Editar
-                        </Button>
+                        <div className="flex flex-col gap-1 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            className="h-8 px-2.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                            title="Editar comentario"
+                            onClick={() => { setEditingWeek(row.week); setDraft(comments[row.week].comment) }}
+                          >
+                            <EditIcon className="h-4 w-4 mr-1" />
+                            Editar
+                          </Button>
+                          {comments[row.week]?.author === user?.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900"
+                              title="Eliminar comentario"
+                              onClick={() => deleteComment(row.week)}
+                            >
+                              <TrashIcon className="h-4 w-4 mr-1" />
+                              Eliminar
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1">
