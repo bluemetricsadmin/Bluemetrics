@@ -914,6 +914,7 @@ export default function WellsPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm text-muted-foreground">Pozos de Riego</p>
+                           <p className="text-xs text-muted-foreground/70">Últimos 3 meses</p>
                           <p className="text-xs text-muted-foreground/70">Pozos (4, 8, 15)</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
                             {metrics.riego.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
@@ -942,6 +943,7 @@ export default function WellsPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm text-muted-foreground">Pozos de Servicios</p>
+                           <p className="text-xs text-muted-foreground/70">Últimos 3 meses</p>
                           <p className="text-xs text-muted-foreground/70">Pozos (11, 12, 3, 7, 14)</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
                             {metrics.servicios.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
