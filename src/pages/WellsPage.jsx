@@ -888,7 +888,7 @@ export default function WellsPage() {
                           <p className="text-sm text-muted-foreground">Total Pozos</p>
                           <p className="text-xs text-muted-foreground/70">Últimos 3 meses</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.pozos.toLocaleString()} m³
+                            {metrics.pozos.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(pozosTrend) > 0 ? (
@@ -916,7 +916,7 @@ export default function WellsPage() {
                           <p className="text-sm text-muted-foreground">Pozos de Riego</p>
                           <p className="text-xs text-muted-foreground/70">Pozos (4, 8, 15)</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.riego.toLocaleString()} m³
+                            {metrics.riego.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(riegoTrend) > 0 ? (
@@ -944,7 +944,7 @@ export default function WellsPage() {
                           <p className="text-sm text-muted-foreground">Pozos de Servicios</p>
                           <p className="text-xs text-muted-foreground/70">Pozos (11, 12, 3, 7, 14)</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.servicios.toLocaleString()} m³
+                            {metrics.servicios.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(serviciosTrend) > 0 ? (
@@ -980,7 +980,7 @@ export default function WellsPage() {
                       <p className="text-sm text-muted-foreground">Total Pozos</p>
                       <p className="text-xs text-muted-foreground/70">Servicios + Riego — Últimas 4 semanas</p>
                       <p className="text-2xl font-bold text-foreground mt-1">
-                        {weeklyMetrics.pozos.toLocaleString()} m³
+                        {weeklyMetrics.pozos.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
                       </p>
                       <div className="flex items-center gap-1 mt-1">
                         {parseFloat(pozosTrendW) > 0 ? (
@@ -1008,7 +1008,7 @@ export default function WellsPage() {
                       <p className="text-sm text-muted-foreground">Pozos de Riego</p>
                       <p className="text-xs text-muted-foreground/70">Pozos (4, 8, 15) — Últimas 4 semanas</p>
                       <p className="text-2xl font-bold text-foreground mt-1">
-                        {weeklyMetrics.riego.toLocaleString()} m³
+                        {weeklyMetrics.riego.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
                       </p>
                       <div className="flex items-center gap-1 mt-1">
                         {parseFloat(riegoTrendW) > 0 ? (
@@ -1036,7 +1036,7 @@ export default function WellsPage() {
                       <p className="text-sm text-muted-foreground">Pozos de Servicios</p>
                       <p className="text-xs text-muted-foreground/70">Pozos (11, 12, 3, 7, 14) — Últimas 4 semanas</p>
                       <p className="text-2xl font-bold text-foreground mt-1">
-                        {weeklyMetrics.servicios.toLocaleString()} m³
+                        {weeklyMetrics.servicios.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
                       </p>
                       <div className="flex items-center gap-1 mt-1">
                         {parseFloat(serviciosTrendW) > 0 ? (
