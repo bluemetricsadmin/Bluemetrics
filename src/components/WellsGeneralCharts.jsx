@@ -314,7 +314,7 @@ export default function WellsGeneralCharts() {
             grid: { color: 'rgba(0, 0, 0, 0.05)' },
             ticks: {
               callback: function(value) {
-                return value.toLocaleString() + ' m³'
+                return value.toLocaleString('es-MX', { minimumFractionDigits: 2 }) + ' m³'
               }
             }
           }
