@@ -1,6 +1,6 @@
 import { formatMX } from '../utils/formatMX'
 import { formatAlertText } from '../utils/wellAlertEvaluator'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from "react-router"
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
@@ -604,6 +604,17 @@ export default function WellsPage() {
     setServiciosTrendW(servicios.trend)
   }, [weeklyData])
 
+  // Periodo considerado en las métricas mensuales: últimas 13 semanas
+  const periodInfo = useMemo(() => {
+    const data2026 = weeklyData.multiYearData.find(y => y.year === '2026')?.data || []
+    const weeks = data2026.slice(-13).map(w => ({
+      week: w.week,
+      fecha_inicio: w.fecha_inicio,
+      fecha_fin: w.fecha_fin
+    }))
+    return { weeks }
+  }, [weeklyData])
+
   const getQualityBadge = (quality) => {
     switch (quality) {
       case 'excellent':
@@ -883,6 +894,7 @@ export default function WellsPage() {
             </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   {/* Total Pozos */}
+                  <MetricTooltip period={periodInfo}>
                   <Card>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -909,8 +921,10 @@ export default function WellsPage() {
                       </div>
                     </CardContent>
                   </Card>
+                  </MetricTooltip>
 
                   {/* Pozos de Riego */}
+                  <MetricTooltip period={periodInfo}>
                   <Card>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -938,8 +952,10 @@ export default function WellsPage() {
                       </div>
                     </CardContent>
                   </Card>
+                  </MetricTooltip>
 
                   {/* Pozos de Servicios */}
+                  <MetricTooltip period={periodInfo}>
                   <Card>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -967,6 +983,7 @@ export default function WellsPage() {
                       </div>
                     </CardContent>
                   </Card>
+                  </MetricTooltip>
                 </div>
 
             {/* Métricas Semanales */}
@@ -1574,6 +1591,48 @@ export default function WellsPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function formatTooltipDate(iso) {
+  if (!iso) return 'N/A'
+  return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function MetricTooltip({ children, period }) {
+  const weeks = period?.weeks || []
+  if (weeks.length === 0) return children
+
+  const first = weeks[0]
+  const last = weeks[weeks.length - 1]
+
+  const months = [...new Set(
+    weeks.map(w => new Date(w.fecha_inicio).toLocaleDateString('es-MX', { month: 'long' }))
+  )].map(m => m.charAt(0).toUpperCase() + m.slice(1))
+
+  return (
+    <div className="relative group">
+      {children}
+      <div className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-80 max-w-[90vw] bg-white rounded-lg border shadow-xl pointer-events-none">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold text-gray-900">Últimos 3 meses</p>
+            <span className="text-[10px] font-medium text-purple-700 border border-purple-300 bg-purple-50 rounded-full px-2 py-0.5">
+              {weeks.length} semanas
+            </span>
+          </div>
+          <p className="text-xs text-gray-600">
+            Meses considerados: <span className="font-medium text-gray-800">{months.join(', ')}</span>
+          </p>
+          <p className="text-xs text-gray-600 mt-1">
+            Rango: <span className="font-medium text-gray-800">
+              Semana {first.week} ({formatTooltipDate(first.fecha_inicio)}) – Semana {last.week} ({formatTooltipDate(last.fecha_fin)})
+            </span>
+          </p>
+          
+        </div>
+      </div>
     </div>
   )
 }
