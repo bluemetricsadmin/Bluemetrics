@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { supabase } from '../supabaseClient'
+import { useAuth } from '../contexts/AuthContextNew'
 import { 
   SearchIcon, 
   ArrowUpDownIcon, 
@@ -14,6 +15,7 @@ import {
   DownloadIcon,
   MessageSquarePlusIcon,
   EditIcon,
+  TrashIcon,
   Loader2Icon,
   CalendarIcon,
   BarChart3Icon
@@ -37,6 +39,8 @@ export default function ConsumptionTable({
   const [editingComment, setEditingComment] = useState(null) // { pointId, comment, author }
   const [savingComment, setSavingComment] = useState(false)
   const [commentDialogOpen, setCommentDialogOpen] = useState(false)
+
+  const { user } = useAuth()
 
   // Obtener tipos únicos de los datos
   const uniqueTypes = useMemo(() => {
@@ -143,6 +147,40 @@ export default function ConsumptionTable({
     }
   }
 
+  // Función para eliminar comentario
+  const deleteComment = async (pointId) => {
+    if (!confirm('¿Estás seguro de eliminar este comentario?')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('reading_comments')
+        .delete()
+        .eq('year', selectedYear)
+        .eq('week_number', weekNumber)
+        .eq('point_id', pointId)
+        .select()
+
+      if (error) {
+        console.error('❌ Error eliminando comentario:', error)
+        alert('Error al eliminar el comentario: ' + error.message)
+        return
+      }
+
+      setComments(prev => {
+        const updated = { ...prev }
+        delete updated[pointId]
+        return updated
+      })
+
+      console.log('✅ Comentario eliminado:', pointId)
+    } catch (err) {
+      console.error('❌ Error al eliminar comentario:', err)
+      alert('Error al eliminar el comentario')
+    }
+  }
+
   // Función para abrir dialog de comentario
   const openCommentDialog = (pointId, pointName) => {
     const existingComment = comments[pointId]
@@ -150,7 +188,7 @@ export default function ConsumptionTable({
       pointId,
       pointName,
       comment: existingComment?.comment || '',
-      author: existingComment?.author || ''
+      author: user?.name || 'Anónimo'
     })
     setCommentDialogOpen(true)
   }
@@ -473,32 +511,53 @@ export default function ConsumptionTable({
                       )}
                     </td>
                     <td className="p-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-start gap-2">
                         {comments[item.id] ? (
-                          <div className="flex-1">
-                            <p className="text-xs text-foreground line-clamp-2">
-                              {comments[item.id].comment}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              - {comments[item.id].author}
-                            </p>
-                          </div>
+                          <>
+                            <div className="flex-1">
+                              <p className="text-xs text-foreground line-clamp-2">
+                                {comments[item.id].comment}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                - {comments[item.id].author}
+                              </p>
+                            </div>
+                            <div className="flex flex-col gap-1 flex-shrink-0">
+                              <Button
+                                size="sm"
+                                className="h-8 px-2.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                                title="Editar comentario"
+                                onClick={() => openCommentDialog(item.id, item.name)}
+                              >
+                                <EditIcon className="h-3 w-3 mr-1" />
+                                Editar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900"
+                                title="Eliminar comentario"
+                                onClick={() => deleteComment(item.id)}
+                              >
+                                <TrashIcon className="h-4 w-4 mr-1" />
+                                Eliminar
+                              </Button>
+                            </div>
+                          </>
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">Sin comentario</span>
+                          <>
+                            <span className="flex-1 text-xs text-muted-foreground italic">Sin comentario</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="flex-shrink-0 text-xs"
+                              onClick={() => openCommentDialog(item.id, item.name)}
+                            >
+                              <MessageSquarePlusIcon className="h-3.5 w-3.5 mr-1" />
+                              Comentar
+                            </Button>
+                          </>
                         )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => openCommentDialog(item.id, item.name)}
-                          className="h-7 w-7 p-0 flex-shrink-0"
-                          title={comments[item.id] ? 'Editar comentario' : 'Agregar comentario'}
-                        >
-                          {comments[item.id] ? (
-                            <EditIcon className="h-3.5 w-3.5" />
-                          ) : (
-                            <MessageSquarePlusIcon className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
                       </div>
                     </td>
                     <td className="p-3 text-right text-sm text-muted-foreground">
@@ -621,16 +680,12 @@ export default function ConsumptionTable({
                   <input
                     type="text"
                     value={editingComment.author}
-                    onChange={(e) => setEditingComment({
-                      ...editingComment,
-                      author: e.target.value
-                    })}
-                    placeholder="Ingresa tu nombre"
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-background hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    readOnly
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-muted/50 dark:bg-gray-800 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-not-allowed"
                   />
                 </div>
                 <p className="text-xs text-muted-foreground pl-1">
-                  Opcional - Se mostrará como "Anónimo" si se deja vacío
+                  Autor asignado automáticamente de tu sesión
                 </p>
               </div>
 

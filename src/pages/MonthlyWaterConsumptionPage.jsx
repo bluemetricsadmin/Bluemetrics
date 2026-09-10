@@ -527,7 +527,10 @@ export default function MonthlyWaterConsumptionPage() {
                 />
 
                 {/* Tabla de datos detallados */}
-                <Card>
+
+                {/*
+
+ <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -537,7 +540,7 @@ export default function MonthlyWaterConsumptionPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* Tabs de categorías */}
+                
                     <div className="mb-4 overflow-x-auto">
                       <div className="flex gap-2 border-b border-muted pb-2">
                         {consumptionPointsData.categories.map(category => (
@@ -556,7 +559,7 @@ export default function MonthlyWaterConsumptionPage() {
                       </div>
                     </div>
 
-                    {/* Tabla de datos */}
+                    
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
@@ -606,6 +609,12 @@ export default function MonthlyWaterConsumptionPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+
+
+
+                 */}
+               
               </>
             )}
           </main>

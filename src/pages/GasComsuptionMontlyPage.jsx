@@ -593,7 +593,8 @@ export default function GasComsumptionMonthlyPage() {
                   multiYearData={multiYearData}
                 />
 
-                <Card>
+{/*
+ <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -670,6 +671,11 @@ export default function GasComsumptionMonthlyPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+
+
+*/}
+               
               </>
             )}
           </main>
