@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
@@ -295,13 +296,6 @@ export default function ConsumptionTable({
 
 
   // Helper para forzar el formato mexicano en toda la tabla
-  const formatMX = (value) => {
-    if (value === null || value === undefined || isNaN(value)) return "0.00";
-    return Number(value).toLocaleString('es-MX', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  };
 
   // Icono de ordenamiento
   const SortIcon = ({ field }) => {

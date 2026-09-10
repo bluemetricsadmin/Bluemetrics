@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
@@ -340,7 +341,7 @@ export default function WeeklyComparisonChart({
           },
           label: function(context) {
             const dataIndex = context.dataIndex
-            let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString('es-MX', { minimumFractionDigits: 2 })} ${unit}`
+            let label = `${context.dataset.label}: ${formatMX(context.parsed.y)} ${unit}`
             
             // Agregar información de cambio vs semana anterior para cada año
             if (useMultiYear && processedMultiYear[context.datasetIndex]) {
@@ -395,7 +396,7 @@ export default function WeeklyComparisonChart({
         },
         ticks: {
           callback: function(value) {
-            return value.toLocaleString('es-MX', { minimumFractionDigits: 2 }) + ' ' + unit
+            return formatMX(value) + ' ' + unit
           }
         }
       }
@@ -501,7 +502,7 @@ export default function WeeklyComparisonChart({
                 }`}>
                   <p className="text-xs text-muted-foreground">Total {yearItem.year}</p>
                   <p className={`text-lg font-bold ${isLatest ? 'text-foreground' : 'text-muted-foreground'}`}>
-                    {yearTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })} {unit}
+                    {formatMX(yearTotal)} {unit}
                   </p>
                 </div>
               )
@@ -511,13 +512,13 @@ export default function WeeklyComparisonChart({
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
                 <p className="text-xs text-muted-foreground">Total {effectiveCurrentYear}</p>
                 <p className="text-lg font-bold text-foreground">
-                  {comparisonStats.currentTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })} {unit}
+                  {formatMX(comparisonStats.currentTotal)} {unit}
                 </p>
               </div>
               <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
                 <p className="text-xs text-muted-foreground">Total {effectivePreviousYear}</p>
                 <p className="text-lg font-bold text-muted-foreground">
-                  {comparisonStats.previousTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })} {unit}
+                  {formatMX(comparisonStats.previousTotal)} {unit}
                 </p>
               </div>
             </>

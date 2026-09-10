@@ -1,3 +1,4 @@
+import { formatMX, formatMXInt } from '../utils/formatMX'
 import { useState, useEffect } from 'react'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
@@ -231,7 +232,7 @@ export default function WellsGeneralCharts() {
                 style={{ backgroundColor: entry.color }}
               />
               <span className="text-sm text-gray-700">
-                {entry.name}: {entry.value.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                {entry.name}: {formatMX(entry.value)} m³
               </span>
             </div>
           ))}
@@ -295,7 +296,7 @@ export default function WellsGeneralCharts() {
           tooltip: {
             callbacks: {
               label: function(context) {
-                return `${context.dataset.label}: ${context.parsed.y.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³`
+                return `${context.dataset.label}: ${formatMX(context.parsed.y)} m³`
               }
             }
           }
@@ -314,7 +315,7 @@ export default function WellsGeneralCharts() {
             grid: { color: 'rgba(0, 0, 0, 0.05)' },
             ticks: {
               callback: function(value) {
-                return value.toLocaleString('es-MX', { minimumFractionDigits: 2 }) + ' m³'
+                return formatMX(value) + ' m³'
               }
             }
           }
@@ -617,7 +618,7 @@ export default function WellsGeneralCharts() {
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-700 font-medium mb-1">Consumo Total</p>
               <p className="text-2xl font-bold text-blue-900">
-                {stats.totalConsumo.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} m³
+                {formatMXInt(stats.totalConsumo)} m³
               </p>
             </div>
 
@@ -626,14 +627,14 @@ export default function WellsGeneralCharts() {
               <p className="text-sm text-purple-700 font-medium mb-1">Año con Mayor Consumo</p>
               <p className="text-2xl font-bold text-purple-900">{stats.maxYear.year}</p>
               <p className="text-xs text-purple-600">
-                {stats.maxYear.consumo.toLocaleString('es-MX', { minimumFractionDigits: 0 })} m³
+                {formatMXInt(stats.maxYear.consumo)} m³
               </p>
             </div>
             <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
               <p className="text-sm text-orange-700 font-medium mb-1">Año con Menor Consumo</p>
               <p className="text-2xl font-bold text-orange-900">{stats.minYear.year}</p>
               <p className="text-xs text-orange-600">
-                {stats.minYear.consumo.toLocaleString('es-MX', { minimumFractionDigits: 0 })} m³
+                {formatMXInt(stats.minYear.consumo)} m³
               </p>
             </div> */}
             

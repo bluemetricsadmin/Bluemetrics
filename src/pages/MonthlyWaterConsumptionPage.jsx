@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
@@ -591,11 +592,11 @@ export default function MonthlyWaterConsumptionPage() {
                                   </td>
                                   {monthValues.map((value, idx) => (
                                     <td key={idx} className="text-right py-3 px-2">
-                                      {value > 0 ? value.toLocaleString() : '-'}
+                                      {value > 0 ? formatMX(value) : '-'}
                                     </td>
                                   ))}
                                   <td className="text-right py-3 px-4 font-semibold bg-muted/30">
-                                    {total > 0 ? total.toLocaleString() : '-'}
+                                    {total > 0 ? formatMX(total) : '-'}
                                   </td>
                                 </tr>
                               )

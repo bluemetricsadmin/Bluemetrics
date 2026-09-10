@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import DashboardChart from "./DashboardChart"
 import datosPozo12 from '../lib/datos_pozo_12.json'
@@ -136,7 +137,7 @@ export function WellMonitoringCharts() {
             <div className="text-sm text-muted-foreground mb-2">Consumo Semanal vs. Meta</div>
             <div className="text-3xl font-bold text-foreground mb-4">
               {wellConsumptionData.length > 0 ? 
-                `${(wellConsumptionData[wellConsumptionData.length - 1].actual * 1000).toLocaleString()} m³` 
+                `${formatMX(wellConsumptionData[wellConsumptionData.length - 1].actual * 1000)} m³` 
                 : '0 m³'
               }
             </div>

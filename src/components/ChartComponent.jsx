@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import React from 'react'
 import {
   Chart as ChartJS,
@@ -145,7 +146,7 @@ const ChartComponent = ({
                 if (label.includes('%')) {
                   return `${label}: ${value.toFixed(2)}%`;
                 }
-                return `${label}: ${value.toLocaleString('es-ES', { maximumFractionDigits: 2 })} m³`;
+                return `${label}: ${formatMX(value)} m³`;
               }
             }
           },
@@ -166,7 +167,7 @@ const ChartComponent = ({
             },
             ticks: {
               callback: function(value) {
-                return value.toLocaleString('es-ES')
+                return formatMX(value)
               }
             }
           },
@@ -266,7 +267,7 @@ const ChartComponent = ({
           intersect: false,
           callbacks: {
             label: function(context) {
-              return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} m³`
+              return `${context.dataset.label}: ${formatMX(context.parsed.y)} m³`
             }
           }
         },
@@ -287,7 +288,7 @@ const ChartComponent = ({
           },
           ticks: {
             callback: function(value) {
-              return value.toLocaleString()
+              return formatMX(value)
             }
           }
         },

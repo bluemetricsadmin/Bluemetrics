@@ -1,3 +1,4 @@
+import { formatMXInt } from '../utils/formatMX'
 import { useState } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
@@ -129,28 +130,28 @@ export default function WaterBalancePage() {
             <Waves className="h-8 w-8 text-blue-600" />
           </div>
           <p className="text-sm font-medium">Pozos</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.sources[0].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.sources[0].value / 1000)}k m³</p>
         </div>
         <div className="text-center">
           <div className="h-16 w-16 mx-auto mb-2 rounded-full bg-green-500/20 flex items-center justify-center">
             <Building2 className="h-8 w-8 text-green-600" />
           </div>
           <p className="text-sm font-medium">Municipal</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.sources[1].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.sources[1].value / 1000)}k m³</p>
         </div>
         <div className="text-center">
           <div className="h-16 w-16 mx-auto mb-2 rounded-full bg-yellow-500/20 flex items-center justify-center">
             <Factory className="h-8 w-8 text-yellow-600" />
           </div>
           <p className="text-sm font-medium">PTAR</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.sources[2].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.sources[2].value / 1000)}k m³</p>
         </div>
         <div className="text-center">
           <div className="h-16 w-16 mx-auto mb-2 rounded-full bg-red-500/20 flex items-center justify-center">
             <Truck className="h-8 w-8 text-red-600" />
           </div>
           <p className="text-sm font-medium">Pipas</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.sources[3].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.sources[3].value / 1000)}k m³</p>
         </div>
       </div>
 
@@ -166,14 +167,14 @@ export default function WaterBalancePage() {
             <Zap className="h-10 w-10 text-indigo-600" />
           </div>
           <p className="text-sm font-medium">Red Principal</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.distribution[0].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.distribution[0].value / 1000)}k m³</p>
         </div>
         <div className="text-center">
           <div className="h-20 w-20 mx-auto mb-2 rounded-full bg-purple-500/20 flex items-center justify-center">
             <Database className="h-10 w-10 text-purple-600" />
           </div>
           <p className="text-sm font-medium">Almacenamiento</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.distribution[1].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.distribution[1].value / 1000)}k m³</p>
         </div>
       </div>
 
@@ -189,28 +190,28 @@ export default function WaterBalancePage() {
             <DropletIcon className="h-8 w-8 text-green-700" />
           </div>
           <p className="text-sm font-medium">Riego</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.usage[0].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.usage[0].value / 1000)}k m³</p>
         </div>
         <div className="text-center">
           <div className="h-16 w-16 mx-auto mb-2 rounded-full bg-red-600/20 flex items-center justify-center">
             <ActivityIcon className="h-8 w-8 text-red-700" />
           </div>
           <p className="text-sm font-medium">Torres</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.usage[1].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.usage[1].value / 1000)}k m³</p>
         </div>
         <div className="text-center">
           <div className="h-16 w-16 mx-auto mb-2 rounded-full bg-orange-600/20 flex items-center justify-center">
             <Building2 className="h-8 w-8 text-orange-700" />
           </div>
           <p className="text-sm font-medium">Edificios</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.usage[2].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.usage[2].value / 1000)}k m³</p>
         </div>
         <div className="text-center">
           <div className="h-16 w-16 mx-auto mb-2 rounded-full bg-gray-600/20 flex items-center justify-center">
             <AlertTriangleIcon className="h-8 w-8 text-gray-700" />
           </div>
           <p className="text-sm font-medium">Pérdidas</p>
-          <p className="text-xs text-muted-foreground">{(waterFlow.usage[3].value / 1000).toFixed(0)}k m³</p>
+          <p className="text-xs text-muted-foreground">{formatMXInt(waterFlow.usage[3].value / 1000)}k m³</p>
         </div>
       </div>
     </div>
@@ -303,7 +304,7 @@ export default function WaterBalancePage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Entrada Total</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {(totalInflow / 1000).toFixed(0)}k m³
+                      {formatMXInt(totalInflow / 1000)}k m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       <ArrowUpIcon className="h-4 w-4 text-blue-500" />
@@ -323,7 +324,7 @@ export default function WaterBalancePage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Salida Total</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {(totalOutflow / 1000).toFixed(0)}k m³
+                      {formatMXInt(totalOutflow / 1000)}k m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       <ArrowUpIcon className="h-4 w-4 text-red-500" />
@@ -343,7 +344,7 @@ export default function WaterBalancePage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Balance Neto</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {(netBalance / 1000).toFixed(1)}k m³
+                      {formatMXInt(netBalance / 1000)}k m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       <TrendingUpIcon className="h-4 w-4 text-green-500" />
@@ -448,7 +449,7 @@ export default function WaterBalancePage() {
                       <Waves className="h-4 w-4 text-blue-500" />
                       <span className="text-sm">Pozos</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.inflow.pozos / 1000).toFixed(0)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.inflow.pozos / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(waterBalance.inflow.pozos / totalInflow * 100)}%` }}></div>
@@ -459,7 +460,7 @@ export default function WaterBalancePage() {
                       <Building2 className="h-4 w-4 text-green-500" />
                       <span className="text-sm">Agua Municipal</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.inflow.municipal / 1000).toFixed(0)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.inflow.municipal / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-green-500 rounded-full" style={{ width: `${(waterBalance.inflow.municipal / totalInflow * 100)}%` }}></div>
@@ -470,7 +471,7 @@ export default function WaterBalancePage() {
                       <Factory className="h-4 w-4 text-yellow-500" />
                       <span className="text-sm">PTAR</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.inflow.ptar / 1000).toFixed(0)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.inflow.ptar / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${(waterBalance.inflow.ptar / totalInflow * 100)}%` }}></div>
@@ -481,7 +482,7 @@ export default function WaterBalancePage() {
                       <Truck className="h-4 w-4 text-red-500" />
                       <span className="text-sm">Pipas</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.inflow.pipas / 1000).toFixed(0)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.inflow.pipas / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-red-500 rounded-full" style={{ width: `${(waterBalance.inflow.pipas / totalInflow * 100)}%` }}></div>
@@ -502,7 +503,7 @@ export default function WaterBalancePage() {
                       <DropletIcon className="h-4 w-4 text-green-600" />
                       <span className="text-sm">Riego</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.outflow.riego / 1000).toFixed(0)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.outflow.riego / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-green-600 rounded-full" style={{ width: `${(waterBalance.outflow.riego / totalOutflow * 100)}%` }}></div>
@@ -513,7 +514,7 @@ export default function WaterBalancePage() {
                       <ActivityIcon className="h-4 w-4 text-red-600" />
                       <span className="text-sm">Torres de Enfriamiento</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.outflow.torres / 1000).toFixed(0)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.outflow.torres / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-red-600 rounded-full" style={{ width: `${(waterBalance.outflow.torres / totalOutflow * 100)}%` }}></div>
@@ -524,7 +525,7 @@ export default function WaterBalancePage() {
                       <Building2 className="h-4 w-4 text-orange-600" />
                       <span className="text-sm">Edificios</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.outflow.edificios / 1000).toFixed(0)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.outflow.edificios / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-orange-600 rounded-full" style={{ width: `${(waterBalance.outflow.edificios / totalOutflow * 100)}%` }}></div>
@@ -535,7 +536,7 @@ export default function WaterBalancePage() {
                       <Factory className="h-4 w-4 text-purple-600" />
                       <span className="text-sm">Industria</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.outflow.industria / 1000).toFixed(0)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.outflow.industria / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-purple-600 rounded-full" style={{ width: `${(waterBalance.outflow.industria / totalOutflow * 100)}%` }}></div>
@@ -546,7 +547,7 @@ export default function WaterBalancePage() {
                       <AlertTriangleIcon className="h-4 w-4 text-gray-600" />
                       <span className="text-sm">Pérdidas</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.outflow.perdidas / 1000).toFixed(1)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.outflow.perdidas / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-gray-600 rounded-full" style={{ width: `${(waterBalance.outflow.perdidas / totalOutflow * 100)}%` }}></div>
@@ -557,7 +558,7 @@ export default function WaterBalancePage() {
                       <Waves className="h-4 w-4 text-amber-600" />
                       <span className="text-sm">Evaporación</span>
                     </div>
-                    <span className="text-sm font-medium">{(waterBalance.outflow.evaporacion / 1000).toFixed(1)}k m³</span>
+                    <span className="text-sm font-medium">{formatMXInt(waterBalance.outflow.evaporacion / 1000)}k m³</span>
                   </div>
                   <div className="ml-6 h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-amber-600 rounded-full" style={{ width: `${(waterBalance.outflow.evaporacion / totalOutflow * 100)}%` }}></div>

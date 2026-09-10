@@ -1,3 +1,4 @@
+import { formatMX, formatMXInt } from '../utils/formatMX'
 import { Card, CardContent } from "../components/ui/card"
 import { dashboardData } from "../lib/dashboard-data"
 import { 
@@ -14,7 +15,7 @@ import {
 } from "lucide-react"
 
 export function DashboardSummary() {
-  const formatCurrency = (amount) => `$${amount.toLocaleString()}`
+  const formatCurrency = (amount) => `$${formatMX(amount)}`
   const formatPercentage = (value) => `${value}%`
   const getTrendIcon = (current, previous) => {
     if (current > previous) return <TrendingUp className="w-3 h-3 text-green-500" />
@@ -33,7 +34,7 @@ export function DashboardSummary() {
             <div className="min-w-0 flex-1">
               <div className="text-xs text-muted-foreground">Consumo Total</div>
               <div className="text-lg font-bold text-foreground">
-                {(dashboardData.stats.totalConsumption / 1000).toFixed(0)}k m³
+                {formatMXInt(dashboardData.stats.totalConsumption / 1000)}k m³
               </div>
               <div className="flex items-center gap-1 text-xs">
                 {getTrendIcon(dashboardData.stats.totalConsumption, 75000)}

@@ -883,7 +883,8 @@ export default function EditGasReadingsPage() {
                                     <input
                                       id={`input-${point.id}`}
                                       ref={index === 0 ? firstInputRef : null}
-                                      type="number"
+                                      type="text"
+                                      inputMode="decimal"
                                       placeholder="Lectura en m³"
                                       value={value}
                                       onChange={(e) => handleReadingChange(point.id, e.target.value)}
@@ -993,7 +994,8 @@ export default function EditGasReadingsPage() {
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs text-muted-foreground font-medium">Consumo:</span>
                                     <input
-                                      type="number"
+                                      type="text"
+                                      inputMode="decimal"
                                       placeholder="Consumo m³"
                                       value={value}
                                       onChange={(e) => handleConsumoChange(point.id, e.target.value)}

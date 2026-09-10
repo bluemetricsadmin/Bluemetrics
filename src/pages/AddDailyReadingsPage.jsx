@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useEffect } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
@@ -1097,7 +1098,7 @@ export default function AddDailyReadingsPage() {
                                 <div className="text-right">
                                   {previousValue !== null ? (
                                     <span className="text-sm text-blue-600 font-medium">
-                                      {parseFloat(previousValue).toLocaleString()}
+                                      {formatMX(parseFloat(previousValue))}
                                     </span>
                                   ) : (
                                     <span className="text-xs text-muted-foreground">N/A</span>
@@ -1120,7 +1121,7 @@ export default function AddDailyReadingsPage() {
                                     <span className={`text-sm font-bold ${
                                       consumoValue >= 0 ? 'text-purple-600' : 'text-red-600'
                                     }`}>
-                                      {consumoValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                      {formatMX(consumoValue)}
                                     </span>
                                   ) : (
                                     <span className="text-xs text-muted-foreground">--</span>

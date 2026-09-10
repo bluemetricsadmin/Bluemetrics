@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useMemo } from 'react'
 import { Line, Bar } from 'react-chartjs-2'
 import {
@@ -38,13 +39,6 @@ ChartJS.register(
 )
 
 // Funciones auxiliares
-const formatMX = (value) => {
-  if (value === null || value === undefined || isNaN(value)) return "0.00";
-  return Number(value).toLocaleString('es-MX', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
 
 const formatearFecha = (fecha, vista) => {
   if (!fecha) return 'N/A'

@@ -24,6 +24,7 @@ import {
   AlertTriangleIcon
 } from 'lucide-react'
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth'
+import { formatMX } from '../utils/formatMX'
 
 // Definición de categorías y puntos de medición para lecturas diarias
 const dailyReadingPointsData = {
@@ -1030,7 +1031,7 @@ export default function EditDailyReadingsPage() {
                     {totalCount > pageSize && (
                       <div className="flex items-center justify-between mt-6 pt-4 border-t">
                         <div className="text-sm text-muted-foreground">
-                          Mostrando {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalCount)} de {totalCount} fechas
+                          Mostrando {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, totalCount)} de {formatMX(totalCount)} fechas
                         </div>
                         <div className="flex gap-2">
                           <Button
@@ -1247,8 +1248,8 @@ export default function EditDailyReadingsPage() {
                                     <input
                                       id={`input-${point.id}`}
                                       ref={index === 0 ? firstInputRef : null}
-                                      type="number"
-                                      step="0.01"
+                                      type="text"
+                                      inputMode="decimal"
                                       placeholder="Lectura en m³"
                                       value={value}
                                       onChange={(e) => handleReadingChange(point.id, e.target.value)}
@@ -1358,8 +1359,8 @@ export default function EditDailyReadingsPage() {
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs text-muted-foreground font-medium">Consumo:</span>
                                     <input
-                                      type="number"
-                                      step="0.01"
+                                      type="text"
+                                      inputMode="decimal"
                                       placeholder="Consumo m³"
                                       value={value}
                                       onChange={(e) => handleConsumoChange('consumo', e.target.value)}
@@ -1490,8 +1491,8 @@ export default function EditDailyReadingsPage() {
 
                                           <div className="flex items-center gap-2">
                                             <input
-                                              type="number"
-                                              step="0.01"
+                                              type="text"
+                                              inputMode="decimal"
                                               placeholder="Consumo m³"
                                               value={value}
                                               onChange={(e) => handleConsumoPozoChange(point.id, e.target.value)}

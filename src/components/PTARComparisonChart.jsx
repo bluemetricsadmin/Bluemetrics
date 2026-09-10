@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Line, Bar } from 'react-chartjs-2'
@@ -166,7 +167,7 @@ export default function PTARComparisonChart({
         callbacks: {
           label: function(context) {
             const dataIndex = context.dataIndex
-            let label = `${context.dataset.label}: ${context.parsed.y.toLocaleString()} ${unit}`
+            let label = `${context.dataset.label}: ${formatMX(context.parsed.y)} ${unit}`
             
             // Agregar información de cambio
             if (processedMultiYear[context.datasetIndex]) {
@@ -204,7 +205,7 @@ export default function PTARComparisonChart({
         },
         ticks: {
           callback: function(value) {
-            return value.toLocaleString() + ' ' + unit
+            return formatMX(value) + ' ' + unit
           }
         }
       }
@@ -240,7 +241,7 @@ export default function PTARComparisonChart({
                   ? 'text-foreground'
                   : 'text-muted-foreground'
               }`}>
-                {comparisonStats.totals[year].toLocaleString()} {unit}
+                {formatMX(comparisonStats.totals[year])} {unit}
               </p>
             </div>
           ))}

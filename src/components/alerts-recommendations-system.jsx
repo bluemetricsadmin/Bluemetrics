@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
@@ -215,7 +216,7 @@ export function AlertsRecommendationsSystem() {
               <div className="text-sm text-center">
                 <span className="text-muted-foreground">Ahorro Total Estimado: </span>
                 <span className="font-semibold text-primary">
-                  {recommendations.reduce((acc, rec) => acc + (rec.estimatedSavings || 0), 0).toLocaleString()} m³/mes
+                  {formatMX(recommendations.reduce((acc, rec) => acc + (rec.estimatedSavings || 0), 0))} m³/mes
                 </span>
               </div>
             </div>

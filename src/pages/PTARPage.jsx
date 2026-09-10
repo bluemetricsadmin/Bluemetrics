@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useEffect } from "react"
 import { supabase } from '../supabaseClient'
 import { DashboardHeader } from "../components/dashboard-header"
@@ -650,10 +651,7 @@ export default function PTARPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-500">Agua Residual (AR)</p>
                     <p className="text-3xl font-bold text-gray-900 mt-2">
-                      {(currentYearData.total_agua_residual_m3 || 0).toLocaleString('es-ES', { 
-                        minimumFractionDigits: 2, 
-                        maximumFractionDigits: 2 
-                      })} m³
+                      {formatMX(currentYearData.total_agua_residual_m3 || 0)} m³
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-sm text-gray-500">
@@ -687,10 +685,7 @@ export default function PTARPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-500">Agua Tratada (AT)</p>
                     <p className="text-3xl font-bold text-gray-900 mt-2">
-                      {(currentYearData.total_agua_tratada_m3 || 0).toLocaleString('es-ES', { 
-                        minimumFractionDigits: 2, 
-                        maximumFractionDigits: 2 
-                      })} m³
+                      {formatMX(currentYearData.total_agua_tratada_m3 || 0)} m³
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-sm text-gray-500">
@@ -1039,7 +1034,7 @@ export default function PTARPage() {
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Total Agua Residual</h4>
                     <span className="text-lg font-semibold text-gray-900">
                       {resumenAnual.length > 0 
-                        ? (resumenAnual.reduce((sum, item) => sum + (Number(item.total_agua_residual_m3) || 0), 0)).toLocaleString('es-ES', { maximumFractionDigits: 2 })
+                        ? formatMX(resumenAnual.reduce((sum, item) => sum + (Number(item.total_agua_residual_m3) || 0), 0))
                         : '0'} m³
                     </span>
                   </Card>
@@ -1048,7 +1043,7 @@ export default function PTARPage() {
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Total Agua Tratada</h4>
                     <span className="text-lg font-semibold text-gray-900">
                       {resumenAnual.length > 0 
-                        ? (resumenAnual.reduce((sum, item) => sum + (Number(item.total_agua_tratada_m3) || 0), 0)).toLocaleString('es-ES', { maximumFractionDigits: 2 })
+                        ? formatMX(resumenAnual.reduce((sum, item) => sum + (Number(item.total_agua_tratada_m3) || 0), 0))
                         : '0'} m³
                     </span>
                   </Card>
@@ -1129,10 +1124,10 @@ export default function PTARPage() {
                             {data.period}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {Number(data.ar).toLocaleString('es-ES', { maximumFractionDigits: 2 })}
+                            {formatMX(Number(data.ar))}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {Number(data.at).toLocaleString('es-ES', { maximumFractionDigits: 2 })}
+                            {formatMX(Number(data.at))}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                             <Badge className={
@@ -1148,20 +1143,20 @@ export default function PTARPage() {
                           {(timeFilter === 'daily' || timeFilter === 'weekly') && (
                             <>
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {Number(data.recirculacion || 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })}
+                                {formatMX(Number(data.recirculacion || 0))}
                               </td>
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {Number(data.total_dia || 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })}
+                                {formatMX(Number(data.total_dia || 0))}
                               </td>
                             </>
                           )}
                           {timeFilter === 'daily' && (
                             <>
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {Number(data.medidor_entrada || 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })}
+                                {formatMX(Number(data.medidor_entrada || 0))}
                               </td>
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {Number(data.medidor_salida || 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })}
+                                {formatMX(Number(data.medidor_salida || 0))}
                               </td>
                             </>
                           )}

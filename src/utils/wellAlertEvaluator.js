@@ -12,6 +12,8 @@
  *   R3: consumo actual > mismo periodo del año anterior
  */
 
+import { formatMX } from './formatMX'
+
 const MES_ES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
@@ -28,6 +30,22 @@ const METADATA_KEYS = new Set([
 const toNum = (v) => {
   const n = parseFloat(v)
   return Number.isFinite(n) ? n : 0
+}
+
+/**
+ * Normaliza números sin separador de miles dentro de un texto de alerta
+ * persistido (generado por versiones previas con toFixed). Evita tocar
+ * años (2026), semanas/meses y códigos alfanuméricos.
+ * @param {string} text - Texto de title/description de una alerta.
+ * @returns {string} Texto con números en formato es-MX (coma=miles, punto=decimal).
+ */
+export function formatAlertText(text) {
+  if (typeof text !== 'string') return text
+  return text.replace(/\b\d{4,}\.\d{1,2}\b/g, (match) => {
+    const num = parseFloat(match)
+    if (!Number.isFinite(num)) return match
+    return formatMX(num)
+  })
 }
 
 export function getMeasurementColumns(row) {
@@ -80,12 +98,12 @@ function buildAlert({ granularity, column, value, reference, period }) {
   return {
     event_type: 'anomalia_sobreconsumo',
     severity: 'preventiva',
-    title: `Anomalía de sobreconsumo detectada — ${period} (${value.toFixed(2)} m³)`,
+    title: `Anomalía de sobreconsumo detectada — ${period} (${formatMX(value)} m³)`,
     description:
       `El consumo del ${period} supera en más del 30% los valores de referencia ` +
       `en las 3 reglas simultáneas (promedio móvil 10 periodos, periodo anterior y ` +
       `mismo periodo del año anterior). Medidor con mayor consumo: ${column} ` +
-      `(${value.toFixed(2)} m³, referencia ${reference.toFixed(2)} m³).`,
+      `(${formatMX(value)} m³, referencia ${formatMX(reference)} m³).`,
     recommendation:
       'Revisar el medidor y las líneas de distribución del periodo reportado. ' +
       'Verificar fugas, válvulas abiertas o mal funcionamiento del medidor.',

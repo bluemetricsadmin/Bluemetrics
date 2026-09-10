@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useEffect } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
@@ -1241,7 +1242,7 @@ const checkIfMonthExists = async () => {
                                   <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg">
                                     <span className="text-xs text-blue-600 dark:text-blue-400">Consumo:</span>
                                     <span className={`text-sm font-bold ${consumoValue < 0 ? 'text-red-500' : 'text-blue-600 dark:text-blue-400'}`}>
-                                      {consumoValue.toFixed(2)} m³
+                                      {formatMX(consumoValue)} m³
                                     </span>
                                   </div>
                                 )}

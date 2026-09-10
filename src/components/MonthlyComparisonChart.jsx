@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
@@ -36,14 +37,6 @@ ChartJS.register(
   Filler
 )
 
-// Helper para forzar el formato mexicano en toda la gráfica
-const formatMX = (value) => {
-  if (value === null || value === undefined || isNaN(value)) return "0.00";
-  return Number(value).toLocaleString('es-MX', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
 
 /**
  * Gráfica de comparación mensual con múltiples años

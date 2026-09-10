@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Card, CardContent, CardHeader } from '../components/ui/card'
@@ -588,10 +589,10 @@ export default function AddDataPage() {
                         {formData.m3PorAnexo && formData.m3CedidosPorAnexo ? (
                           <div className="flex items-center justify-between">
                             <span className="font-medium">
-                              {(parseFloat(formData.m3PorAnexo) - parseFloat(formData.m3CedidosPorAnexo)).toFixed(2)} m³
+                              {formatMX(parseFloat(formData.m3PorAnexo) - parseFloat(formData.m3CedidosPorAnexo))} m³
                             </span>
                             <span className="text-sm text-gray-500">
-                              {parseFloat(formData.m3PorAnexo).toFixed(2)} - {parseFloat(formData.m3CedidosPorAnexo).toFixed(2)}
+                              {formatMX(parseFloat(formData.m3PorAnexo))} - {formatMX(parseFloat(formData.m3CedidosPorAnexo))}
                             </span>
                           </div>
                         ) : (

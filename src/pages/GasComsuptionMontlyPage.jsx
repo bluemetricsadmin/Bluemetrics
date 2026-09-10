@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
@@ -346,7 +347,7 @@ export default function GasComsumptionMonthlyPage() {
                         <div>
                           <p className="text-sm text-muted-foreground">Consumo Total de Gas</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.total.toLocaleString()} m3
+                            {formatMX(metrics.total)} m3
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(totalTrend) > 0 ? (
@@ -371,7 +372,7 @@ export default function GasComsumptionMonthlyPage() {
                         <div>
                           <p className="text-sm text-muted-foreground">Calderas y Calefaccion</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.calderas.toLocaleString()} m3
+                            {formatMX(metrics.calderas)} m3
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(calderasTrend) > 0 ? (
@@ -397,7 +398,7 @@ export default function GasComsumptionMonthlyPage() {
                         <div>
                           <p className="text-sm text-muted-foreground">Comedores y Restaurantes</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.comedores.toLocaleString()} m3
+                            {formatMX(metrics.comedores)} m3
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(comedoresTrend) > 0 ? (
@@ -423,7 +424,7 @@ export default function GasComsumptionMonthlyPage() {
                         <div>
                           <p className="text-sm text-muted-foreground">Residencias</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.residencial.toLocaleString()} m3
+                            {formatMX(metrics.residencial)} m3
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(residencialTrend) > 0 ? (
@@ -655,11 +656,11 @@ export default function GasComsumptionMonthlyPage() {
                                   </td>
                                   {monthValues.map((value, idx) => (
                                     <td key={idx} className="text-right py-3 px-2">
-                                      {value > 0 ? value.toLocaleString() : '-'}
+                                      {value > 0 ? formatMX(value) : '-'}
                                     </td>
                                   ))}
                                   <td className="text-right py-3 px-4 font-semibold bg-muted/30">
-                                    {total > 0 ? total.toLocaleString() : '-'}
+                                    {total > 0 ? formatMX(total) : '-'}
                                   </td>
                                 </tr>
                               )

@@ -401,8 +401,8 @@ export default function EditPTARReadingsPage() {
                               <input
                                 id={`input-${point.id}`}
                                 ref={index === 0 ? firstInputRef : null}
-                                type="number"
-                                step="0.01"
+                                type="text"
+                                inputMode="decimal"
                                 placeholder="Lectura en m³"
                                 value={value}
                                 onChange={(e) => handleReadingChange(point.id, e.target.value)}

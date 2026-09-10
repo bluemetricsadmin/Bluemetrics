@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
@@ -728,7 +729,7 @@ export default function GasConsumptionPage() {
       tooltip: {
         callbacks: {
           label: function(context) {
-            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} m³`
+            return `${context.dataset.label}: ${formatMX(context.parsed.y)} m³`
           }
         }
       }
@@ -738,7 +739,7 @@ export default function GasConsumptionPage() {
         beginAtZero: true,
         ticks: {
           callback: function(value) {
-            return value.toLocaleString() + ' m³'
+            return formatMX(value) + ' m³'
           }
         }
       }
@@ -801,7 +802,7 @@ export default function GasConsumptionPage() {
                     <p className="text-sm text-muted-foreground">Consumo Total Gas</p>
                     <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
                     <p className="text-2xl font-bold text-foreground mt-1">
-                      {consumoTotalGas.toLocaleString()} m³
+                      {formatMX(consumoTotalGas)} m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       {parseFloat(consumoTotalGasTrend) > 0 ? (
@@ -829,7 +830,7 @@ export default function GasConsumptionPage() {
                     <p className="text-sm text-muted-foreground">Calderas y Calefacción</p>
                     <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
                     <p className="text-2xl font-bold text-foreground mt-1">
-                      {calderasTotal.toLocaleString()} m³
+                      {formatMX(calderasTotal)} m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       {parseFloat(calderasTrend) > 0 ? (
@@ -857,7 +858,7 @@ export default function GasConsumptionPage() {
                     <p className="text-sm text-muted-foreground">Comedores Total</p>
                     <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
                     <p className="text-2xl font-bold text-foreground mt-1">
-                      {comedoresTotal.toLocaleString()} m³
+                      {formatMX(comedoresTotal)} m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       {parseFloat(comedoresTrend) > 0 ? (
@@ -885,7 +886,7 @@ export default function GasConsumptionPage() {
                     <p className="text-sm text-muted-foreground">Residencias Total</p>
                     <p className="text-xs text-muted-foreground/70">Últimas 4 semanas</p>
                     <p className="text-2xl font-bold text-foreground mt-1">
-                      {residenciasTotal.toLocaleString()} m³
+                      {formatMX(residenciasTotal)} m³
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       {parseFloat(residenciasTrend) > 0 ? (

@@ -1,3 +1,5 @@
+import { formatMX } from '../utils/formatMX'
+import { formatAlertText } from '../utils/wellAlertEvaluator'
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from "react-router"
 import { DashboardHeader } from "../components/dashboard-header"
@@ -791,11 +793,11 @@ export default function WellsPage() {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900 font-medium">
-                                {well.m3ParaConsumir.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                                {formatMX(well.m3ParaConsumir)} m³
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center">
                                 <div className="text-sm font-medium text-gray-900">
-                                  {well.totalConsumption2026.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                                  {formatMX(well.totalConsumption2026)} m³
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   (sem {well.weekNumber})
@@ -813,7 +815,7 @@ export default function WellsPage() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center">
                                 <div className="text-sm font-medium text-gray-900">
-                                  {well.aguaDisponibleUltimaSemana.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                                  {formatMX(well.aguaDisponibleUltimaSemana)} m³
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   (sem {well.weekNumber})
@@ -888,7 +890,7 @@ export default function WellsPage() {
                           <p className="text-sm text-muted-foreground">Total Pozos</p>
                           <p className="text-xs text-muted-foreground/70">Últimos 3 meses</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.pozos.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                            {formatMX(metrics.pozos)} m³
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(pozosTrend) > 0 ? (
@@ -917,7 +919,7 @@ export default function WellsPage() {
                            <p className="text-xs text-muted-foreground/70">Últimos 3 meses</p>
                           <p className="text-xs text-muted-foreground/70">Pozos (4, 8, 15)</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.riego.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                            {formatMX(metrics.riego)} m³
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(riegoTrend) > 0 ? (
@@ -946,7 +948,7 @@ export default function WellsPage() {
                            <p className="text-xs text-muted-foreground/70">Últimos 3 meses</p>
                           <p className="text-xs text-muted-foreground/70">Pozos (11, 12, 3, 7, 14)</p>
                           <p className="text-2xl font-bold text-foreground mt-1">
-                            {metrics.servicios.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                            {formatMX(metrics.servicios)} m³
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             {parseFloat(serviciosTrend) > 0 ? (
@@ -982,7 +984,7 @@ export default function WellsPage() {
                       <p className="text-sm text-muted-foreground">Total Pozos</p>
                       <p className="text-xs text-muted-foreground/70">Servicios + Riego — Últimas 4 semanas</p>
                       <p className="text-2xl font-bold text-foreground mt-1">
-                        {weeklyMetrics.pozos.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                        {formatMX(weeklyMetrics.pozos)} m³
                       </p>
                       <div className="flex items-center gap-1 mt-1">
                         {parseFloat(pozosTrendW) > 0 ? (
@@ -1010,7 +1012,7 @@ export default function WellsPage() {
                       <p className="text-sm text-muted-foreground">Pozos de Riego</p>
                       <p className="text-xs text-muted-foreground/70">Pozos (4, 8, 15) — Últimas 4 semanas</p>
                       <p className="text-2xl font-bold text-foreground mt-1">
-                        {weeklyMetrics.riego.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                        {formatMX(weeklyMetrics.riego)} m³
                       </p>
                       <div className="flex items-center gap-1 mt-1">
                         {parseFloat(riegoTrendW) > 0 ? (
@@ -1038,7 +1040,7 @@ export default function WellsPage() {
                       <p className="text-sm text-muted-foreground">Pozos de Servicios</p>
                       <p className="text-xs text-muted-foreground/70">Pozos (11, 12, 3, 7, 14) — Últimas 4 semanas</p>
                       <p className="text-2xl font-bold text-foreground mt-1">
-                        {weeklyMetrics.servicios.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                        {formatMX(weeklyMetrics.servicios)} m³
                       </p>
                       <div className="flex items-center gap-1 mt-1">
                         {parseFloat(serviciosTrendW) > 0 ? (
@@ -1126,7 +1128,7 @@ export default function WellsPage() {
                                 </Badge>
                               </div>
                               <p className={`text-xs ${descColor} mt-1 line-clamp-2`}>
-                                {alert.title || alert.description}
+                                {formatAlertText(alert.title || alert.description)}
                               </p>
                               {alert.recommendation && (
                                 <p className="text-xs text-gray-500 mt-1 italic truncate">
@@ -1320,7 +1322,7 @@ export default function WellsPage() {
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
                     <h4 className="text-sm font-semibold text-blue-900 mb-2">m³ Disponibles Calculados</h4>
                     <p className="text-2xl font-bold text-blue-700">
-                      {((wellsStaticInfo[selectedWell.id]?.m3PorAnexo || 0) - (wellsStaticInfo[selectedWell.id]?.m3CededByAnnex || 0)).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                      {formatMX((wellsStaticInfo[selectedWell.id]?.m3PorAnexo || 0) - (wellsStaticInfo[selectedWell.id]?.m3CededByAnnex || 0))} m³
                     </p>
                   </div>
                 </div>

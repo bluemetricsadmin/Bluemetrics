@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { DashboardHeader } from "../components/dashboard-header"
@@ -13,14 +14,6 @@ import { useAuth } from '../contexts/AuthContextNew';
 
 const CONSUMPTION_TABLE = 'lecturas_semana_agua_consumo_2026'
 
-// Helper para forzar el formato mexicano
-const formatMX = (value) => {
-  if (value === null || value === undefined || isNaN(value)) return "0.00";
-  return Number(value).toLocaleString('es-MX', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
 
 export default function DashboardPage() {
   const navigate = useNavigate()

@@ -1,3 +1,4 @@
+import { formatMX } from './formatMX'
 export const getPreviousYearData = (multiYearData, currentYear) => {
   if (!Array.isArray(multiYearData) || multiYearData.length === 0) return null
   const yearNum = parseInt(String(currentYear), 10)
@@ -20,7 +21,7 @@ export const construirEtiquetaYoY = ({ valorActual, valorAnterior, etiquetaPerio
   const pct = calcularCambioPct(valorActual, valorAnterior)
   if (pct === null) return ''
   const signo = pct > 0 ? '+' : ''
-  const valorFormateado = parseFloat(valorAnterior).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const valorFormateado = formatMX(valorAnterior)
   return `vs ${etiquetaPeriodo}: ${valorFormateado} ${unidad} (${signo}${pct.toFixed(1)}%)`
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { updateAlertStatus } from '../utils/wellAlertSync'
+import { formatAlertText } from '../utils/wellAlertEvaluator'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent } from "../components/ui/card"
@@ -324,7 +325,7 @@ export default function AlertsPage() {
                           
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <h3 className="font-semibold text-base">{evt.title}</h3>
+                              <h3 className="font-semibold text-base">{formatAlertText(evt.title)}</h3>
                               {granularityLabel && (
                                 <Badge className="bg-cyan-100 text-cyan-800">
                                   <ShieldAlert className="w-3 h-3 mr-1" />
@@ -336,7 +337,7 @@ export default function AlertsPage() {
                               </Badge>
                             </div>
 
-                            <p className="text-sm text-muted-foreground mb-1">{evt.description}</p>
+                            <p className="text-sm text-muted-foreground mb-1">{formatAlertText(evt.description)}</p>
 
                             {evt.recommendation && (
                               <p className="text-xs text-muted-foreground mb-2">💡 {evt.recommendation}</p>

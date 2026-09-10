@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useMemo, useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
@@ -267,13 +268,6 @@ export default function WeeklyComparisonTable({
   }
 
   // Helper para forzar el formato mexicano en toda la tabla
-  const formatMX = (value) => {
-    if (value === null || value === undefined || isNaN(value)) return "0.00";
-    return Number(value).toLocaleString('es-MX', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  };
 
   // Obtener color basado en el cambio
   const getChangeColor = (changeType) => {

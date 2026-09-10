@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import DashboardChart from "./DashboardChart"
 import datosPozo12 from '../lib/datos_pozo_12.json'
@@ -135,7 +136,7 @@ export function MainConsumptionMetrics() {
                 {(() => {
                   const lastMonthConsumption = consumptionData.length > 0 ? consumptionData[consumptionData.length - 1].value * 1000 : 0;
                   const dailyAverage = Math.round(lastMonthConsumption / 30);
-                  return `${dailyAverage.toLocaleString()} m³`;
+                  return `${formatMX(dailyAverage)} m³`;
                 })()}
               </div>
             </div>
@@ -145,7 +146,7 @@ export function MainConsumptionMetrics() {
                 {(() => {
                   const weeklyData = datosPozo12.datos_semanales.consumo_semanal_detallado;
                   const lastWeek = weeklyData[weeklyData.length - 1];
-                  return `${Math.round(lastWeek?.total_pozos || 0).toLocaleString()} m³`;
+                  return `${formatMX(Math.round(lastWeek?.total_pozos || 0))} m³`;
                 })()}
               </div>
             </div>
@@ -192,7 +193,7 @@ export function MainConsumptionMetrics() {
               <div className="text-3xl font-bold text-foreground">
                 {(() => {
                   const lastMonthValue = consumptionData.length > 0 ? consumptionData[consumptionData.length - 1].value : 0;
-                  return (lastMonthValue * 1000).toLocaleString();
+                  return formatMX(lastMonthValue * 1000);
                 })()}
               </div>
               <div className="flex items-center gap-2 mt-2">

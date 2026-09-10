@@ -1,3 +1,4 @@
+import { formatMX } from '../utils/formatMX'
 import { useParams, useNavigate } from "react-router"
 import { useState, useEffect } from "react"
 import { DashboardHeader } from "../components/dashboard-header"
@@ -838,11 +839,11 @@ export default function WellDetailPage() {
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">m³ cedidos por Anexo (2026)</label>
-                        <p className="text-sm text-gray-900">{wellData.m3CededByAnnex.toLocaleString()}</p>
+                        <p className="text-sm text-gray-900">{formatMX(wellData.m3CededByAnnex)}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">m³ por Anexo (Actualizado)</label>
-                        <p className="text-sm text-gray-900 font-semibold">{wellData.m3PorAnexo.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p className="text-sm text-gray-900 font-semibold">{formatMX(wellData.m3PorAnexo)}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-500">Estado</label>
@@ -892,14 +893,14 @@ export default function WellDetailPage() {
                       <div className="border-t pt-3">
                         <label className="text-sm font-medium text-gray-500">Tope de Lectura</label>
                         <p className="text-base text-gray-900 font-semibold">
-                          {staticInfo.medidor.topeLectura.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                          {formatMX(staticInfo.medidor.topeLectura)} m³
                         </p>
                       </div>
 
                       <div className="border-t pt-3">
                         <label className="text-sm font-medium text-gray-500">Lectura Actual</label>
                         <p className="text-base text-blue-600 font-semibold">
-                          {currentReading.toLocaleString('es-MX', { minimumFractionDigits: 2 })} m³
+                          {formatMX(currentReading)} m³
                         </p>
                         <div className="mt-2">
                           <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -1025,19 +1026,19 @@ export default function WellDetailPage() {
                               {data.year}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {data.m3CededByAnnex.toLocaleString()}
+                              {formatMX(data.m3CededByAnnex)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {data.m3CededByTitle.toLocaleString()}
+                              {formatMX(data.m3CededByTitle)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               <div className="flex items-center gap-2">
-                              {data.availableForConsumption.toLocaleString()}
+                              {formatMX(data.availableForConsumption)}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                              
-                              {data.realConsumption.toLocaleString()}
+                              {formatMX(data.realConsumption)}
                                 {index > 0 && wellData.yearlyData[index - 1] && (
                                   <>
                                     {getConsumptionTrend(data.realConsumption, wellData.yearlyData[index - 1].realConsumption) === 'up' && (
@@ -1096,7 +1097,7 @@ export default function WellDetailPage() {
                         <div className="flex items-center gap-2">
                           <DropletIcon className="h-5 w-5 text-blue-500" />
                           <span className="text-lg font-semibold text-gray-900">
-                            {currentReading.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                            {formatMX(currentReading)} m³
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">{`Última semana registrada ${currentWeekNum}`}</p>
@@ -1108,7 +1109,7 @@ export default function WellDetailPage() {
                         <div className="flex items-center gap-2">
                           <DropletIcon className="h-5 w-5 text-green-500" />
                           <span className="text-lg font-semibold text-gray-900">
-                            {currentConsumption.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                            {formatMX(currentConsumption)} m³
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">{`Última semana ${currentWeekNum}`}</p>
@@ -1126,7 +1127,7 @@ export default function WellDetailPage() {
                             <div className="h-5 w-5" />
                           )}
                           <span className={`text-lg font-semibold ${vsLastWeek > 0 ? 'text-red-600' : vsLastWeek < 0 ? 'text-green-600' : 'text-gray-900'}`}>
-                            {vsLastWeek > 0 ? '+' : ''}{vsLastWeek.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                            {vsLastWeek > 0 ? '+' : ''}{formatMX(vsLastWeek)} m³
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
@@ -1146,7 +1147,7 @@ export default function WellDetailPage() {
                             <div className="h-5 w-5" />
                           )}
                           <span className={`text-lg font-semibold ${vsLastYear > 0 ? 'text-red-600' : vsLastYear < 0 ? 'text-green-600' : 'text-gray-900'}`}>
-                            {vsLastYear > 0 ? '+' : ''}{vsLastYear.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³
+                            {vsLastYear > 0 ? '+' : ''}{formatMX(vsLastYear)} m³
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">{`Misma semana ${new Date().getFullYear() - 1}`}</p>
