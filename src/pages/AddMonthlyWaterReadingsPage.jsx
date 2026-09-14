@@ -67,22 +67,20 @@ export default function AddMonthlyWaterReadingsPage() {
     'circuito_6_residencias': 10,
     'circuito_8_campus': 10,
     'medidor_general_pozos': 10,
-    'campo_soft_bol': 10
+    'campo_soft_bol': 10,
+    'cedes_cisterna': 1
   }
 
   // Fórmulas ajustadas: consumo final = consumo_base - consumo(factores)
-  const newFormulas1 = ['residencias_10_15', 'estadio_banorte', 'estadio_banorte_purgas','aulas_4_sur', 'aulas_4_maestros']
-  const newFormulas2 = ['nucleo', 'aulas_3']
-  const factorConsumption1 = ['caffenio', 'estadio_azul', 'wellnes_te_purga','cdi_1', 'cdi_2']
-  const factorConsumption2 = ['expedition', 'hub', 'basanti', 'aulas_3_sr_latino']
-
-  // Mapa derivado: formulaId → [factorIds a restar]
-  const adjustmentMap = {}
-  newFormulas1.forEach((id, i) => { adjustmentMap[id] = [factorConsumption1[i]] })
-  const _chunkSize = factorConsumption2.length / newFormulas2.length
-  newFormulas2.forEach((id, i) => {
-    adjustmentMap[id] = factorConsumption2.slice(i * _chunkSize, (i + 1) * _chunkSize)
-  })
+  const adjustmentMap = {
+    'estadio_banorte': ['estadio_azul'],
+    'estadio_banorte_purgas': ['wellnes_te_purga'],
+    'aulas_4_sur': ['cdi_1'],
+    'aulas_4_maestros': ['cdi_2'],
+    'nucleo': ['expedition', 'hub'],
+    'aulas_3': ['basanti', 'aulas_3_sr_latino'],
+    'cedes_cisterna': ['caffenio', 'san_huevito', 'cedes_e2']
+  }
 
   // Función para limpiar todos los datos persistidos
   const clearAllPersistedData = () => {
