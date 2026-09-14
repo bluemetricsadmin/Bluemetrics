@@ -432,8 +432,11 @@ export default function DashboardPage() {
               </Card>
             )}
 
-            {/* Comparativa de gas */}
-            <div className="mt-8">
+
+
+{/**
+ * 
+ *   <div className="mt-8">
               <h2 className="text-2xl font-bold text-foreground flex items-center gap-2 mb-4">
                 <FlameIcon className="h-6 w-6 text-orange-500" />
                 Comparativa de Consumo de Gas
@@ -520,6 +523,18 @@ export default function DashboardPage() {
                 </Card>
               )}
             </div>
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ */}
+            {/* Comparativa de gas */}
+          
           </main>
         </div>
       </div>
