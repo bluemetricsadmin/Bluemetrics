@@ -310,7 +310,7 @@
         },
         {
           "id": "edificio_negocios_daf",
-          "name": "Edificio de Negocios (DAF)",
+          "name": "Edificio de Negocios",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -630,7 +630,7 @@
         },
         {
           "id": "administrativo",
-          "name": "Administrativo (Centrales Norte)",
+          "name": "Centrales Norte",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -662,7 +662,7 @@
         },
         {
           "id": "escuela_arte_caldera_1",
-          "name": "Escuela de Arte y Caldera 1",
+          "name": "Escuela de Arte",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": [
@@ -694,7 +694,7 @@
         },
         {
           "id": "ciap_centro",
-          "name": "Ciap-Centro",
+          "name": "Ciap-Centro(Baños lado banderas)",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -710,7 +710,7 @@
         },
         {
           "id": "ciap_poniente",
-          "name": "Ciap-Poniente",
+          "name": "Ciap-Poniente(Tarjas oficinas)",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1133,7 +1133,7 @@
         
         {
           "id": "cedes_e2",
-          "name": "E2-General",
+          "name": "Estacionamiento E2-General",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1261,7 +1261,7 @@
         },
         {
           "id": "rectoria_sur",
-          "name": "Rectoría Sur  (No Operativo)",
+          "name": "Rectoría Sur (No Operativo)",
           "type": "edificio",
           "unit": "m³",
           "weeklyData": [
@@ -1816,7 +1816,7 @@
         },
         {
           "id": "la_dia",
-          "name": "La Dia",
+          "name": "DIA",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -1928,7 +1928,7 @@
         },
         {
           "id": "aulas_4_oxxo",
-          "name": "Aulas 4 OXXO",
+          "name": "Aulas 4-OXXO",
           "type": "concesion",
           "unit": "m³",
           "weeklyData": [
@@ -2387,7 +2387,7 @@
         },
         {
           "id": "megacentral_suavizador_purga",
-          "name": "Megacentral Suavizador Purga (No operativo)",
+          "name": "Megacentral Suavizador Purga (Respaldo)",
           "type": "purga",
           "unit": "m³",
           "notes": "Fuera de servicio provisional",
@@ -2513,7 +2513,7 @@
 
          {
           "id": "estacionamiento_e3",
-          "name": "E3 (Ciudad)",
+          "name": "Estacionamiento 3(Ciudad)",
           "type": "estacionamiento",
           "source": "ciudad",
           "unit": "m³",
@@ -2651,7 +2651,7 @@
         },
         {
           "id": "residencias_13_2_ciudad",
-          "name": "Estudiantes Residencias 13-2 (Ciudad) (No Operativo)",
+          "name": "Estudiantes Residencias 13-2 (Ciudad) (Respaldo)",
           "type": "residencia",
           "source": "ciudad",
           "unit": "m³",
@@ -2669,7 +2669,7 @@
         },
         {
           "id": "residencias_13_3_ciudad",
-          "name": "Estudiantes Residencias 13-3 (Ciudad) (No Operativo)",
+          "name": "Estudiantes Residencias 13-3 (Ciudad) (Respaldo)",
           "type": "residencia",
           "source": "ciudad",
           "unit": "m³",
