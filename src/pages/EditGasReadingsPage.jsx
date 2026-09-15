@@ -248,8 +248,8 @@ export default function EditGasReadingsPage() {
 
           const { data: lastWeekData, error: lastWeekError } = await supabase
             .from(prevTableName)
-            .select('l_numero_semana')
-            .order('l_numero_semana', { ascending: false })
+            .select('numero_semana')
+            .order('numero_semana', { ascending: false })
             .limit(1)
             .single()
 
@@ -257,7 +257,7 @@ export default function EditGasReadingsPage() {
             console.warn('⚠️ No se encontraron datos del año anterior para calcular consumo')
             prevWeekNum = null
           } else {
-            prevWeekNum = lastWeekData.l_numero_semana
+            prevWeekNum = lastWeekData.numero_semana
             console.log(`📅 Semana 1: usando semana ${prevWeekNum} del año ${previousYear} como referencia`)
           }
         }
@@ -267,7 +267,7 @@ export default function EditGasReadingsPage() {
           const { data, error: prevError } = await supabase
             .from(prevTableName)
             .select('*')
-            .eq('l_numero_semana', prevWeekNum)
+            .eq('numero_semana', prevWeekNum)
             .single()
 
           if (!prevError && data) {
@@ -277,23 +277,93 @@ export default function EditGasReadingsPage() {
           }
         }
 
-        // Casos especiales con factor 10 (mismos que AddWeeklyReadingsPage)
-        const specialCases = {
-          'circuito_6_residencias': 10,
-          'circuito_8_campus': 10,
-          'medidor_general_pozos': 10,
-          'campo_soft_bol': 10
+        // Factores de multiplicación para puntos de gas
+        const gasFactors = {
+          'campus_acometida_principal_digital': 1,
+          'campus_acometida_principal_analogica': 2.44,
+          'domo_cultural': 2.34,
+          'centrales_local': 2.34,
+          'dona_tota': 2.34,
+          'chilaquiles_tec': 1,
+          'carls_junior': 2.34,
+          'comedor_centrales_tec_food': 2.34,
+          'davilas_grill_team': 1,
+          'pizza_little_caesars': 1,
+          'biotecnologia': 2.34,
+          'caldera_1_leon': 2.34,
+          'mega_calefaccion_1': 2.34,
+          'mega_calefaccion_2': 2.34,
+          'mega_calefaccion_3': 2.34,
+          'mega_calefaccion_4': 2.34,
+          'mega_calefaccion_5': 2.34,
+          'ciap_super_salads': 2.34,
+          'aulas_1': 2.34,
+          'biblioteca': 2.34,
+          'nikkori': 9.86,
+          'nectar_works': 9.86,
+          'sr_latino': 2.34,
+          'arena_borrego': 2.34,
+          'calefaccion_1_bryan': 2.34,
+          'calefaccion_2_aerco': 2.34,
+          'caldera_3': 2.34,
+          'aulas_7': 2.34,
+          'la_dia': 2.34,
+          'aulas_4': 2.34,
+          'centro_congresos_vestidores': 1.01,
+          'jubileo': 0.94,
+          'expedition': 2.34,
+          'bread_expedition': 2.34,
+          'matthew_expedition': 2.34,
+          'estudiantes_acometida_principal_digital': 1,
+          'estudiantes_acometida_principal_analogico': 1.54,
+          'cedes': 0.98,
+          'cedes_trabajadores_vestidores': 0.98,
+          'caldera_2': 0.98,
+          'comedor_estudiantes': 0.98,
+          'residencias_4': 0.98,
+          'residencias_1': 0.98,
+          'residencias_2': 0.98,
+          'residencias_5': 0.98,
+          'residencias_8': 0.98,
+          'residencias_7': 0.98,
+          'residencias_3': 1.52,
+          'residencias_abc_calefaccion': 1.52,
+          'residencias_abc_regaderas': 1.52,
+          'residencias_abc_locales_comida': 1,
+          'campus_norte_acometida_externa': 1.14,
+          'campus_norte_acometida_interna': 1.14,
+          'campus_norte_comedor_d': 0.97,
+          'campus_norte_edificio_d_calefaccion': 0.97,
+          'estadio_borrego_acometida_digital': 1,
+          'estadio_borrego_acometida_analogica': 1.16,
+          'estadio_yarda': 1,
+          'wellness_acometida_digital': 1,
+          'wellness_acometida_analogica': 1.2,
+          'wellness_supersalads': 1.2,
+          'wellness_general_calefaccion': 1,
+          'wellness_calentador_sotano_regaderas': 1,
+          'wellness_alberca': 1,
+          'auditorio_luis_elizondo': 1,
+          'pabellon_tec_semillero': 1,
+          'pabellon_tec_cocina_estudiantes_2do_piso': 1.48,
+          'guarderia': 1,
+          'escamilla': 1,
+          'casa_solar': 1,
+          'estudiantes_11': 1,
+          'estudiantes_12': 1,
+          'estudiantes_13': 1,
+          'estudiantes_15_y_10': 1
         }
 
         // Calcular consumo para cada punto
-        const consumoTableName = `lecturas_semana_agua_consumo_${selectedYear}`
+        const consumoTableName = `lecturas_semanales_gas_consumo_${selectedYear}`
         const consumoData = {
-          l_numero_semana: selectedWeek
+          numero_semana: selectedWeek
         }
 
         if (weekInfo) {
-          consumoData.l_fecha_inicio = weekInfo.startDate
-          consumoData.l_fecha_fin = weekInfo.endDate
+          consumoData.fecha_inicio = weekInfo.startDate
+          consumoData.fecha_fin = weekInfo.endDate
         }
 
         gasConsumptionPointsData.categories.forEach(category => {
@@ -303,14 +373,22 @@ export default function EditGasReadingsPage() {
             const currentValue = readings[key] ? parseFloat(readings[key]) : NaN
 
             if (!isNaN(currentValue) && prevWeekData) {
-              const previousValue = parseFloat(prevWeekData[`l_${point.id}`]) || 0
-              const factor = specialCases[point.id] || 1
+              const previousValue = parseFloat(prevWeekData[point.id]) || 0
+              const factor = gasFactors[point.id] || 1
               const consumption = (currentValue - previousValue) * factor
-              consumoData[`l_${point.id}`] = consumption
+              consumoData[point.id] = consumption
               consumoCount++
             }
           })
         })
+
+        // Segunda pasada: ajustar wellness_general_calefaccion
+        const wgcField = 'wellness_general_calefaccion'
+        const wsaField = 'wellness_supersalads'
+        if (consumoData[wgcField] !== undefined && consumoData[wsaField] !== undefined) {
+          consumoData[wgcField] -= consumoData[wsaField]
+          console.log(`📊 wellness_general_calefaccion ajustado: consumo=${consumoData[wgcField]} (restado consumo de wellness_supersalads: ${consumoData[wsaField]})`)
+        }
 
         if (consumoCount > 0) {
           console.log(`📊 Guardando consumo calculado (${consumoCount} puntos) en ${consumoTableName}`)
@@ -318,7 +396,7 @@ export default function EditGasReadingsPage() {
           const { error: consumoError } = await supabase
             .from(consumoTableName)
             .upsert(consumoData, {
-              onConflict: 'l_numero_semana',
+              onConflict: 'numero_semana',
               ignoreDuplicates: false
             })
 

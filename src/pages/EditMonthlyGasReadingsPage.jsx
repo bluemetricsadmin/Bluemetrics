@@ -451,12 +451,82 @@ const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
             console.warn(`⚠️ No se encontró mes anterior ${prevMonth}/${prevYear} para calcular consumo`)
           }
 
-          // Casos especiales con factor 10 (mismos que semanales y AddMonthly)
-          const specialCases = {
-            'circuito_6_residencias': 10,
-            'circuito_8_campus': 10,
-            'medidor_general_pozos': 10,
-            'campo_soft_bol': 10
+          // Factores de multiplicación para puntos de gas
+          const gasFactors = {
+            'campus_acometida_principal_digital': 1,
+            'campus_acometida_principal_analogica': 2.44,
+            'domo_cultural': 2.34,
+            'centrales_local': 2.34,
+            'dona_tota': 2.34,
+            'chilaquiles_tec': 1,
+            'carls_junior': 2.34,
+            'comedor_centrales_tec_food': 2.34,
+            'davilas_grill_team': 1,
+            'pizza_little_caesars': 1,
+            'biotecnologia': 2.34,
+            'caldera_1_leon': 2.34,
+            'mega_calefaccion_1': 2.34,
+            'mega_calefaccion_2': 2.34,
+            'mega_calefaccion_3': 2.34,
+            'mega_calefaccion_4': 2.34,
+            'mega_calefaccion_5': 2.34,
+            'ciap_super_salads': 2.34,
+            'aulas_1': 2.34,
+            'biblioteca': 2.34,
+            'nikkori': 9.86,
+            'nectar_works': 9.86,
+            'sr_latino': 2.34,
+            'arena_borrego': 2.34,
+            'calefaccion_1_bryan': 2.34,
+            'calefaccion_2_aerco': 2.34,
+            'caldera_3': 2.34,
+            'aulas_7': 2.34,
+            'la_dia': 2.34,
+            'aulas_4': 2.34,
+            'centro_congresos_vestidores': 1.01,
+            'jubileo': 0.94,
+            'expedition': 2.34,
+            'bread_expedition': 2.34,
+            'matthew_expedition': 2.34,
+            'estudiantes_acometida_principal_digital': 1,
+            'estudiantes_acometida_principal_analogico': 1.54,
+            'cedes': 0.98,
+            'cedes_trabajadores_vestidores': 0.98,
+            'caldera_2': 0.98,
+            'comedor_estudiantes': 0.98,
+            'residencias_4': 0.98,
+            'residencias_1': 0.98,
+            'residencias_2': 0.98,
+            'residencias_5': 0.98,
+            'residencias_8': 0.98,
+            'residencias_7': 0.98,
+            'residencias_3': 1.52,
+            'residencias_abc_calefaccion': 1.52,
+            'residencias_abc_regaderas': 1.52,
+            'residencias_abc_locales_comida': 1,
+            'campus_norte_acometida_externa': 1.14,
+            'campus_norte_acometida_interna': 1.14,
+            'campus_norte_comedor_d': 0.97,
+            'campus_norte_edificio_d_calefaccion': 0.97,
+            'estadio_borrego_acometida_digital': 1,
+            'estadio_borrego_acometida_analogica': 1.16,
+            'estadio_yarda': 1,
+            'wellness_acometida_digital': 1,
+            'wellness_acometida_analogica': 1.2,
+            'wellness_supersalads': 1.2,
+            'wellness_general_calefaccion': 1,
+            'wellness_calentador_sotano_regaderas': 1,
+            'wellness_alberca': 1,
+            'auditorio_luis_elizondo': 1,
+            'pabellon_tec_semillero': 1,
+            'pabellon_tec_cocina_estudiantes_2do_piso': 1.48,
+            'guarderia': 1,
+            'escamilla': 1,
+            'casa_solar': 1,
+            'estudiantes_11': 1,
+            'estudiantes_12': 1,
+            'estudiantes_13': 1,
+            'estudiantes_15_y_10': 1
           }
 
           // Calcular consumo para cada punto
@@ -477,13 +547,21 @@ const [selectedYear, setSelectedYear] = useState(DEFAULT_YEAR)
 
               if (!isNaN(currentValue) && prevMonthData) {
                 const previousValue = parseFloat(prevMonthData[dbFieldName]) || 0
-                const factor = specialCases[point.id] || 1
+                const factor = gasFactors[point.id] || 1
                 const consumption = (currentValue - previousValue) * factor
                 consumoData[dbFieldName] = consumption
                 consumoCount++
               }
             })
           })
+
+          // Segunda pasada: ajustar wellness_general_calefaccion
+          const wgcField = 'wellness_general_calefaccion'
+          const wsaField = 'wellness_supersalads'
+          if (consumoData[wgcField] !== undefined && consumoData[wsaField] !== undefined) {
+            consumoData[wgcField] -= consumoData[wsaField]
+            console.log(`📊 wellness_general_calefaccion ajustado: consumo=${consumoData[wgcField]} (restado consumo de wellness_supersalads: ${consumoData[wsaField]})`)
+          }
 
           if (consumoCount > 0) {
             const consumoTableName = getMonthlyGasConsumptionTableName()
