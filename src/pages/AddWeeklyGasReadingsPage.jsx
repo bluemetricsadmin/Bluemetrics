@@ -406,6 +406,14 @@ export default function AddWeeklyGasReadingsPage() {
           }
         })
       })
+
+      // Segunda pasada: ajustar wellness_general_calefaccion
+      const wgcKey = `wellness_general_calefaccion_${weekNumber}`
+      const wsaKey = `wellness_supersalads_${weekNumber}`
+      if (newConsumption[wgcKey] !== undefined && newConsumption[wsaKey] !== undefined) {
+        newConsumption[wgcKey] -= newConsumption[wsaKey]
+        console.log(`📊 wellness_general_calefaccion ajustado: consumo=${newConsumption[wgcKey]} (restado consumo de wellness_supersalads: ${newConsumption[wsaKey]})`)
+      }
       
       setConsumption(newConsumption)
       console.log('📊 Consumo calculado para', Object.keys(newConsumption).length, 'puntos')
@@ -645,7 +653,29 @@ export default function AddWeeklyGasReadingsPage() {
         const factor = gasFactors[pointId] || 1
         const consumoValue = (currentValue - previousValue) * factor
         
-        setConsumption(prev => ({ ...prev, [key]: consumoValue }))
+        setConsumption(prev => {
+          const updated = { ...prev, [key]: consumoValue }
+
+          // Recalcular wellness_general_calefaccion si se modificó wellness_supersalads o viceversa
+          if (pointId === 'wellness_supersalads' || pointId === 'wellness_general_calefaccion') {
+            const wgcKey = `wellness_general_calefaccion_${weekNumber}`
+            const wsaKey = `wellness_supersalads_${weekNumber}`
+
+            // Calcular consumo base de wellness_supersalads
+            const wsaCurr = parseFloat(newReadings[wsaKey]) || 0
+            const wsaPrev = parseFloat(previousWeekReadings['wellness_supersalads']) || 0
+            const wsaFactor = gasFactors['wellness_supersalads'] || 1
+            updated[wsaKey] = (wsaCurr - wsaPrev) * wsaFactor
+
+            // Calcular consumo base de wellness_general_calefaccion
+            const wgcCurr = parseFloat(newReadings[wgcKey]) || 0
+            const wgcPrev = parseFloat(previousWeekReadings['wellness_general_calefaccion']) || 0
+            const wgcFactor = gasFactors['wellness_general_calefaccion'] || 1
+            updated[wgcKey] = (wgcCurr - wgcPrev) * wgcFactor - updated[wsaKey]
+          }
+
+          return updated
+        })
       }
     }
   }
