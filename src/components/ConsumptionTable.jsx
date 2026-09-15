@@ -399,7 +399,7 @@ export default function ConsumptionTable({
             <>
               <div>
                 <p className="text-xs text-muted-foreground">Consumo Semana {weekNumber - 1}</p>
-                <p className="text-xl font-bold text-muted-foreground">{formatMX(totals.currentWeek)} m³</p>
+                <p className="text-xl font-bold text-muted-foreground">{formatMX(totals.previousWeek)} m³</p>
                 <p className="text-xs text-muted-foreground mt-1">Semana anterior</p>
               </div>
               <div>
