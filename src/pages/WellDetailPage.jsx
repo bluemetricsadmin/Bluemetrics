@@ -329,9 +329,13 @@ export default function WellDetailPage() {
   // Función para cargar datos de múltiples años
   const fetchMultiYearData = async () => {
     try {
-      const promises = selectedYears.map(async (year) => {
-        const data = await fetchChartDataFromSupabase(parseInt(year))
-        return { year, data }
+      const years = new Set(selectedYears.map(year => parseInt(year, 10)))
+      const minYear = Math.min(...years)
+      if (minYear - 1 >= 2023) years.add(minYear - 1) // Soportar lookup YoY del chart (al mostrar 1 año)
+
+      const promises = [...years].map(async (year) => {
+        const data = await fetchChartDataFromSupabase(year)
+        return { year: String(year), data }
       })
       
       const results = await Promise.all(promises)
