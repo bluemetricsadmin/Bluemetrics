@@ -256,7 +256,7 @@ const DailyConsumptionChartJS = ({
       const dia = extraerDiaDeDiaHora(item.dia_hora)
       if (dia) {
         const key = `${mesKey}-${dia}`
-        porDia[key] = (porDia[key] || 0) + safeVal
+        porDia[key] = safeVal
       }
 
       if (!porMes[mesKey]) porMes[mesKey] = { total: 0, count: 0 }
@@ -465,13 +465,13 @@ const DailyConsumptionChartJS = ({
             return label
           },
           afterLabel: function (context) {
-            if (!yoyDailyLookup || context.parsed.y <= 0 || context.datasetIndex !== 0 || processedMultiYear.length === 0) return null
-            const point = processedMultiYear[processedMultiYear.length - 1].processed[context.dataIndex]
+            if (!yoyDailyLookup || !processedMultiYear[context.datasetIndex]) return null
+            const point = processedMultiYear[context.datasetIndex].processed[context.dataIndex]
             if (!point) return null
 
             const mesKey = derivarMesDeLectura({ mes: point.mes })
             if (vistaActual === 'anual') {
-              if (!mesKey) return null
+              if (context.parsed.y <= 0 || !mesKey) return null
               return construirEtiquetaYoY({
                 valorActual: context.parsed.y,
                 valorAnterior: yoyDailyLookup.promediosMes[mesKey],
@@ -482,12 +482,18 @@ const DailyConsumptionChartJS = ({
 
             const dia = extraerDiaDeDiaHora(point.diaHora || point.fecha)
             if (!mesKey || !dia) return null
+
+            const valorAnterior = yoyDailyLookup.porDia[`${mesKey}-${dia}`]
+            const etiquetaPeriodo = `${dia} ${mesKey} ${yoyDailyLookup.prevYear}`
+            if (context.parsed.y <= 0 || valorAnterior === null || valorAnterior === undefined || valorAnterior <= 0) {
+              return `vs ${etiquetaPeriodo}: sin datos`
+            }
             return construirEtiquetaYoY({
               valorActual: context.parsed.y,
-              valorAnterior: yoyDailyLookup.porDia[`${mesKey}-${dia}`],
-              etiquetaPeriodo: `${dia} ${mesKey} ${yoyDailyLookup.prevYear}`,
+              valorAnterior,
+              etiquetaPeriodo,
               unidad: 'm³'
-            }) || null
+            }) || `vs ${etiquetaPeriodo}: sin datos`
           }
         }
       }
