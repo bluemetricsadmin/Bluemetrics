@@ -358,7 +358,7 @@
         },
         {
           "id": "wellness_parque_central_tunel",
-          "name": "Wellness Edificio Wellnes + PC (No operativo)",
+          "name": "Wellnes + PC (No operativo)",
           "type": "instalacion_deportiva",
           "unit": "m³",
           "weeklyData": [
@@ -614,7 +614,7 @@
         },
         {
           "id": "comedor_central_tunel",
-          "name": "Centrales tunel (llave cto. Basura)",
+          "name": "Centrales llave cto. Basura",
           "type": "comedor",
           "unit": "m³",
           "weeklyData": [
@@ -1293,7 +1293,7 @@
         },
         {
           "id": "cetec",
-          "name": "Cetec",
+          "name": "CETEC",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": [
@@ -1562,6 +1562,7 @@
           "name": "Residencias 2 pte  (No Operativo)",
           "type": "residencia",
           "unit": "m³",
+          "noRead": true,
           "notes": "Medidor removido 29-Sep-25",
           "weeklyData": [
             {
@@ -2263,12 +2264,12 @@
     },
     {
       "id": "purgas_evaporacion",
-      "name": "Estado Borregos (purga T.E.)",
+      "name": "Estadio Borregos (purga T.E.)",
       "description": "Sistemas de purga y evaporación de torres de enfriamiento",
       "points": [
         {
           "id": "estadio_banorte_purgas",
-          "name": "Estadio Banorte purgas (Estadio Borrego Torre Enfriamiento purgas  (importante)",
+          "name": "Estadio Borregos (purga T.E.)",
           "type": "purga",
           "importance": "importante",
           "unit": "m³",
@@ -2480,7 +2481,6 @@
           "type": "instalacion_deportiva",
           "source": "ciudad",
           "unit": "m³",
-          "noRead":true,
           "weeklyData": [
             {
               "week": 1,
