@@ -1,8 +1,8 @@
 # Cómo se calcula el consumo de Agua y Gas
 
-Documento en lenguaje sencillo que explica cómo cada punto de medición calcula su consumo.
+Documento explicativo de las formulas para el calculo de consumo de medición de gas y agua.
 
-## La idea general
+## Formula Base
 
 El consumo de un medidor se calcula comparando la lectura de hoy con la lectura del periodo anterior:
 
