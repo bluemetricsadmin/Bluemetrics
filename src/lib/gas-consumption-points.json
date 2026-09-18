@@ -172,7 +172,7 @@
         },
         {
           "id": "nectar_works",
-          "name": "Biblioteca Nectar Works",
+          "name": "Biblioteca-Nectar Works",
           "type": "restaurante",
           "unit": "m³",
           "weeklyData": []
@@ -214,7 +214,7 @@
         },
         {
           "id": "aulas_7",
-          "name": "Aulas 7-Laboratorios(No Operativo",
+          "name": "Aulas 7-Laboratorios(No Operativo)",
           "type": "edificio_academico",
           "unit": "m³",
           "weeklyData": []
@@ -277,7 +277,7 @@
         },
         {
           "id": "estudiantes_acometida_principal_analogico",
-          "name": "Poligono residencias(1,2,3,4 y 5)-Analogico",
+          "name": "Poligono residencias(1,2,3,4 y 5)-Analógico",
           "type": "medidor_analogico",
           "unit": "m³",
           "weeklyData": []
