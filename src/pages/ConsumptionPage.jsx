@@ -25,7 +25,8 @@ import {
   Loader2Icon,
   SearchIcon,
   XIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  InfoIcon
 } from 'lucide-react'
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
@@ -38,7 +39,6 @@ export default function ConsumptionPage() {
   // Estados para el nuevo sistema de tablas detalladas
   const [activeTab, setActiveTab] = useState('pozos_servicios') // Tab activa para las tablas
   const [selectedWeek, setSelectedWeek] = useState(2) // Semana seleccionada (1 o 2)
-  const [showComparison, setShowComparison] = useState(true) // Mostrar comparación entre semanas
   
   // Estados para datos de Supabase
   const [weeklyReadings, setWeeklyReadings] = useState([])
@@ -836,53 +836,56 @@ export default function ConsumptionPage() {
                   <p className="text-muted-foreground mt-1">Vista detallada de todos los medidores del campus</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* Selector de Año para Consumo */}
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Año:</label>
-                    <select
-                      value={selectedYearForReadings}
-                      onChange={(e) => setSelectedYearForReadings(e.target.value)}
-                      className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      disabled={loading}
-                    >
-                      {AVAILABLE_YEARS.map(year => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Selector de semana */}
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Semana:</label>
-                    <select
-                      value={selectedWeek}
-                      onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
-                      className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <option>Cargando...</option>
-                      ) : availableWeeks.length > 0 ? (
-                        availableWeeks.map(week => (
-                          <option key={week.weekNumber} value={week.weekNumber}>
-                            Semana {week.weekNumber} ({week.startDate} - {week.endDate})
-                          </option>
-                        ))
-                      ) : (
-                        <option>No hay semanas disponibles</option>
+                  <div className="flex items-center gap-4 px-3 py-2 rounded-lg bg-gradient-to-br from-blue-50 to-slate-50 border border-blue-200 shadow-sm dark:from-blue-950/20 dark:to-slate-900/20 dark:border-blue-800">
+                    {/* Selector de Año para Consumo */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium">Año:</label>
+                      <select
+                        value={selectedYearForReadings}
+                        onChange={(e) => setSelectedYearForReadings(e.target.value)}
+                        className="px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={loading}
+                      >
+                        {AVAILABLE_YEARS.map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Selector de semana */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium">Semana:</label>
+                      <select
+                        value={selectedWeek}
+                        onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
+                        className="px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <option>Cargando...</option>
+                        ) : availableWeeks.length > 0 ? (
+                          availableWeeks.map(week => (
+                            <option key={week.weekNumber} value={week.weekNumber}>
+                              Semana {week.weekNumber} ({week.startDate} - {week.endDate})
+                            </option>
+                          ))
+                        ) : (
+                          <option>No hay semanas disponibles</option>
+                        )}
+                      </select>
+                      {loading && (
+                        <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
                       )}
-                    </select>
-                    {loading && (
-                      <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
-                    )}
+                    </div>
+                    {/* Tooltip de ayuda */}
+                    <div className="relative group flex items-center">
+                      <InfoIcon className="h-4 w-4 text-blue-600 cursor-help" />
+                      <div className="absolute z-50 right-0 top-full mt-2 hidden group-hover:block w-64 bg-white dark:bg-gray-900 rounded-lg border shadow-xl p-3 pointer-events-none">
+                        <p className="text-xs text-gray-700 dark:text-gray-300">
+                          Estos filtros de Año y Semana determinan los datos y comentarios mostrados en la tabla de pozos de abajo.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  {/* Toggle comparación */}
-                  <Button
-                    variant={showComparison ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowComparison(!showComparison)}
-                  >
-                    {showComparison ? 'Con Comparación' : 'Sin Comparación'}
-                  </Button>
                 </div>
               </div>
             </div>
@@ -932,7 +935,7 @@ export default function ConsumptionPage() {
                   title={category.name}
                   data={category.points}
                   weekNumber={selectedWeek}
-                  showComparison={showComparison}
+                  showComparison={true}
                   selectedYear={selectedYearForReadings}
                 />
               )
@@ -953,9 +956,11 @@ export default function ConsumptionPage() {
                     }}
                     className="px-3 py-2 border border-muted rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    {availableYears.map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
+                    {availableYears
+                      .filter(year => parseInt(year) < parseInt(DEFAULT_YEAR))
+                      .map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
                   </select>
                   <span className="text-sm font-medium">vs</span>
                   <select
