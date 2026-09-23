@@ -769,7 +769,7 @@ export default function AddWeeklyReadingsPage() {
         'wellness_suavizador_purga','wellness_te_purga', 'wellness_te_rebosadero', 
         'cedes_tinaco_riego_pluvial', 'megacentral_te_purgas', 'megacentral_suavizador_purga',
         'cah3_te_purgas', 'residencias_10_15_te_purga', 'estadio_borrego_pluvial',
-        'ciap_cisterna_pluvial', 'campo_soft_bol', 'cedes_ciudad',
+        'ciap_cisterna_pluvial', 'nucleo_entrada_cisterna', 'campo_soft_bol', 'cedes_ciudad',
         'estacionamiento_e3', 'guarderia', 'naranjos', 'casa_solar', 'escamilla_banos_alumnos',
         'residencias_11_ciudad', 'residencias_12_ciudad', 'residencias_13_1_ciudad',
         'residencias_13_2_ciudad', 'residencias_13_3_ciudad', 'residencias_15_sotano'
@@ -777,6 +777,7 @@ export default function AddWeeklyReadingsPage() {
 
     const templateData = []
     const aguaCiudadOrder = [
+      'nucleo_entrada_cisterna',
       'campo_soft_bol',
       'cedes_ciudad',
       'estacionamiento_e3',
