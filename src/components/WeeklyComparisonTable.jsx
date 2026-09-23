@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContextNew'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog'
 import { 
   ArrowUpIcon,
   ArrowDownIcon,
@@ -14,8 +15,13 @@ import {
   Loader2Icon,
   EditIcon,
   MessageSquarePlusIcon,
-  TrashIcon
+  TrashIcon,
+  EyeIcon,
+  XIcon
 } from 'lucide-react'
+
+// Longitud máxima de caracteres mostrada en la celda antes de ofrecer la previsualización
+const COMMENT_PREVIEW_THRESHOLD = 140
 
 /**
  * Tabla tipo Excel para comparación semanal entre años
@@ -37,12 +43,14 @@ export default function WeeklyComparisonTable({
 
   const { user } = useAuth()
 
-  // Comentarios semanales por recurso: { [week_number]: { id, comment, author, authorName, created_at, updated_at } }
+  // Comentarios semanales por recurso y año:
+  // { [year]: { [week_number]: { id, comment, author, authorName, created_at, updated_at } } }
   const [comments, setComments] = useState({})
   const [loadingComments, setLoadingComments] = useState(false)
-  const [editingWeek, setEditingWeek] = useState(null)
+  const [editingKey, setEditingKey] = useState(null) // { year, week }
   const [draft, setDraft] = useState('')
   const [savingComment, setSavingComment] = useState(false)
+  const [previewComment, setPreviewComment] = useState(null) // { comment, authorName, updated_at, year, week }
 
   useEffect(() => {
     fetchComments()
@@ -63,7 +71,9 @@ export default function WeeklyComparisonTable({
 
       const commentsMap = {}
       data?.forEach(comment => {
-        commentsMap[comment.week_number] = {
+        const yearKey = String(comment.year)
+        if (!commentsMap[yearKey]) commentsMap[yearKey] = {}
+        commentsMap[yearKey][comment.week_number] = {
           id: comment.id,
           comment: comment.comment,
           author: comment.author,
@@ -81,7 +91,7 @@ export default function WeeklyComparisonTable({
     }
   }
 
-  const saveComment = async (week) => {
+  const saveComment = async (week, year) => {
     if (!draft.trim()) {
       alert('Por favor ingresa un comentario')
       return
@@ -99,12 +109,13 @@ export default function WeeklyComparisonTable({
       const { data, error } = await supabase
         .from('weekly_comments')
         .upsert({
+          year: parseInt(year, 10),
           week_number: week,
           source_type: sourceType,
           comment: draft.trim(),
           author: user.id
         }, {
-          onConflict: 'week_number,source_type'
+          onConflict: 'year,week_number,source_type'
         })
         .select('*')
 
@@ -114,21 +125,25 @@ export default function WeeklyComparisonTable({
         return
       }
 
+      const yearKey = String(year)
       setComments(prev => ({
         ...prev,
-        [week]: {
-          id: data[0]?.id,
-          comment: draft.trim(),
-          author: user.id,
-          authorName: user.name !== 'Usuario' ? user.name : null,
-          created_at: data[0]?.created_at,
-          updated_at: data[0]?.updated_at
+        [yearKey]: {
+          ...(prev[yearKey] || {}),
+          [week]: {
+            id: data[0]?.id,
+            comment: draft.trim(),
+            author: user.id,
+            authorName: user.name !== 'Usuario' ? user.name : null,
+            created_at: data[0]?.created_at,
+            updated_at: data[0]?.updated_at
+          }
         }
       }))
 
-      setEditingWeek(null)
+      setEditingKey(null)
       setDraft('')
-      console.log('✅ Comentario semanal guardado:', week)
+      console.log('✅ Comentario semanal guardado:', year, week)
     } catch (err) {
       console.error('❌ Error al guardar comentario semanal:', err)
       alert('Error al guardar el comentario')
@@ -137,7 +152,7 @@ export default function WeeklyComparisonTable({
     }
   }
 
-  const deleteComment = async (week) => {
+  const deleteComment = async (week, year) => {
     if (!user?.id) {
       alert('Sesión no disponible. Inicia sesión para eliminar.')
       return
@@ -151,6 +166,7 @@ export default function WeeklyComparisonTable({
       const { error } = await supabase
         .from('weekly_comments')
         .delete()
+        .eq('year', parseInt(year, 10))
         .eq('week_number', week)
         .eq('source_type', sourceType)
         .eq('author', user.id)
@@ -162,17 +178,125 @@ export default function WeeklyComparisonTable({
         return
       }
 
+      const yearKey = String(year)
       setComments(prev => {
-        const updated = { ...prev }
-        delete updated[week]
+        const updated = { ...prev, [yearKey]: { ...(prev[yearKey] || {}) } }
+        delete updated[yearKey][week]
         return updated
       })
 
-      console.log('✅ Comentario semanal eliminado:', week)
+      console.log('✅ Comentario semanal eliminado:', year, week)
     } catch (err) {
       console.error('❌ Error al eliminar comentario semanal:', err)
       alert('Error al eliminar el comentario')
     }
+  }
+
+  // Render de la celda de comentarios para un año y semana concretos
+  const renderCommentCell = (year, week) => {
+    const yearKey = String(year)
+    const comment = comments[yearKey]?.[week]
+    const isEditing = editingKey?.year === yearKey && editingKey?.week === week
+
+    if (isEditing) {
+      return (
+        <div className="w-full min-w-0 space-y-2">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={3}
+            placeholder="Escribe un comentario sobre esta semana..."
+            className="w-full px-2 py-1 border border-muted rounded text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-y break-words"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              className="h-7 px-2.5 text-xs"
+              onClick={() => saveComment(week, year)}
+              disabled={savingComment || !draft.trim()}
+            >
+              {savingComment && <Loader2Icon className="h-3.5 w-3.5 mr-1 animate-spin" />}
+              Guardar
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2.5 text-xs"
+              onClick={() => { setEditingKey(null); setDraft('') }}
+              disabled={savingComment}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    if (comment) {
+      const isLong = (comment.comment?.length || 0) > COMMENT_PREVIEW_THRESHOLD
+      return (
+        <div className="w-full min-w-0 space-y-1.5">
+          <p className={`text-xs text-foreground whitespace-pre-wrap break-words leading-snug ${isLong ? 'line-clamp-3' : ''}`}>
+            {comment.comment}
+          </p>
+          {isLong && (
+            <button
+              type="button"
+              onClick={() => setPreviewComment({ ...comment, year: yearKey, week })}
+              className="inline-flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
+            >
+              <EyeIcon className="h-3 w-3" />
+              Ver completo
+            </button>
+          )}
+          <div className="min-w-0">
+            <p className="text-[10px] text-muted-foreground truncate">
+              - {comment.authorName || 'Usuario'}
+            </p>
+            {comment.updated_at && (
+              <p className="text-[10px] text-muted-foreground truncate">
+                Editado: {new Date(comment.updated_at).toLocaleString('es-MX')}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button
+              size="sm"
+              className="h-7 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+              title="Editar comentario"
+              onClick={() => { setEditingKey({ year: yearKey, week }); setDraft(comment.comment) }}
+            >
+              <EditIcon className="h-3.5 w-3.5 mr-1" />
+              Editar
+            </Button>
+            {comment.author === user?.id && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs text-red-600 border-red-300 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20"
+                title="Eliminar comentario"
+                onClick={() => deleteComment(week, year)}
+              >
+                <TrashIcon className="h-3.5 w-3.5 mr-1" />
+                Eliminar
+              </Button>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+        onClick={() => { setEditingKey({ year: yearKey, week }); setDraft('') }}
+      >
+        <MessageSquarePlusIcon className="h-3.5 w-3.5 mr-1" />
+        Comentar
+      </Button>
+    )
   }
 
   // Los datos ya vienen como consumo desde las tablas Lecturas_Semana_Agua_consumo
@@ -242,18 +366,21 @@ export default function WeeklyComparisonTable({
 
   // Exportar a CSV
   const exportToCSV = () => {
-    const headers = ['Semana', `${year1} (m³)`, `${year2} (m³)`, 'Cambio (%)', 'Diferencia (m³)', 'Comentarios']
+    const year1Key = String(year1)
+    const year2Key = String(year2)
+    const headers = ['Semana', `${year1} (m³)`, `${year2} (m³)`, 'Cambio (%)', 'Diferencia (m³)', `Comentario ${year1}`, `Comentario ${year2}`]
     const rows = weekRows.map(row => [
       row.week,
       row.consumption2024.toFixed(2),
       row.consumption2025.toFixed(2),
       row.change.toFixed(1),
       (row.consumption2025 - row.consumption2024).toFixed(2),
-      (comments[row.week]?.comment || '').replace(/"/g, '""')
+      (comments[year1Key]?.[row.week]?.comment || '').replace(/"/g, '""'),
+      (comments[year2Key]?.[row.week]?.comment || '').replace(/"/g, '""')
     ])
     
     // Agregar fila de totales
-    rows.push(['TOTAL', totals.total2024.toFixed(2), totals.total2025.toFixed(2), totals.avgChange.toFixed(1), (totals.total2025 - totals.total2024).toFixed(2), ''])
+    rows.push(['TOTAL', totals.total2024.toFixed(2), totals.total2025.toFixed(2), totals.avgChange.toFixed(1), (totals.total2025 - totals.total2024).toFixed(2), '', ''])
 
     const csvContent = [
       headers.join(','),
@@ -342,7 +469,15 @@ export default function WeeklyComparisonTable({
 
       <CardContent>
         <div className="overflow-x-auto max-h-[600px] overflow-y-auto border rounded-lg">
-          <table className="w-full border-collapse">
+          <table className="w-full table-fixed border-collapse min-w-[880px]">
+            <colgroup>
+              <col className="w-[10%]" />
+              <col className="w-[13%]" />
+              <col className="w-[13%]" />
+              <col className="w-[14%]" />
+              <col className="w-[25%]" />
+              <col className="w-[25%]" />
+            </colgroup>
             <thead className="sticky top-0 bg-background z-10 border-b-2 border-muted">
               <tr>
                 <th className="p-3 text-left font-semibold text-sm border-r bg-muted/50">Semana</th>
@@ -358,10 +493,17 @@ export default function WeeklyComparisonTable({
                   <div>Variación</div>
                   <div className="text-xs font-normal text-muted-foreground">({year2} vs {year1})</div>
                 </th>
-                <th className="p-3 text-left font-semibold text-sm border-l bg-violet-50 dark:bg-violet-900/20">
-                  <div className="flex items-center gap-1">
-                    <span>Comentarios</span>
-                    {loadingComments && <Loader2Icon className="h-3 w-3 animate-spin text-muted-foreground" />}
+                <th className="p-2 text-left align-top font-semibold text-sm border-l bg-violet-50 dark:bg-violet-900/20">
+                  <div className="flex items-center gap-1 break-words">
+                    <span>Comentario {year1}</span>
+                    {loadingComments && <Loader2Icon className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />}
+                  </div>
+                  <div className="text-xs font-normal text-muted-foreground">(por semana)</div>
+                </th>
+                <th className="p-2 text-left align-top font-semibold text-sm border-l bg-fuchsia-50 dark:bg-fuchsia-900/20">
+                  <div className="flex items-center gap-1 break-words">
+                    <span>Comentario {year2}</span>
+                    {loadingComments && <Loader2Icon className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />}
                   </div>
                   <div className="text-xs font-normal text-muted-foreground">(por semana)</div>
                 </th>
@@ -414,86 +556,14 @@ export default function WeeklyComparisonTable({
                     )}
                   </td>
 
-                  {/* Comentarios */}
-                  <td className="p-3 text-sm border-l">
-                    {editingWeek === row.week ? (
-                      <div className="space-y-2">
-                        <textarea
-                          value={draft}
-                          onChange={(e) => setDraft(e.target.value)}
-                          rows={2}
-                          placeholder="Escribe un comentario sobre esta semana..."
-                          className="w-full px-2 py-1 border border-muted rounded text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                        />
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => saveComment(row.week)}
-                            disabled={savingComment || !draft.trim()}
-                          >
-                            {savingComment && <Loader2Icon className="h-3.5 w-3.5 mr-1 animate-spin" />}
-                            Guardar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => { setEditingWeek(null); setDraft('') }}
-                            disabled={savingComment}
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : comments[row.week] ? (
-                      <div className="flex items-start gap-2">
-                        <div className="flex-1 text-left">
-                          <p className="text-xs text-foreground whitespace-pre-wrap">{comments[row.week].comment}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            - {comments[row.week].authorName || 'Usuario'}
-                          </p>
-                          {comments[row.week].updated_at && (
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                              Última edición: {new Date(comments[row.week].updated_at).toLocaleString('es-MX')}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-1 flex-shrink-0">
-                          <Button
-                            size="sm"
-                            className="h-8 px-2.5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                            title="Editar comentario"
-                            onClick={() => { setEditingWeek(row.week); setDraft(comments[row.week].comment) }}
-                          >
-                            <EditIcon className="h-4 w-4 mr-1" />
-                            Editar
-                          </Button>
-                          {comments[row.week]?.author === user?.id && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900"
-                              title="Eliminar comentario"
-                              onClick={() => deleteComment(row.week)}
-                            >
-                              <TrashIcon className="h-4 w-4 mr-1" />
-                              Eliminar
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-xs"
-                          onClick={() => { setEditingWeek(row.week); setDraft('') }}
-                        >
-                          <MessageSquarePlusIcon className="h-3.5 w-3.5 mr-1" />
-                          Comentar
-                        </Button>
-                      </div>
-                    )}
+                  {/* Comentario año 1 */}
+                  <td className="p-2 text-sm border-l align-top">
+                    {renderCommentCell(year1, row.week)}
+                  </td>
+
+                  {/* Comentario año 2 */}
+                  <td className="p-2 text-sm border-l align-top">
+                    {renderCommentCell(year2, row.week)}
                   </td>
                 </tr>
               ))}
@@ -517,11 +587,45 @@ export default function WeeklyComparisonTable({
                   </span>
                 </td>
                 <td className="p-3 border-l"></td>
+                <td className="p-3 border-l"></td>
               </tr>
             </tbody>
           </table>
         </div>
       </CardContent>
+
+      {/* Modal de previsualización de comentario completo */}
+      <Dialog open={!!previewComment} onOpenChange={(open) => { if (!open) setPreviewComment(null) }}>
+        <DialogHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <DialogTitle>
+                Comentario — Semana {previewComment?.week} · {previewComment?.year}
+              </DialogTitle>
+              <DialogDescription>
+                {previewComment?.authorName || 'Usuario'}
+                {previewComment?.updated_at && (
+                  <> · Editado: {new Date(previewComment.updated_at).toLocaleString('es-MX')}</>
+                )}
+              </DialogDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 shrink-0"
+              title="Cerrar"
+              onClick={() => setPreviewComment(null)}
+            >
+              <XIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+        <DialogContent>
+          <p className="px-6 py-4 text-sm text-gray-700 whitespace-pre-wrap break-words">
+            {previewComment?.comment}
+          </p>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
