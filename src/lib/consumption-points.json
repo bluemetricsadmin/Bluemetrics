@@ -2467,14 +2467,7 @@
               "reading": 14580
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "agua_ciudad",
-      "name": "Agua de la Ciudad",
-      "description": "Medidores conectados al suministro municipal",
-      "points": [
+        },
          {
           "id": "nucleo_entrada_cisterna",
           "name": "Núcleo - Entrada Cisterna (Agua suavizada)",
@@ -2490,7 +2483,15 @@
               "reading": 14580
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "id": "agua_ciudad",
+      "name": "Agua de la Ciudad",
+      "description": "Medidores conectados al suministro municipal",
+      "points": [
+        
         {
           "id": "campo_soft_bol",
           "name": "Linea respaldo (Ciudad) Cisterna 1 y 2",
