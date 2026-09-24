@@ -376,7 +376,7 @@ export default function AddWeeklyGasReadingsPage() {
         'wellness_acometida_digital': 1,
         'wellness_acometida_analogica': 1.2,
         'wellness_supersalads': 1.2,
-        'wellness_general_calefaccion': 1,
+        'wellness_general_calefaccion': 1.2,
         'wellness_calentador_sotano_regaderas': 1,
         'wellness_alberca': 1,
         'auditorio_luis_elizondo': 1,
