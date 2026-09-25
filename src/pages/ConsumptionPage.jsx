@@ -813,6 +813,7 @@ export default function ConsumptionPage() {
               selectedYearsToShow={comparisonYearsToShow}
               showControls={false}
               multiYearData={multiYearData}
+              sourceType="agua"
             />
           </div>
 

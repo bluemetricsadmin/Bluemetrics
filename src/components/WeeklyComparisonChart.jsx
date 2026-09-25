@@ -1,8 +1,9 @@
 import { formatMX } from '../utils/formatMX'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Line, Bar } from 'react-chartjs-2'
+import { supabase } from '../supabaseClient'
 import { getColorForYear } from '../utils/chartColors'
 import { getMonthForWeek } from '../utils/tableHelpers'
 import { getPreviousYearData, construirEtiquetaYoY } from '../utils/yearOverYear'
@@ -11,7 +12,11 @@ import {
   TrendingDownIcon,
   MinusIcon,
   BarChart3Icon,
-  LineChartIcon
+  LineChartIcon,
+  MessageSquareIcon,
+  InfoIcon,
+  XIcon,
+  Loader2Icon
 } from 'lucide-react'
 
 /**
@@ -32,13 +37,67 @@ export default function WeeklyComparisonChart({
   multiYearData = null, // Nueva prop: array de { year: '2023', data: [...] }
   multiYearDataRiego = null, // Datos de pozos de riego
   multiYearDataServicios = null, // Datos de pozos de servicios
-  total2023 = 0 // Total del año 2023
+  total2023 = 0, // Total del año 2023
+  sourceType = "agua" // Tipo de recurso para los comentarios semanales ('agua' | 'gas')
 }) {
 
   const [internalChartType, setInternalChartType] = useState('line') // 'line' o 'bar'
   const [internalComparisonMode, setInternalComparisonMode] = useState('both') // 'current', 'previous', 'both'
   const [wellFilter, setWellFilter] = useState('total') // 'total', 'riego', 'servicios'
   const [selectedYears, setSelectedYears] = useState(['2026']) // Últimos 2 años por default
+
+  // Comentarios semanales por recurso y año:
+  // { [year]: { [week_number]: { comment, author, authorName, updated_at } } }
+  const [weekComments, setWeekComments] = useState({})
+  const [loadingComments, setLoadingComments] = useState(false)
+  const [selectedWeek, setSelectedWeek] = useState(null)
+  const [selectedYear, setSelectedYear] = useState(null)
+
+  // Precarga de todos los comentarios del recurso activo (filtrado local por año/semana)
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchComments = async () => {
+      try {
+        setLoadingComments(true)
+        const { data, error } = await supabase
+          .from('weekly_comments')
+          .select('week_number, comment, year, author, updated_at, profiles(full_name)')
+          .eq('source_type', sourceType)
+
+        if (error) {
+          console.error('❌ Error cargando comentarios semanales para la gráfica:', error)
+          if (!cancelled) setWeekComments({})
+          return
+        }
+
+        const map = {}
+        data?.forEach(c => {
+          const yearKey = String(c.year)
+          if (!map[yearKey]) map[yearKey] = {}
+          map[yearKey][c.week_number] = {
+            comment: c.comment,
+            author: c.author,
+            authorName: c.profiles?.full_name || null,
+            updated_at: c.updated_at
+          }
+        })
+
+        if (!cancelled) setWeekComments(map)
+      } catch (err) {
+        console.error('❌ Error al cargar comentarios semanales para la gráfica:', err)
+        if (!cancelled) setWeekComments({})
+      } finally {
+        if (!cancelled) setLoadingComments(false)
+      }
+    }
+
+    fetchComments()
+    setSelectedWeek(null)
+    setSelectedYear(null)
+
+    return () => { cancelled = true }
+  }, [sourceType])
   
   // Usar props externos si se proporcionan, sino usar estados internos
   const chartType = externalChartType !== null ? externalChartType : internalChartType
@@ -171,6 +230,59 @@ export default function WeeklyComparisonChart({
   }
   const yoyWeekLookup = buildYoyWeekLookup()
 
+  // Mapeo datasetIndex -> año, en el mismo orden en que se construyen los datasets
+  const datasetYears = useMemo(() => {
+    if (useMultiYear && processedMultiYear.length > 0) {
+      return processedMultiYear.map(yearItem => String(yearItem.year))
+    }
+    const years = []
+    if (comparisonMode === 'current' || comparisonMode === 'both') {
+      years.push(String(effectiveCurrentYear))
+    }
+    if ((comparisonMode === 'previous' || comparisonMode === 'both') && processedPrevious.length > 0) {
+      years.push(String(effectivePreviousYear))
+    }
+    return years
+  }, [useMultiYear, processedMultiYear, comparisonMode, effectiveCurrentYear, effectivePreviousYear, processedPrevious])
+
+  // Helpers de comentarios semanales
+  const hasComment = useCallback(
+    (year, week) => Boolean(weekComments[String(year)]?.[week]),
+    [weekComments]
+  )
+
+  const selectedComment = selectedWeek != null && selectedYear
+    ? weekComments[String(selectedYear)]?.[selectedWeek] || null
+    : null
+
+  const clearSelectedWeek = () => {
+    setSelectedWeek(null)
+    setSelectedYear(null)
+  }
+
+  // Manejar clic sobre un punto/barra de la gráfica para seleccionar su semana y año
+  const handleChartClick = (event, _elements, chart) => {
+    const hits = chart
+      ? chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)
+      : []
+    if (!hits || hits.length === 0) return
+    const { index, datasetIndex } = hits[0]
+    const year = datasetYears[datasetIndex]
+    if (year === undefined || year === null) return
+    setSelectedWeek(index + 1)
+    setSelectedYear(String(year))
+  }
+
+  // Cambiar el cursor al pasar sobre un punto interactivo
+  const handleChartHover = (event, elements, chart) => {
+    const target = event?.native?.target || event?.target
+    if (!target?.style) return
+    const hits = chart
+      ? chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)
+      : elements
+    target.style.cursor = hits && hits.length > 0 ? 'pointer' : 'default'
+  }
+
   // Calcular estadísticas comparativas
   const comparisonStats = useMemo(() => {
     if (processedCurrent.length === 0) {
@@ -247,23 +359,34 @@ export default function WeeklyComparisonChart({
       processedMultiYear.forEach((yearItem, index) => {
         const color = getColorForYear(yearItem.year)
         const isLastYear = index === processedMultiYear.length - 1
-        
+        const weeks = yearItem.processed.map(d => d.week)
+        const isSelectedYear = String(selectedYear) === String(yearItem.year)
+
         datasets.push({
           label: yearItem.year,
           data: yearItem.processed.map(d => d.consumption),
-          borderColor: color.border,
-          backgroundColor: chartType === 'bar' ? color.bg : color.bgFill,
-          borderWidth: 2,
+          borderColor: chartType === 'bar'
+            ? weeks.map(w => hasComment(yearItem.year, w) ? 'rgb(139, 92, 246)' : color.border)
+            : color.border,
+          backgroundColor: chartType === 'bar'
+            ? weeks.map(w => hasComment(yearItem.year, w) ? 'rgba(139, 92, 246, 0.75)' : color.bg)
+            : color.bgFill,
+          borderWidth: chartType === 'bar' ? 1 : 2,
           borderDash: isLastYear ? [] : [5, 5],
           fill: chartType === 'line',
           tension: 0.4,
-          pointRadius: isLastYear ? 3 : 2,
+          pointRadius: weeks.map(w => (isSelectedYear && selectedWeek === w) ? 7 : (isLastYear ? 3 : 2)),
           pointHoverRadius: isLastYear ? 6 : 5,
-          pointBackgroundColor: isLastYear ? yearItem.processed.map(d => {
-            if (d.vsLastWeekPercent > 5) return 'rgb(239, 68, 68)'
-            if (d.vsLastWeekPercent < -5) return 'rgb(34, 197, 94)'
+          pointBackgroundColor: weeks.map((w, i) => {
+            if (chartType === 'bar') return hasComment(yearItem.year, w) ? 'rgb(139, 92, 246)' : color.border
+            if (isLastYear) {
+              if (yearItem.processed[i].vsLastWeekPercent > 5) return 'rgb(239, 68, 68)'
+              if (yearItem.processed[i].vsLastWeekPercent < -5) return 'rgb(34, 197, 94)'
+            }
             return color.border
-          }) : color.border
+          }),
+          pointBorderColor: weeks.map(w => hasComment(yearItem.year, w) ? 'rgb(139, 92, 246)' : 'rgba(0, 0, 0, 0)'),
+          pointBorderWidth: weeks.map(w => hasComment(yearItem.year, w) ? 2.5 : 0)
         })
       })
       
@@ -277,45 +400,65 @@ export default function WeeklyComparisonChart({
     const previousColor = getColorForYear(effectivePreviousYear)
 
     if (comparisonMode === 'current' || comparisonMode === 'both') {
+      const currentWeeks = processedCurrent.map(d => d.week)
+      const isSelectedYear = String(selectedYear) === String(effectiveCurrentYear)
       datasets.push({
         label: `${effectiveCurrentYear}`,
         data: processedCurrent.map(d => d.consumption),
-        borderColor: currentColor.border,
-        backgroundColor: chartType === 'bar' ? currentColor.bg : currentColor.bgFill,
-        borderWidth: 2,
+        borderColor: chartType === 'bar'
+          ? currentWeeks.map(w => hasComment(effectiveCurrentYear, w) ? 'rgb(139, 92, 246)' : currentColor.border)
+          : currentColor.border,
+        backgroundColor: chartType === 'bar'
+          ? currentWeeks.map(w => hasComment(effectiveCurrentYear, w) ? 'rgba(139, 92, 246, 0.75)' : currentColor.bg)
+          : currentColor.bgFill,
+        borderWidth: chartType === 'bar' ? 1 : 2,
         fill: chartType === 'line',
         tension: 0.4,
-        pointRadius: 3,
+        pointRadius: currentWeeks.map(w => (isSelectedYear && selectedWeek === w) ? 7 : 3),
         pointHoverRadius: 6,
-        pointBackgroundColor: processedCurrent.map(d => {
-          if (d.vsLastWeekPercent > 5) return 'rgb(239, 68, 68)'
-          if (d.vsLastWeekPercent < -5) return 'rgb(34, 197, 94)'
+        pointBackgroundColor: currentWeeks.map((w, i) => {
+          if (chartType === 'bar') return hasComment(effectiveCurrentYear, w) ? 'rgb(139, 92, 246)' : currentColor.border
+          if (processedCurrent[i].vsLastWeekPercent > 5) return 'rgb(239, 68, 68)'
+          if (processedCurrent[i].vsLastWeekPercent < -5) return 'rgb(34, 197, 94)'
           return currentColor.border
-        })
+        }),
+        pointBorderColor: currentWeeks.map(w => hasComment(effectiveCurrentYear, w) ? 'rgb(139, 92, 246)' : 'rgba(0, 0, 0, 0)'),
+        pointBorderWidth: currentWeeks.map(w => hasComment(effectiveCurrentYear, w) ? 2.5 : 0)
       })
     }
 
     if ((comparisonMode === 'previous' || comparisonMode === 'both') && processedPrevious.length > 0) {
+      const previousWeeks = processedPrevious.map(d => d.week)
+      const isSelectedYear = String(selectedYear) === String(effectivePreviousYear)
       datasets.push({
         label: `${effectivePreviousYear}`,
         data: processedPrevious.map(d => d.consumption),
-        borderColor: previousColor.border,
-        backgroundColor: chartType === 'bar' ? previousColor.bg : previousColor.bgFill,
-        borderWidth: 2,
+        borderColor: chartType === 'bar'
+          ? previousWeeks.map(w => hasComment(effectivePreviousYear, w) ? 'rgb(139, 92, 246)' : previousColor.border)
+          : previousColor.border,
+        backgroundColor: chartType === 'bar'
+          ? previousWeeks.map(w => hasComment(effectivePreviousYear, w) ? 'rgba(139, 92, 246, 0.75)' : previousColor.bg)
+          : previousColor.bgFill,
+        borderWidth: chartType === 'bar' ? 1 : 2,
         borderDash: [5, 5],
         fill: chartType === 'line',
         tension: 0.4,
-        pointRadius: 2,
-        pointHoverRadius: 5
+        pointRadius: previousWeeks.map(w => (isSelectedYear && selectedWeek === w) ? 7 : 2),
+        pointHoverRadius: 5,
+        pointBackgroundColor: previousWeeks.map(w => hasComment(effectivePreviousYear, w) ? 'rgb(139, 92, 246)' : previousColor.border),
+        pointBorderColor: previousWeeks.map(w => hasComment(effectivePreviousYear, w) ? 'rgb(139, 92, 246)' : 'rgba(0, 0, 0, 0)'),
+        pointBorderWidth: previousWeeks.map(w => hasComment(effectivePreviousYear, w) ? 2.5 : 0)
       })
     }
 
     return { labels, datasets }
-  }, [processedCurrent, processedPrevious, effectiveCurrentYear, effectivePreviousYear, chartType, comparisonMode, useMultiYear, processedMultiYear])
+  }, [processedCurrent, processedPrevious, effectiveCurrentYear, effectivePreviousYear, chartType, comparisonMode, useMultiYear, processedMultiYear, hasComment, selectedWeek, selectedYear])
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    onClick: handleChartClick,
+    onHover: handleChartHover,
     interaction: {
       mode: 'index',
       intersect: false,
@@ -561,6 +704,70 @@ export default function WeeklyComparisonChart({
       </CardHeader>
 
       <CardContent>
+        {/* Comentario de la semana seleccionada al hacer clic en la gráfica */}
+        <div className="mb-4">
+          {selectedWeek == null ? (
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-dashed border-muted bg-muted/20 text-sm text-muted-foreground">
+              <MessageSquareIcon className="h-4 w-4 shrink-0" />
+              <span>Haz clic en un punto de la gráfica para ver el comentario de esa semana.</span>
+              {loadingComments && <Loader2Icon className="h-3.5 w-3.5 animate-spin" />}
+            </div>
+          ) : (
+            <div className={`rounded-lg border p-4 ${
+              selectedComment
+                ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800'
+                : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+            }`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <MessageSquareIcon className={`h-4 w-4 shrink-0 ${selectedComment ? 'text-violet-600' : 'text-amber-600'}`} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      Semana {selectedWeek} · {selectedYear}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {getMonthForWeek(selectedWeek)}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 shrink-0"
+                  title="Quitar selección"
+                  onClick={clearSelectedWeek}
+                >
+                  <XIcon className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {loadingComments ? (
+                <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                  <Loader2Icon className="h-4 w-4 animate-spin" />
+                  Cargando comentario...
+                </div>
+              ) : selectedComment ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                    {selectedComment.comment}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                    <span>- {selectedComment.authorName || 'Usuario'}</span>
+                    {selectedComment.updated_at && (
+                      <span>Editado: {new Date(selectedComment.updated_at).toLocaleString('es-MX')}</span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 mt-3 text-sm text-amber-800 dark:text-amber-200">
+                  <InfoIcon className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>Sin comentarios registrados para la Semana {selectedWeek} del año {selectedYear}.</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="h-[450px] w-full">
           <ChartComponent data={chartData} options={chartOptions} />
         </div>
@@ -581,6 +788,10 @@ export default function WeeklyComparisonChart({
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 <span>Disminución &lt;0% (verde)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-white border-2 border-violet-500"></div>
+                <span>Semana con comentario</span>
               </div>
             </div>
           </div>

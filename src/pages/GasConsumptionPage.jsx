@@ -1080,6 +1080,7 @@ export default function GasConsumptionPage() {
                 selectedYearsToShow={comparisonYearsToShow}
                 showControls={false}
                 multiYearData={multiYearData}
+                sourceType="gas"
               />
             </div>
 
