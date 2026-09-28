@@ -9,7 +9,7 @@ export const yearConsumptionService = {
    */
   async getAnnualizedConsumption({
     search = '',
-    sortBy = 'consumo_total',
+    sortBy = 'consumo_2026',
     sortDir = 'desc',
     limit = 10,
     offset = 0,

@@ -9,15 +9,16 @@ import {
   Loader2Icon,
   SearchIcon,
   Droplet,
+  FilterIcon,
 } from 'lucide-react'
 
 const COLUMNS = [
+  { key: 'numero', label: 'No.', value: row => row.rowNumber, align: 'right' },
   { key: 'medidor', label: 'Medidor', value: row => row.medidorNombre, align: 'left' },
   { key: 'consumo_2023', label: '2023', value: row => row.consumo2023, align: 'right' },
   { key: 'consumo_2024', label: '2024', value: row => row.consumo2024, align: 'right' },
   { key: 'consumo_2025', label: '2025', value: row => row.consumo2025, align: 'right' },
-  { key: 'consumo_2026', label: '2026', value: row => row.consumo2026, align: 'right' },
-  { key: 'consumo_total', label: 'Total', value: row => row.consumoTotal, align: 'right' },
+  { key: 'consumo_2026', label: '2026', value: row => row.consumo2026, align: 'right', sortable: true },
 ]
 
 function SortIcon({ active, direction }) {
@@ -38,6 +39,7 @@ export default function YearConsumptionTable({
     error,
     searchTerm,
     setSearchTerm,
+    filterMode,
     sortConfig,
     handleSort,
     toggleSortDirection,
@@ -69,7 +71,7 @@ export default function YearConsumptionTable({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar medidor..."
+                placeholder="Buscar medidor o número..."
                 className="w-full border border-muted rounded-lg pl-9 pr-3 py-2 text-sm bg-background hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
               />
             </div>
@@ -88,6 +90,22 @@ export default function YearConsumptionTable({
             </Button>
           </div>
         </div>
+
+        {filterMode && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mt-4 flex flex-wrap items-center gap-2 text-xs"
+          >
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary">
+              <FilterIcon className="h-3 w-3" />
+              Filtrando por {filterMode === 'numero' ? 'No.' : 'Medidor'}: {searchTerm}
+            </span>
+            <span className="text-muted-foreground">
+              Orden {isDesc ? 'mayor a menor' : 'menor a mayor'}
+            </span>
+          </div>
+        )}
       </CardHeader>
 
       <CardContent>
@@ -108,7 +126,7 @@ export default function YearConsumptionTable({
                 <thead>
                   <tr className="border-b border-muted bg-muted/40">
                     {COLUMNS.map(col => {
-                      const active = sortConfig.key === col.key
+                      const active = col.sortable && sortConfig.key === col.key
                       return (
                         <th
                           key={col.key}
@@ -117,17 +135,21 @@ export default function YearConsumptionTable({
                             col.align === 'right' ? 'text-right' : 'text-left'
                           }`}
                         >
-                          <button
-                            type="button"
-                            onClick={() => handleSort(col.key)}
-                            className={`inline-flex items-center gap-1.5 transition-colors hover:text-foreground ${
-                              active ? 'text-foreground' : ''
-                            }`}
-                          >
-                            {col.align === 'right' && <SortIcon active={active} direction={sortConfig.direction} />}
-                            {col.label}
-                            {col.align === 'left' && <SortIcon active={active} direction={sortConfig.direction} />}
-                          </button>
+                          {col.sortable ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSort(col.key)}
+                              className={`inline-flex items-center gap-1.5 transition-colors hover:text-foreground ${
+                                active ? 'text-foreground' : ''
+                              }`}
+                            >
+                              {col.align === 'right' && <SortIcon active={active} direction={sortConfig.direction} />}
+                              {col.label}
+                              {col.align === 'left' && <SortIcon active={active} direction={sortConfig.direction} />}
+                            </button>
+                          ) : (
+                            col.label
+                          )}
                         </th>
                       )
                     })}
@@ -145,10 +167,12 @@ export default function YearConsumptionTable({
                           className={`px-4 py-2.5 whitespace-nowrap ${
                             col.align === 'right' ? 'text-right tabular-nums' : 'text-left text-foreground'
                           } ${col.key === 'medidor' ? 'font-medium' : ''} ${
-                            col.key === 'consumo_total' ? 'font-semibold' : ''
+                            col.key === 'numero' ? 'text-muted-foreground' : ''
                           }`}
                         >
-                          {col.key === 'medidor' ? col.value(row) : formatMX(col.value(row))}
+                          {col.key === 'medidor' || col.key === 'numero'
+                            ? col.value(row)
+                            : formatMX(col.value(row))}
                         </td>
                       ))}
                     </tr>
