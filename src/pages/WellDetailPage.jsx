@@ -1230,6 +1230,7 @@ export default function WellDetailPage() {
                   selectedYearsToShow={selectedYears}
                   multiYearData={multiYearData}
                   total2023={totalConsumption2023}
+                  sourceType="agua"
                 />
               </div>
             </div>

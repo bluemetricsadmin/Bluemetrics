@@ -12,6 +12,7 @@ import { CalendarIcon, Loader2Icon, BarChart3Icon, FlameIcon, Droplet } from 'lu
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
 import { useAuth } from '../contexts/AuthContextNew';
+import YearConsumptionTable from '../components/YearConsumptionTable';
 
 const CONSUMPTION_TABLE = 'lecturas_semana_agua_consumo_2026'
 const GAS_CONSUMPTION_TABLE = 'lecturas_semanales_gas_consumo_2026'
@@ -432,7 +433,7 @@ export default function DashboardPage() {
               </Card>
             )}
 
-
+            <YearConsumptionTable />
 
 {/**
  * 

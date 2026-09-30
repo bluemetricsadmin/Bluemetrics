@@ -729,6 +729,7 @@ export default function WellsPage() {
                 unit="m³"
                 total2023={kpiData.total2023}
                 showControls={true}
+                sourceType="agua"
               />
             ) : (
               <WellsGeneralCharts />
