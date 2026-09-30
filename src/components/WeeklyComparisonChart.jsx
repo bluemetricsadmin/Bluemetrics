@@ -14,6 +14,7 @@ import {
   BarChart3Icon,
   LineChartIcon,
   MessageSquareIcon,
+  MessageSquareOffIcon,
   InfoIcon,
   XIcon,
   Loader2Icon
@@ -52,6 +53,7 @@ export default function WeeklyComparisonChart({
   const [loadingComments, setLoadingComments] = useState(false)
   const [selectedWeek, setSelectedWeek] = useState(null)
   const [selectedYear, setSelectedYear] = useState(null)
+  const [showComments, setShowComments] = useState(true)
 
   // Precarga de todos los comentarios del recurso activo (filtrado local por año/semana)
   useEffect(() => {
@@ -247,13 +249,29 @@ export default function WeeklyComparisonChart({
 
   // Helpers de comentarios semanales
   const hasComment = useCallback(
-    (year, week) => Boolean(weekComments[String(year)]?.[week]),
-    [weekComments]
+    (year, week) => showComments && Boolean(weekComments[String(year)]?.[week]),
+    [weekComments, showComments]
   )
 
-  const selectedComment = selectedWeek != null && selectedYear
-    ? weekComments[String(selectedYear)]?.[selectedWeek] || null
-    : null
+  // Comentarios de la semana seleccionada para todos los años visibles (hasta 4)
+  const selectedWeekComments = useMemo(() => {
+    if (selectedWeek == null) return []
+    return datasetYears
+      .map(year => {
+        const entry = weekComments[String(year)]?.[selectedWeek]
+        if (!entry) return null
+        return {
+          year: String(year),
+          comment: entry.comment,
+          authorName: entry.authorName,
+          updated_at: entry.updated_at,
+          color: getColorForYear(year).border,
+          isSelected: String(selectedYear) === String(year)
+        }
+      })
+      .filter(Boolean)
+      .reverse()
+  }, [selectedWeek, selectedYear, datasetYears, weekComments])
 
   const clearSelectedWeek = () => {
     setSelectedWeek(null)
@@ -262,6 +280,7 @@ export default function WeeklyComparisonChart({
 
   // Manejar clic sobre un punto/barra de la gráfica para seleccionar su semana y año
   const handleChartClick = (event, _elements, chart) => {
+    if (!showComments) return
     const hits = chart
       ? chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)
       : []
@@ -277,6 +296,10 @@ export default function WeeklyComparisonChart({
   const handleChartHover = (event, elements, chart) => {
     const target = event?.native?.target || event?.target
     if (!target?.style) return
+    if (!showComments) {
+      target.style.cursor = 'default'
+      return
+    }
     const hits = chart
       ? chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true)
       : elements
@@ -551,16 +574,32 @@ export default function WeeklyComparisonChart({
   return (
     <Card className="w-full">
       <CardHeader>
-        <div>
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <p className="text-sm text-muted-foreground">
-            Análisis comparativo de consumo semanal
-          </p>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold truncate">{title}</h3>
+            <p className="text-xs text-muted-foreground">
+              Análisis comparativo de consumo semanal
+            </p>
+          </div>
+          <Button
+            variant={showComments ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 shrink-0"
+            title={showComments ? 'Ocultar comentarios' : 'Mostrar comentarios'}
+            onClick={() => setShowComments(v => !v)}
+          >
+            {showComments ? (
+              <MessageSquareIcon className="h-4 w-4" />
+            ) : (
+              <MessageSquareOffIcon className="h-4 w-4" />
+            )}
+            <span className="ml-1 hidden sm:inline">Comentarios</span>
+          </Button>
         </div>
 
         {/* Controles - solo mostrar si showControls es true */}
         {showControls && (
-          <div className="flex items-center gap-2 flex-wrap mt-4">
+          <div className="flex items-center gap-2 flex-wrap mt-3">
             {/* Selector de filtro de pozos */}
             <select
               value={wellFilter}
@@ -631,20 +670,20 @@ export default function WeeklyComparisonChart({
         )}
 
         {/* Estadísticas de comparación */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 mt-3">
           {/* Totales dinámicos por año */}
           {useMultiYear && processedMultiYear.length > 0 ? (
             processedMultiYear.slice().reverse().map((yearItem, index) => {
               const yearTotal = yearItem.processed.reduce((sum, w) => sum + w.consumption, 0)
               const isLatest = index === 0
               return (
-                <div key={yearItem.year} className={`p-3 rounded-lg border ${
+                <div key={yearItem.year} className={`p-2 rounded-lg border ${
                   isLatest
                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200'
                     : 'bg-gray-50 dark:bg-gray-800 border-gray-200'
                 }`}>
-                  <p className="text-xs text-muted-foreground">Total {yearItem.year}</p>
-                  <p className={`text-lg font-bold ${isLatest ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  <p className="text-[11px] text-muted-foreground">Total {yearItem.year}</p>
+                  <p className={`text-base font-bold ${isLatest ? 'text-foreground' : 'text-muted-foreground'}`}>
                     {formatMX(yearTotal)} {unit}
                   </p>
                 </div>
@@ -652,15 +691,15 @@ export default function WeeklyComparisonChart({
             })
           ) : (
             <>
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
-                <p className="text-xs text-muted-foreground">Total {effectiveCurrentYear}</p>
-                <p className="text-lg font-bold text-foreground">
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+                <p className="text-[11px] text-muted-foreground">Total {effectiveCurrentYear}</p>
+                <p className="text-base font-bold text-foreground">
                   {formatMX(comparisonStats.currentTotal)} {unit}
                 </p>
               </div>
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
-                <p className="text-xs text-muted-foreground">Total {effectivePreviousYear}</p>
-                <p className="text-lg font-bold text-muted-foreground">
+              <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200">
+                <p className="text-[11px] text-muted-foreground">Total {effectivePreviousYear}</p>
+                <p className="text-base font-bold text-muted-foreground">
                   {formatMX(comparisonStats.previousTotal)} {unit}
                 </p>
               </div>
@@ -669,14 +708,14 @@ export default function WeeklyComparisonChart({
 
           {/* Cambio año sobre año */}
           {canCompareYearOverYear && (
-            <div className={`p-3 rounded-lg border ${
+            <div className={`p-2 rounded-lg border ${
               comparisonStats.yearOverYear > 0 
                 ? 'bg-red-50 dark:bg-red-900/20 border-red-200' 
                 : comparisonStats.yearOverYear < 0
                 ? 'bg-green-50 dark:bg-green-900/20 border-green-200'
                 : 'bg-gray-50 dark:bg-gray-800 border-gray-200'
             }`}>
-              <p className="text-xs text-muted-foreground">Cambio Anual</p>
+              <p className="text-[11px] text-muted-foreground">Cambio Anual</p>
               <div className="flex items-center gap-1">
                 {comparisonStats.yearOverYear > 0 ? (
                   <TrendingUpIcon className="h-4 w-4 text-red-600" />
@@ -685,7 +724,7 @@ export default function WeeklyComparisonChart({
                 ) : (
                   <MinusIcon className="h-4 w-4 text-gray-600" />
                 )}
-                <p className={`text-lg font-bold ${
+                <p className={`text-base font-bold ${
                   comparisonStats.yearOverYear > 0 ? 'text-red-600' : 
                   comparisonStats.yearOverYear < 0 ? 'text-green-600' : 
                   'text-gray-600'
@@ -696,87 +735,106 @@ export default function WeeklyComparisonChart({
             </div>
           )}
 
-          {/* Semana actual vs anterior */}
-
-
         </div>
 
       </CardHeader>
 
       <CardContent>
-        {/* Comentario de la semana seleccionada al hacer clic en la gráfica */}
-        <div className="mb-4">
-          {selectedWeek == null ? (
-            <div className="flex items-center gap-2 p-3 rounded-lg border border-dashed border-muted bg-muted/20 text-sm text-muted-foreground">
-              <MessageSquareIcon className="h-4 w-4 shrink-0" />
-              <span>Haz clic en un punto de la gráfica para ver el comentario de esa semana.</span>
-              {loadingComments && <Loader2Icon className="h-3.5 w-3.5 animate-spin" />}
-            </div>
-          ) : (
-            <div className={`rounded-lg border p-4 ${
-              selectedComment
-                ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800'
-                : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-            }`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  <MessageSquareIcon className={`h-4 w-4 shrink-0 ${selectedComment ? 'text-violet-600' : 'text-amber-600'}`} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      Semana {selectedWeek} · {selectedYear}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {getMonthForWeek(selectedWeek)}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 shrink-0"
-                  title="Quitar selección"
-                  onClick={clearSelectedWeek}
-                >
-                  <XIcon className="h-4 w-4" />
-                </Button>
+        {/* Comentarios de la semana seleccionada al hacer clic en la gráfica */}
+        {showComments && (
+          <div className="mb-3">
+            {selectedWeek == null ? (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-muted bg-muted/20 text-xs text-muted-foreground">
+                <MessageSquareIcon className="h-3.5 w-3.5 shrink-0" />
+                <span>Haz clic en un punto de la gráfica para ver los comentarios de esa semana.</span>
+                {loadingComments && <Loader2Icon className="h-3.5 w-3.5 animate-spin" />}
               </div>
-
-              {loadingComments ? (
-                <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
-                  <Loader2Icon className="h-4 w-4 animate-spin" />
-                  Cargando comentario...
-                </div>
-              ) : selectedComment ? (
-                <div className="mt-3 space-y-2">
-                  <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                    {selectedComment.comment}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                    <span>- {selectedComment.authorName || 'Usuario'}</span>
-                    {selectedComment.updated_at && (
-                      <span>Editado: {new Date(selectedComment.updated_at).toLocaleString('es-MX')}</span>
-                    )}
+            ) : (
+              <div className={`rounded-lg border p-3 ${
+                selectedWeekComments.length > 0
+                  ? 'bg-violet-50/60 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800'
+                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+              }`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MessageSquareIcon className={`h-4 w-4 shrink-0 ${selectedWeekComments.length > 0 ? 'text-violet-600' : 'text-amber-600'}`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        Semana {selectedWeek} · {getMonthForWeek(selectedWeek)}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {selectedWeekComments.length > 0
+                          ? `${selectedWeekComments.length} ${selectedWeekComments.length === 1 ? 'comentario' : 'comentarios'}`
+                          : 'Sin comentarios'}
+                      </p>
+                    </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 shrink-0"
+                    title="Quitar selección"
+                    onClick={clearSelectedWeek}
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </Button>
                 </div>
-              ) : (
-                <div className="flex items-start gap-2 mt-3 text-sm text-amber-800 dark:text-amber-200">
-                  <InfoIcon className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>Sin comentarios registrados para la Semana {selectedWeek} del año {selectedYear}.</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
 
-        <div className="h-[450px] w-full">
+                {loadingComments ? (
+                  <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                    <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
+                    Cargando comentarios...
+                  </div>
+                ) : selectedWeekComments.length > 0 ? (
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                    {selectedWeekComments.map(c => (
+                      <div
+                        key={c.year}
+                        className={`rounded-md border bg-background/70 p-2 ${
+                          c.isSelected ? 'border-violet-400 ring-1 ring-violet-300' : 'border-border'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                          <span className="text-xs font-semibold text-foreground">{c.year}</span>
+                          {c.isSelected && (
+                            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">
+                              Seleccionado
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[13px] leading-snug text-foreground whitespace-pre-wrap break-words max-h-24 overflow-y-auto">
+                          {c.comment}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[10px] text-muted-foreground">
+                          <span>- {c.authorName || 'Usuario'}</span>
+                          {c.updated_at && (
+                            <span>Editado: {new Date(c.updated_at).toLocaleString('es-MX')}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2 mt-2 text-xs text-amber-800 dark:text-amber-200">
+                    <InfoIcon className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>Sin comentarios registrados para la Semana {selectedWeek}.</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="h-[360px] w-full sm:h-[400px]">
           <ChartComponent data={chartData} options={chartOptions} />
         </div>
 
         {/* Leyenda de colores de puntos */}
         {chartType === 'line' && comparisonMode !== 'previous' && (
-          <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-            <p className="text-xs font-medium mb-2">Leyenda de puntos (cambio vs semana anterior):</p>
-            <div className="flex gap-4 text-xs">
+          <div className="mt-3 p-2 bg-muted/30 rounded-lg">
+            <p className="text-[11px] font-medium mb-1">Leyenda de puntos (cambio vs semana anterior):</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
                 <span>Aumento &gt;5%</span>
@@ -789,10 +847,12 @@ export default function WeeklyComparisonChart({
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 <span>Disminución &lt;0% (verde)</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-white border-2 border-violet-500"></div>
-                <span>Semana con comentario</span>
-              </div>
+              {showComments && (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-white border-2 border-violet-500"></div>
+                  <span>Semana con comentario</span>
+                </div>
+              )}
             </div>
           </div>
         )}
