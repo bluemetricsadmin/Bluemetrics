@@ -1,5 +1,5 @@
 import { formatMX } from '../utils/formatMX'
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader } from "./ui/card"
 import { Button } from "./ui/button"
 import { Line, Bar } from 'react-chartjs-2'
@@ -54,6 +54,8 @@ export default function WeeklyComparisonChart({
   const [selectedWeek, setSelectedWeek] = useState(null)
   const [selectedYear, setSelectedYear] = useState(null)
   const [showComments, setShowComments] = useState(true)
+  // Bandera para autoseleccionar la última semana sólo una vez por activación
+  const autoSelectedRef = useRef(false)
 
   // Precarga de todos los comentarios del recurso activo (filtrado local por año/semana)
   useEffect(() => {
@@ -97,6 +99,7 @@ export default function WeeklyComparisonChart({
     fetchComments()
     setSelectedWeek(null)
     setSelectedYear(null)
+    autoSelectedRef.current = false
 
     return () => { cancelled = true }
   }, [sourceType])
@@ -216,6 +219,31 @@ export default function WeeklyComparisonChart({
     return processWeeklyData(previousYearData)
   }, [previousYearData, useMultiYear, processedMultiYear])
 
+  // Última semana con datos del año actual (el más reciente mostrado)
+  const lastWeekOfCurrentYear = useMemo(() => {
+    if (!processedCurrent || processedCurrent.length === 0) return null
+    const weeksWithData = processedCurrent.filter(w => w.consumption > 0)
+    if (weeksWithData.length > 0) {
+      return Math.max(...weeksWithData.map(w => w.week))
+    }
+    return processedCurrent[processedCurrent.length - 1].week
+  }, [processedCurrent])
+
+  // Al activar la vista de comentarios, resetear la bandera de autoselección
+  useEffect(() => {
+    if (showComments) autoSelectedRef.current = false
+  }, [showComments])
+
+  // Autoseleccionar la última semana del año actual si aún no hay selección
+  useEffect(() => {
+    if (!showComments) return
+    if (autoSelectedRef.current) return
+    if (lastWeekOfCurrentYear == null) return
+    autoSelectedRef.current = true
+    setSelectedWeek(lastWeekOfCurrentYear)
+    setSelectedYear(String(effectiveCurrentYear))
+  }, [showComments, lastWeekOfCurrentYear, effectiveCurrentYear])
+
   // Lookup vs misma semana del año anterior: activo solo cuando se muestra exactamente 1 año
   const buildYoyWeekLookup = () => {
     if (!useMultiYear || filteredMultiYearData.length !== 1) return null
@@ -253,12 +281,12 @@ export default function WeeklyComparisonChart({
     [weekComments, showComments]
   )
 
-  // Comentarios de la semana seleccionada para todos los años visibles (hasta 4)
+  // Comentarios de la semana seleccionada en cualquier año (se priorizan los recientes, hasta 4)
   const selectedWeekComments = useMemo(() => {
     if (selectedWeek == null) return []
-    return datasetYears
+    return Object.keys(weekComments)
       .map(year => {
-        const entry = weekComments[String(year)]?.[selectedWeek]
+        const entry = weekComments[year]?.[selectedWeek]
         if (!entry) return null
         return {
           year: String(year),
@@ -270,8 +298,9 @@ export default function WeeklyComparisonChart({
         }
       })
       .filter(Boolean)
-      .reverse()
-  }, [selectedWeek, selectedYear, datasetYears, weekComments])
+      .sort((a, b) => Number(b.year) - Number(a.year))
+      .slice(0, 4)
+  }, [selectedWeek, selectedYear, weekComments])
 
   const clearSelectedWeek = () => {
     setSelectedWeek(null)
