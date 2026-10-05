@@ -6,10 +6,14 @@ const ITEMS_PER_PAGE = 10
 const SEARCH_DEBOUNCE_MS = 300
 const NUMERIC_SEARCH = /^\d+$/
 
-const POINT_NAMES = new Map(
-  (consumptionPointsData.categories || [])
-    .flatMap(cat => cat.points || [])
-    .map(point => [point.id, point.name])
+const ALL_POINTS = (consumptionPointsData.categories || []).flatMap(
+  cat => cat.points || []
+)
+
+const POINT_NAMES = new Map(ALL_POINTS.map(point => [point.id, point.name]))
+
+const NO_READ_POINT_IDS = new Set(
+  ALL_POINTS.filter(point => point.noRead).map(point => point.id)
 )
 
 const prettifySlug = (slug) =>
@@ -85,7 +89,11 @@ export function useYearConsumption() {
 
       if (rpcError) throw new Error(rpcError.message)
 
-      let rows = assignRowNumbers((result || []).map(normalizeRow), offset)
+      const readableRows = (result || []).filter(
+        row => !NO_READ_POINT_IDS.has(row.medidor)
+      )
+
+      let rows = assignRowNumbers(readableRows.map(normalizeRow), offset)
 
       if (numericSearch !== null) {
         rows = rows.filter(row => String(row.rowNumber).includes(String(numericSearch)))
