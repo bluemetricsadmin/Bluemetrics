@@ -1,174 +1,132 @@
-import { formatMX } from '../utils/formatMX'
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { DashboardHeader } from "../components/dashboard-header"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
-import { supabase } from '../supabaseClient'
-import { getTopAndBottomConsumers, getPointConsumption } from "../utils/consumptionHelpers"
-import consumptionPointsData from '../lib/consumption-points.json'
-import gasConsumptionPointsData from '../lib/gas-consumption-points.json'
 import { CalendarIcon, Loader2Icon, BarChart3Icon, FlameIcon, Droplet } from 'lucide-react'
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
 import { useAuth } from '../contexts/AuthContextNew';
 import YearConsumptionTable from '../components/YearConsumptionTable';
+import { useDashboardTopBottom } from '../hooks/useDashboardTopBottom'
+import { WATER_CONSUMPTION_TABLE } from '../services/dashboardConsumption'
+import { formatMX, formatMXPercent } from '../utils/formatMX'
 
-const CONSUMPTION_TABLE = 'lecturas_semana_agua_consumo_2026'
-const GAS_CONSUMPTION_TABLE = 'lecturas_semanales_gas_consumo_2026'
+function TopBottomTable({ title, entries, week, previousWeek, accent }) {
+  const isRed = accent === 'red'
+  const wrapper = isRed
+    ? 'border-red-200 bg-red-50 dark:bg-red-900/10'
+    : 'border-green-200 bg-green-50 dark:bg-green-900/10'
+  const heading = isRed
+    ? 'text-red-700 dark:text-red-300'
+    : 'text-green-700 dark:text-green-300'
+  const rank = isRed ? 'text-red-600' : 'text-green-600'
+  const value = isRed
+    ? 'text-red-700 dark:text-red-300'
+    : 'text-green-700 dark:text-green-300'
+  const totalBorder = isRed ? 'border-red-300' : 'border-green-300'
 
-const SELECTED_POINT_IDS = [
-  'l_auditorio_luis_elizondo',
-  'l_cdb2',
-  'l_cdb2_banos_nuevos_2025',
-  'l_arena_borrego',
-  'l_lago_aulas_7_llenado',
-  'l_farnville',
-  'l_em_box',
-  'l_edificio_negocios_daf',
-  'l_aulas_6',
-  'l_domo_cultural',
-  'l_parque_central_registro',
-  'l_wellness_edificio',
-  'l_centrales_dona_tota',
-  'l_centrales_subway',
-  'l_centrales_carls_jr',
-  'l_centrales_little_cesars',
-  'l_centrales_grill_team',
-  'l_centrales_chilaquiles',
-  'l_centrales_tec_food',
-  'l_centrales_oxxo',
-  'l_comedor_central_tunel',
-  'l_administrativo',
-  'l_biotecnologia',
-  'l_escuela_arte_caldera_1',
-  'l_ciap_oriente',
-  'l_ciap_centro',
-  'l_ciap_poniente',
-  'l_ciap_green_shake',
-  'l_ciap_andatti',
-  'l_ciap_dc_jochos',
-  'l_crepaso',
-  'l_el_negro',
-  'l_aulas_5',
-  'l_ciap_starbucks',
-  'l_ciap_super_salads',
-  'l_ciap_sotano',
-  'l_reflexion',
-  'l_residencias_10_15',
-  'l_caffenio',
-  'l_cedes_cisterna',
-  'l_san_huevito',
-  'l_cedes_site',
-  'l_cedes_site_bomba',
-  'l_nucleo',
-  'l_expedition',
-  'l_expedition_bread',
-  'l_expedition_matthew',
-  'l_hub',
-  'l_cedes_e2',
-  'l_e2_beiker',
-  'l_e2_evobike',
-  'l_e2_pancho_de_rigo',
-  'l_e2_bebedero_nube',
-  'l_aulas_1',
-  'l_rectoria_norte',
-  'l_pabellon_la_carreta',
-  'l_rectoria_sur',
-  'l_aulas_2',
-  'l_cetec',
-  'l_biblioteca',
-  'l_biblioteca_nikkori',
-  'l_biblioteca_nectar_works',
-  'l_biblioteca_tim_horton',
-  'l_aulas_3',
-  'l_basanti',
-  'l_aulas_3_sr_latino',
-  'l_centrales_sur',
-  'l_aulas_4_norte',
-  'l_aulas_4_centro',
-  'l_residencias_2_ote',
-  'l_residencias_3',
-  'l_residencias_5',
-  'l_correos',
-  'l_residencias_abc',
-  'l_residencias_abc_lavanderia',
-  'l_mil_mascaras',
-  'l_aulas_7',
-  'l_caldera_3',
-  'l_la_dia',
-  'l_aulas_4_sur',
-  'l_cdi_1',
-  'l_aulas_4_maestros',
-  'l_cdi_2',
-  'l_centro_congresos',
-  'l_jubileo',
-  'l_aulas_4_oxxo',
-  'l_estacionamiento_e1',
-  'l_escamilla_banos_trabajadores',
-  'l_estadio_banorte',
-  'l_campus_norte_edificios_ciudad',
-  'l_estadio_azul'
-]
+  const totals = entries.reduce(
+    (acc, item) => {
+      acc.previous += item.previous
+      acc.current += item.current
+      acc.difference += item.difference
+      return acc
+    },
+    { previous: 0, current: 0, difference: 0 }
+  )
+  const totalPercent = totals.previous !== 0
+    ? (totals.difference / totals.previous) * 100
+    : null
 
-const GAS_SELECTED_POINT_IDS = [
-  'l_domo_cultural',
-  'l_centrales_local',
-  'l_dona_tota',
-  'l_chilaquiles_tec',
-  'l_carls_junior',
-  'l_comedor_centrales_tec_food',
-  'l_davilas_grill_team',
-  'l_pizza_little_caesars',
-  'l_biotecnologia',
-  'l_mega_calefaccion_1',
-  'l_mega_calefaccion_2',
-  'l_mega_calefaccion_3',
-  'l_mega_calefaccion_4',
-  'l_mega_calefaccion_5',
-  'l_ciap_super_salads',
-  'l_aulas_1',
-  'l_biblioteca',
-  'l_nikkori',
-  'l_nectar_works',
-  'l_sr_latino',
-  'l_arena_borrego',
-  'l_calefaccion_1_bryan',
-  'l_calefaccion_2_aerco',
-  'l_caldera_3',
-  'l_aulas_7',
-  'l_la_dia',
-  'l_aulas_4',
-  'l_centro_congresos_vestidores',
-  'l_jubileo',
-  'l_expedition',
-  'l_bread_expedition',
-  'l_matthew_expedition',
-  'l_cedes',
-  'l_residencias_2',
-  'l_residencias_5',
-  'l_residencias_3',
-  'l_residencias_abc_calefaccion',
-  'l_residencias_abc_regaderas',
-  'l_residencias_abc_locales_comida',
-  'l_campus_norte_edificio_d_calefaccion',
-  'l_campus_norte_comedor_d',
-  'l_estadio_yarda',
-  'l_wellness_supersalads',
-  'l_wellness_general_calefaccion',
-  'l_wellness_calentador_sotano_regaderas',
-  'l_wellness_alberca',
-  'l_auditorio_luis_elizondo',
-  'l_pabellon_tec_cocina_estudiantes_2do_piso',
-  'l_guarderia',
-  'l_escamilla',
-  'l_casa_solar',
-  'l_estudiantes_11',
-  'l_estudiantes_12',
-  'l_estudiantes_13',
-  'l_estudiantes_15_y_10'
-]
-
+  return (
+    <div className={`rounded-lg border p-4 ${wrapper}`}>
+      <h4 className={`text-sm font-semibold mb-3 ${heading}`}>{title}</h4>
+      {entries.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Sin datos para esta semana</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-muted-foreground">
+                <th className="text-left font-medium pb-2 pr-2">Punto</th>
+                <th className="text-right font-medium pb-2 px-2 whitespace-nowrap">Sem. {previousWeek}</th>
+                <th className="text-right font-medium pb-2 px-2 whitespace-nowrap">Sem. {week}</th>
+                <th className="text-right font-medium pb-2 px-2 whitespace-nowrap">Diferencia (m³)</th>
+                <th className="text-right font-medium pb-2 pl-2 whitespace-nowrap">% Dif.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((item, index) => (
+                <tr key={item.id} className="border-t border-black/5 dark:border-white/5">
+                  <td className="py-1.5 pr-2">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className={`text-xs font-bold w-4 flex-shrink-0 ${rank}`}>{index + 1}.</span>
+                      <span className="truncate text-foreground" title={item.name}>{item.name}</span>
+                    </span>
+                  </td>
+                  <td className="py-1.5 px-2 text-right text-muted-foreground whitespace-nowrap">
+                    {formatMX(item.previous)}
+                  </td>
+                  <td className="py-1.5 px-2 text-right font-medium whitespace-nowrap">
+                    {formatMX(item.current)}
+                  </td>
+                  <td className={`py-1.5 px-2 text-right font-semibold whitespace-nowrap ${value}`}>
+                    {formatMX(item.difference)}
+                  </td>
+                  <td className="py-1.5 pl-2 text-right whitespace-nowrap">
+                    {item.percent === null ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <span className={
+                        item.percent > 0
+                          ? 'text-red-600 dark:text-red-400'
+                          : item.percent < 0
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-muted-foreground'
+                      }>
+                        {formatMXPercent(item.percent)}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className={`border-t-2 ${totalBorder}`}>
+                <td className="py-2 pr-2 font-semibold text-foreground">Total</td>
+                <td className="py-2 px-2 text-right font-semibold text-muted-foreground whitespace-nowrap">
+                  {formatMX(totals.previous)}
+                </td>
+                <td className="py-2 px-2 text-right font-semibold whitespace-nowrap">
+                  {formatMX(totals.current)}
+                </td>
+                <td className={`py-2 px-2 text-right font-bold whitespace-nowrap ${value}`}>
+                  {formatMX(totals.difference)}
+                </td>
+                <td className="py-2 pl-2 text-right font-semibold whitespace-nowrap">
+                  {totalPercent === null ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <span className={
+                      totalPercent > 0
+                        ? 'text-red-600 dark:text-red-400'
+                        : totalPercent < 0
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-muted-foreground'
+                    }>
+                      {formatMXPercent(totalPercent)}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -183,141 +141,21 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, navigate])
 
-  const [selectedWeek, setSelectedWeek] = useState(null)
-  const [availableWeeks, setAvailableWeeks] = useState([])
-  const [rows, setRows] = useState([])
-  const [gasRows, setGasRows] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [gasLoading, setGasLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [gasError, setGasError] = useState(null)
-
-  // Puntos de medición del catálogo incluidos en la lista de puntos seleccionados
-  const points = useMemo(() => {
-    return (consumptionPointsData.categories || [])
-      .flatMap(cat => cat.points || [])
-      .filter(p => SELECTED_POINT_IDS.includes(`l_${p.id}`))
-  }, [])
-
-  // Puntos de gas del catálogo incluidos en la lista seleccionada
-  const gasPoints = useMemo(() => {
-    return (gasConsumptionPointsData.categories || [])
-      .flatMap(cat => cat.points || [])
-      .filter(p => GAS_SELECTED_POINT_IDS.includes(`l_${p.id}`))
-  }, [])
-
-  // Cargar las filas de consumo semanal desde la tabla de 2026
-  useEffect(() => {
-    const fetchConsumptionData = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const { data, error: fetchError } = await supabase
-          .from(CONSUMPTION_TABLE)
-          .select('*')
-          .order('l_numero_semana', { ascending: true })
-
-        if (fetchError) {
-          console.error('❌ Error cargando consumo:', fetchError)
-          setError(fetchError.message)
-          return
-        }
-
-        setRows(data || [])
-
-        const weeks = (data || []).map(row => ({
-          weekNumber: row.l_numero_semana,
-          startDate: row.l_fecha_inicio,
-          endDate: row.l_fecha_fin
-        }))
-        setAvailableWeeks(weeks)
-
-        if (weeks.length > 0) {
-          setSelectedWeek(weeks[weeks.length - 1].weekNumber)
-        }
-      } catch (err) {
-        console.error('❌ Error al cargar datos:', err)
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchConsumptionData()
-  }, [])
-
-  // Cargar las filas de consumo semanal de gas
-  useEffect(() => {
-    const fetchGasConsumptionData = async () => {
-      try {
-        setGasLoading(true)
-        setGasError(null)
-
-        const { data, error: fetchError } = await supabase
-          .from(GAS_CONSUMPTION_TABLE)
-          .select('*')
-          .order('numero_semana', { ascending: true })
-
-        if (fetchError) {
-          console.error('❌ Error cargando consumo de gas:', fetchError)
-          setGasError(fetchError.message)
-          return
-        }
-
-        setGasRows(data || [])
-      } catch (err) {
-        console.error('❌ Error al cargar datos de gas:', err)
-        setGasError(err.message)
-      } finally {
-        setGasLoading(false)
-      }
-    }
-
-    fetchGasConsumptionData()
-  }, [])
-
-  // Construir weeklyData de cada punto a partir de las filas de consumo
-  const pointsWithData = useMemo(() => {
-    return points.map(point => {
-      const weeklyData = rows.map(row => ({
-        week: row.l_numero_semana,
-        consumption: parseFloat(row[`l_${point.id}`]) || 0
-      }))
-      return {
-        ...point,
-        weeklyData
-      }
-    })
-  }, [points, rows])
-
-  // Top 5 / Bottom 5 según consumo de la semana seleccionada
-  const globalTopBottom = useMemo(() => {
-    if (!selectedWeek) return { top5: [], bottom5: [] }
-    return getTopAndBottomConsumers(pointsWithData, selectedWeek)
-  }, [pointsWithData, selectedWeek])
-
-  // Construir weeklyData de cada punto de gas a partir de las filas de consumo
-  const gasPointsWithData = useMemo(() => {
-    return gasPoints.map(point => {
-      const weeklyData = gasRows.map(row => ({
-        week: row.numero_semana,
-        consumption: parseFloat(row[point.id]) || 0
-      }))
-      return {
-        ...point,
-        weeklyData
-      }
-    })
-  }, [gasPoints, gasRows])
-
-  // Top 5 / Bottom 5 de gas según consumo de la semana seleccionada
-  const gasTopBottom = useMemo(() => {
-    if (!selectedWeek) return { top5: [], bottom5: [] }
-    return getTopAndBottomConsumers(gasPointsWithData, selectedWeek)
-  }, [gasPointsWithData, selectedWeek])
-
-  const selectedWeekInfo = availableWeeks.find(w => w.weekNumber === selectedWeek)
+  const {
+    points,
+    gasPoints,
+    loading,
+    error,
+    gasLoading,
+    gasError,
+    selectedWeek,
+    setSelectedWeek,
+    availableWeeks,
+    selectedWeekInfo,
+    previousWeek,
+    globalTopBottom,
+    gasTopBottom,
+  } = useDashboardTopBottom()
 
   return (
     <RedirectIfNotAuth>
@@ -334,7 +172,7 @@ export default function DashboardPage() {
                   Dashboard de Consumo
                 </h1>
                 <p className="text-muted-foreground">
-                  Comparativa global de puntos de medición seleccionados: los 5 de mayor y menor consumo por semana
+                  Comparativa global de puntos de medición seleccionados: los 5 de mayor y menor diferencia de consumo entre la semana anterior y la semana seleccionada
                 </p>
                 <h2 className="text-2xl font-bold text-foreground flex items-center gap-2 mb-2">
                 <Droplet className="h-6 w-6 text-blue-500" />
@@ -384,7 +222,7 @@ export default function DashboardPage() {
             ) : !selectedWeek ? (
               <Card>
                 <CardContent className="py-16 flex flex-col items-center justify-center text-center">
-                  <p className="text-muted-foreground">No hay semanas disponibles en la tabla {CONSUMPTION_TABLE}</p>
+                  <p className="text-muted-foreground">No hay semanas disponibles en la tabla {WATER_CONSUMPTION_TABLE}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -401,49 +239,21 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 p-4">
-                      <h4 className="text-sm font-semibold text-red-700 dark:text-red-300 mb-3">
-                        Top 5 Mayor Consumo — Semana {selectedWeek}
-                      </h4>
-                      <ol className="space-y-2">
-                        {globalTopBottom.top5.map((item, index) => (
-                          <li key={item.id} className="flex items-center justify-between gap-2 text-sm">
-                            <span className="flex items-center gap-2 min-w-0">
-                              <span className="text-xs font-bold text-red-600 w-5 flex-shrink-0">{index + 1}.</span>
-                              <span className="truncate text-foreground">{item.name}</span>
-                            </span>
-                            <span className="font-semibold text-red-700 dark:text-red-300 whitespace-nowrap">
-                              {formatMX(getPointConsumption(item, selectedWeek))} m³
-                            </span>
-                          </li>
-                        ))}
-                        {globalTopBottom.top5.length === 0 && (
-                          <li className="text-sm text-muted-foreground">Sin datos para esta semana</li>
-                        )}
-                      </ol>
-                    </div>
-                    <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/10 p-4">
-                      <h4 className="text-sm font-semibold text-green-700 dark:text-green-300 mb-3">
-                        Top 5 Menor Consumo — Semana {selectedWeek}
-                      </h4>
-                      <ol className="space-y-2">
-                        {globalTopBottom.bottom5.map((item, index) => (
-                          <li key={item.id} className="flex items-center justify-between gap-2 text-sm">
-                            <span className="flex items-center gap-2 min-w-0">
-                              <span className="text-xs font-bold text-green-600 w-5 flex-shrink-0">{index + 1}.</span>
-                              <span className="truncate text-foreground">{item.name}</span>
-                            </span>
-                            <span className="font-semibold text-green-700 dark:text-green-300 whitespace-nowrap">
-                              {formatMX(getPointConsumption(item, selectedWeek))} m³
-                            </span>
-                          </li>
-                        ))}
-                        {globalTopBottom.bottom5.length === 0 && (
-                          <li className="text-sm text-muted-foreground">Sin datos para esta semana</li>
-                        )}
-                      </ol>
-                    </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <TopBottomTable
+                      title={`Top 5 Mayor Diferencia — Semana ${previousWeek} vs ${selectedWeek}`}
+                      entries={globalTopBottom.top5}
+                      week={selectedWeek}
+                      previousWeek={previousWeek}
+                      accent="red"
+                    />
+                    <TopBottomTable
+                      title={`Top 5 Menor Diferencia — Semana ${previousWeek} vs ${selectedWeek}`}
+                      entries={globalTopBottom.bottom5}
+                      week={selectedWeek}
+                      previousWeek={previousWeek}
+                      accent="green"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -488,49 +298,21 @@ export default function DashboardPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/10 p-4">
-                        <h4 className="text-sm font-semibold text-red-700 dark:text-red-300 mb-3">
-                          Top 5 Mayor Consumo de Gas — Semana {selectedWeek}
-                        </h4>
-                        <ol className="space-y-2">
-                          {gasTopBottom.top5.map((item, index) => (
-                            <li key={item.id} className="flex items-center justify-between gap-2 text-sm">
-                              <span className="flex items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-red-600 w-5 flex-shrink-0">{index + 1}.</span>
-                                <span className="truncate text-foreground">{item.name}</span>
-                              </span>
-                              <span className="font-semibold text-red-700 dark:text-red-300 whitespace-nowrap">
-                                {formatMX(getPointConsumption(item, selectedWeek))} m³
-                              </span>
-                            </li>
-                          ))}
-                          {gasTopBottom.top5.length === 0 && (
-                            <li className="text-sm text-muted-foreground">Sin datos para esta semana</li>
-                          )}
-                        </ol>
-                      </div>
-                      <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/10 p-4">
-                        <h4 className="text-sm font-semibold text-green-700 dark:text-green-300 mb-3">
-                          Top 5 Menor Consumo de Gas — Semana {selectedWeek}
-                        </h4>
-                        <ol className="space-y-2">
-                          {gasTopBottom.bottom5.map((item, index) => (
-                            <li key={item.id} className="flex items-center justify-between gap-2 text-sm">
-                              <span className="flex items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-green-600 w-5 flex-shrink-0">{index + 1}.</span>
-                                <span className="truncate text-foreground">{item.name}</span>
-                              </span>
-                              <span className="font-semibold text-green-700 dark:text-green-300 whitespace-nowrap">
-                                {formatMX(getPointConsumption(item, selectedWeek))} m³
-                              </span>
-                            </li>
-                          ))}
-                          {gasTopBottom.bottom5.length === 0 && (
-                            <li className="text-sm text-muted-foreground">Sin datos para esta semana</li>
-                          )}
-                        </ol>
-                      </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <TopBottomTable
+                        title={`Top 5 Mayor Diferencia de Gas — Semana ${previousWeek} vs ${selectedWeek}`}
+                        entries={gasTopBottom.top5}
+                        week={selectedWeek}
+                        previousWeek={previousWeek}
+                        accent="red"
+                      />
+                      <TopBottomTable
+                        title={`Top 5 Menor Diferencia de Gas — Semana ${previousWeek} vs ${selectedWeek}`}
+                        entries={gasTopBottom.bottom5}
+                        week={selectedWeek}
+                        previousWeek={previousWeek}
+                        accent="green"
+                      />
                     </div>
                   </CardContent>
                 </Card>

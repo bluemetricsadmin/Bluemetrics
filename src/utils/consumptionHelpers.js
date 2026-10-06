@@ -39,3 +39,32 @@ export const getTopAndBottomConsumers = (points, week, count = 5) => {
     bottom5: sortedAsc.slice(0, count).map(entry => entry.item)
   }
 }
+
+// Compara el consumo de un punto entre la semana indicada y la semana anterior (n-1, n).
+// Los faltantes se tratan como 0 (getPointConsumption devuelve 0 si la semana no existe).
+export const getPointWeekComparison = (item, week) => {
+  const current = getPointConsumption(item, week)
+  const previous = getPointConsumption(item, week - 1)
+  const difference = current - previous
+  const percent = previous !== 0 ? (difference / previous) * 100 : null
+
+  return { previous, current, difference, percent }
+}
+
+// Extrae el top/bottom a partir de la diferencia de consumo del último par de semanas (n-1, n).
+export const getTopAndBottomConsumersByPair = (points, week, count = 5) => {
+  const withComparison = (points || [])
+    .filter(item => !item.noRead)
+    .map(item => ({
+      ...item,
+      ...getPointWeekComparison(item, week)
+    }))
+
+  const sortedDesc = [...withComparison].sort((a, b) => b.difference - a.difference)
+  const sortedAsc = [...withComparison].sort((a, b) => a.difference - b.difference)
+
+  return {
+    top5: sortedDesc.slice(0, count),
+    bottom5: sortedAsc.slice(0, count)
+  }
+}
