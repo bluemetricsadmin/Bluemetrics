@@ -2727,8 +2727,8 @@
       "description": "Zona Rancho Tec",
       "points": [
         {
-          "id": "rancho_tec_agua",
-          "name": "Rancho REC Agua",
+          "id": "rancho_tec",
+          "name": "Rancho TEC Agua",
           "type": "medidor_principal",
           "unit": "m³",
           "weeklyData": []
@@ -2743,6 +2743,20 @@
         {
           "id": "cidep",
           "name": "CIDEP",
+          "type": "medidor_principal",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "escuela_medicina",
+      "name": "Escuela de Medicina",
+      "description": "Zona Escuela de Medicina",
+      "points": [
+        {
+          "id": "escuela_medicina",
+          "name": "Escuela de medicina",
           "type": "medidor_principal",
           "unit": "m³",
           "weeklyData": []
