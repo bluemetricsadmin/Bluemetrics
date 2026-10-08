@@ -1,0 +1,68 @@
+-- Migracion para agregar columna escuela_medicina a las tablas de gas
+-- Ejecutar este script manualmente en Supabase
+
+-- ============================================
+-- Tablas de lecturas semanales: lecturas_semanales_gas_2023..2026
+-- ============================================
+
+ALTER TABLE public.lecturas_semanales_gas_2023
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+ALTER TABLE public.lecturas_semanales_gas_2024
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+ALTER TABLE public.lecturas_semanales_gas_2025
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+ALTER TABLE public.lecturas_semanales_gas_2026
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+-- ============================================
+-- Tablas de consumo semanales: lecturas_semanales_gas_consumo_2023..2026
+-- ============================================
+
+ALTER TABLE public.lecturas_semanales_gas_consumo_2023
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+ALTER TABLE public.lecturas_semanales_gas_consumo_2024
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+ALTER TABLE public.lecturas_semanales_gas_consumo_2025
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+ALTER TABLE public.lecturas_semanales_gas_consumo_2026
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+-- ============================================
+-- Tablas mensuales
+-- ============================================
+
+ALTER TABLE public.lecturas_mensuales_gas
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+ALTER TABLE public.lecturas_mensuales_gas_consumo
+ADD COLUMN IF NOT EXISTS escuela_medicina NUMERIC(15, 3);
+
+-- Verificacion de columna agregada
+SELECT
+  table_name,
+  column_name,
+  data_type,
+  numeric_precision,
+  numeric_scale
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name IN (
+    'lecturas_semanales_gas_2023',
+    'lecturas_semanales_gas_2024',
+    'lecturas_semanales_gas_2025',
+    'lecturas_semanales_gas_2026',
+    'lecturas_semanales_gas_consumo_2023',
+    'lecturas_semanales_gas_consumo_2024',
+    'lecturas_semanales_gas_consumo_2025',
+    'lecturas_semanales_gas_consumo_2026',
+    'lecturas_mensuales_gas',
+    'lecturas_mensuales_gas_consumo'
+  )
+  AND column_name = 'escuela_medicina'
+ORDER BY table_name;

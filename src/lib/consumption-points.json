@@ -2720,6 +2720,34 @@
           ]
         }
       ]
+    },
+    {
+      "id": "rancho_tec",
+      "name": "Rancho Tec",
+      "description": "Zona Rancho Tec",
+      "points": [
+        {
+          "id": "rancho_tec_agua",
+          "name": "Rancho REC Agua",
+          "type": "medidor_principal",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
+    },
+    {
+      "id": "cidep",
+      "name": "CIDEP",
+      "description": "Zona CIDEP",
+      "points": [
+        {
+          "id": "cidep",
+          "name": "CIDEP",
+          "type": "medidor_principal",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
     }
   ],
   "summaryCategories": [

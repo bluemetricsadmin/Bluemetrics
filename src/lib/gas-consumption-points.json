@@ -551,6 +551,20 @@
           "weeklyData": []
         }
       ]
+    },
+    {
+      "id": "escuela_medicina",
+      "name": "Escuela de Medicina",
+      "description": "Zona Escuela de Medicina",
+      "points": [
+        {
+          "id": "escuela_medicina",
+          "name": "Escuela de medicina",
+          "type": "medidor_principal",
+          "unit": "m³",
+          "weeklyData": []
+        }
+      ]
     }
   ]
 }
