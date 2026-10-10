@@ -2742,7 +2742,7 @@
       "points": [
         {
           "id": "cidep",
-          "name": "CIDEP",
+          "name": "AGUA PARQUE CISTERNA",
           "type": "medidor_principal",
           "unit": "m³",
           "weeklyData": []
@@ -2756,7 +2756,7 @@
       "points": [
         {
           "id": "escuela_medicina",
-          "name": "Escuela de medicina",
+          "name": "CITES-Agua General",
           "type": "medidor_principal",
           "unit": "m³",
           "weeklyData": []

@@ -559,7 +559,7 @@
       "points": [
         {
           "id": "escuela_medicina",
-          "name": "Escuela de medicina",
+          "name": "CITES-GAS General",
           "type": "medidor_principal",
           "unit": "m³",
           "weeklyData": []
