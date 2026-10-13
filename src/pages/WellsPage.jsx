@@ -11,6 +11,8 @@ import { supabase } from '../supabaseClient'
 import WellsGeneralCharts from '../components/WellsGeneralCharts'
 import WellEventsHistory from '../components/WellEventsHistory'
 import WeeklyComparisonChart from '../components/WeeklyComparisonChart'
+import WellsAnnualTargets from '../components/WellsAnnualTargets'
+import { wellsConsumptionService, CHART_YEARS } from '../services/wellsConsumption'
 import {
   DropletIcon,
   AlertTriangleIcon,
@@ -416,96 +418,12 @@ export default function WellsPage() {
 
   const fetchKPIsAndChartData = async () => {
     try {
-      const years = [2023, 2024, 2025, 2026]
-      const allPozos = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14', 'l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego']
-      const pozosRiego = ['l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_15_riego']
-      const pozosServicios = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14']
-      const yearTotals = {}
-      const allWeeklyData = []
-      const riegoWeeklyData = []
-      const serviciosWeeklyData = []
-
-      for (const year of years) {
-        const tableName = `lecturas_semana_agua_consumo_${year}`
-
-        const { data, error: fetchError } = await supabase
-          .from(tableName)
-          .select('*')
-          .order('l_numero_semana', { ascending: true })
-
-        if (fetchError) {
-          console.warn(`⚠️ No se pudieron cargar datos de ${year}:`, fetchError)
-          continue
-        }
-
-        if (data && data.length > 0) {
-          let yearTotal = 0
-          let yearTotalRiego = 0
-          let yearTotalServicios = 0
-          const yearWeeks = []
-          const yearWeeksRiego = []
-          const yearWeeksServicios = []
-
-          data.forEach((row) => {
-            // Total de todos los pozos
-            const consumoTotalSemana = allPozos.reduce((acc, col) => {
-              return acc + (parseFloat(row[col]) || 0)
-            }, 0)
-
-            // Total de pozos de riego
-            const consumoRiegoSemana = pozosRiego.reduce((acc, col) => {
-              return acc + (parseFloat(row[col]) || 0)
-            }, 0)
-
-            // Total de pozos de servicios
-            const consumoServiciosSemana = pozosServicios.reduce((acc, col) => {
-              return acc + (parseFloat(row[col]) || 0)
-            }, 0)
-
-            yearTotal += consumoTotalSemana
-            yearTotalRiego += consumoRiegoSemana
-            yearTotalServicios += consumoServiciosSemana
-
-            yearWeeks.push({
-              week: row.l_numero_semana,
-              consumption: parseFloat(consumoTotalSemana.toFixed(2)),
-              reading: yearTotal,
-              fecha_inicio: row.l_fecha_inicio,
-              fecha_fin: row.l_fecha_fin
-            })
-
-            yearWeeksRiego.push({
-              week: row.l_numero_semana,
-              consumption: parseFloat(consumoRiegoSemana.toFixed(2)),
-              reading: yearTotalRiego,
-              fecha_inicio: row.l_fecha_inicio,
-              fecha_fin: row.l_fecha_fin
-            })
-
-            yearWeeksServicios.push({
-              week: row.l_numero_semana,
-              consumption: parseFloat(consumoServiciosSemana.toFixed(2)),
-              reading: yearTotalServicios,
-              fecha_inicio: row.l_fecha_inicio,
-              fecha_fin: row.l_fecha_fin
-            })
-          })
-
-          yearTotals[year] = yearTotal
-          allWeeklyData.push({
-            year: year.toString(),
-            data: yearWeeks
-          })
-          riegoWeeklyData.push({
-            year: year.toString(),
-            data: yearWeeksRiego
-          })
-          serviciosWeeklyData.push({
-            year: year.toString(),
-            data: yearWeeksServicios
-          })
-        }
-      }
+      const {
+        yearTotals,
+        allWeeklyData,
+        riegoWeeklyData,
+        serviciosWeeklyData
+      } = await wellsConsumptionService.fetchMultiYearData(CHART_YEARS)
 
       // Calcular KPIs
       const years2023 = yearTotals[2023] || 0
@@ -734,6 +652,9 @@ export default function WellsPage() {
             ) : (
               <WellsGeneralCharts />
             )}
+
+            {/* Metas anuales de consumo total de pozos */}
+            <WellsAnnualTargets />
 
 {/* Lista de pozos */}
             <Card>
