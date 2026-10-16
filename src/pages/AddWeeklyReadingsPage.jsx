@@ -788,7 +788,7 @@ export default function AddWeeklyReadingsPage() {
     const aguaCiudadOrderIndex = new Map(aguaCiudadOrder.map((id, idx) => [id, idx]))
 
     consumptionPointsData.categories.forEach(category => {
-      const pointsInTemplate = category.points.filter(point => allowedIds.includes(point.id))
+      const pointsInTemplate = category.points.filter(point => allowedIds.includes(point.id) && !point.excludeFromTemplate)
       const orderedPoints =
         category.id === 'agua_ciudad'
           ? [...pointsInTemplate].sort((a, b) => {

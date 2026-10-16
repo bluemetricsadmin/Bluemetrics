@@ -67,7 +67,7 @@ export default function EditGasReadingsPage() {
   const downloadTemplate = () => {
     const templateData = []
     gasConsumptionPointsData.categories.forEach(category => {
-      category.points.forEach(point => {
+      category.points.filter(point => !point.excludeFromTemplate).forEach(point => {
         templateData.push({
           'Punto de Consumo': point.name,
           'ID': point.id,

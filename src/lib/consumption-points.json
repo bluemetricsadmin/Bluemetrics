@@ -2731,6 +2731,7 @@
           "name": "Rancho TEC Agua",
           "type": "medidor_principal",
           "unit": "m³",
+          "excludeFromTemplate": true,
           "weeklyData": []
         }
       ]
@@ -2745,6 +2746,7 @@
           "name": "AGUA PARQUE CISTERNA",
           "type": "medidor_principal",
           "unit": "m³",
+          "excludeFromTemplate": true,
           "weeklyData": []
         }
       ]
@@ -2759,6 +2761,7 @@
           "name": "CITES-Agua General",
           "type": "medidor_principal",
           "unit": "m³",
+          "excludeFromTemplate": true,
           "weeklyData": []
         }
       ]

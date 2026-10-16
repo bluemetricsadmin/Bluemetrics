@@ -698,7 +698,7 @@ export default function AddWeeklyGasReadingsPage() {
     const templateData = []
     
     gasConsumptionPointsData.categories.forEach(category => {
-      category.points.forEach(point => {
+      category.points.filter(point => !point.excludeFromTemplate).forEach(point => {
         templateData.push({
           'Punto de Consumo': point.name,
           'ID': point.id,
@@ -718,7 +718,7 @@ export default function AddWeeklyGasReadingsPage() {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Lecturas Semanales Gas')
     
-    const totalPuntos = gasConsumptionPointsData.categories.reduce((acc, cat) => acc + cat.points.length, 0)
+    const totalPuntos = gasConsumptionPointsData.categories.reduce((acc, cat) => acc + cat.points.filter(p => !p.excludeFromTemplate).length, 0)
     
     const instrucciones = [
       { 'INSTRUCCIONES': 'Plantilla de Lecturas Semanales de Gas - Aquanet' },

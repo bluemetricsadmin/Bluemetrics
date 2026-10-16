@@ -562,6 +562,7 @@
           "name": "CITES-GAS General",
           "type": "medidor_principal",
           "unit": "m³",
+          "excludeFromTemplate": true,
           "weeklyData": []
         }
       ]
