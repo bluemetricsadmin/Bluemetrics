@@ -85,15 +85,14 @@ export function useYearConsumption() {
           sortDir: sortConfig.direction,
           limit: ITEMS_PER_PAGE,
           offset,
+          exclude: Array.from(NO_READ_POINT_IDS),
         })
 
       if (rpcError) throw new Error(rpcError.message)
 
-      const readableRows = (result || []).filter(
-        row => !NO_READ_POINT_IDS.has(row.medidor)
-      )
-
-      let rows = assignRowNumbers(readableRows.map(normalizeRow), offset)
+      // El RPC ya excluye los medidores noRead, por lo que
+      // total_registros y la paginación quedan alineados con las filas.
+      let rows = assignRowNumbers((result || []).map(normalizeRow), offset)
 
       if (numericSearch !== null) {
         rows = rows.filter(row => String(row.rowNumber).includes(String(numericSearch)))

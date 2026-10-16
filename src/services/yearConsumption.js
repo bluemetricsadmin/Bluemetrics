@@ -13,6 +13,7 @@ export const yearConsumptionService = {
     sortDir = 'desc',
     limit = 10,
     offset = 0,
+    exclude = [],
   } = {}) {
     const { data, error } = await supabase.rpc(RPC_ANNUALIZED_CONSUMPTION, {
       p_search: search,
@@ -20,6 +21,7 @@ export const yearConsumptionService = {
       p_sort_dir: sortDir,
       p_limit: limit,
       p_offset: offset,
+      p_exclude: exclude,
     })
 
     return { data: data || [], error }

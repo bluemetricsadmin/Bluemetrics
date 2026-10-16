@@ -1,7 +1,7 @@
 -- ============================================================
 -- Fix: fn_obtener_consumos_anualizados_paginados
 -- ------------------------------------------------------------
--- Problema:
+-- Problema 1:
 --   La función usaba REPLACE(col, 'l_', '') para quitar el prefijo
 --   de columna, pero REPLACE elimina TODAS las apariciones del
 --   substring 'l_' en cualquier posición. Eso corrompía los slugs:
@@ -14,18 +14,31 @@
 --   el frontend caía al fallback prettifySlug y mostraba nombres
 --   incorrectos ("Megacentrate 2" en lugar de "Megacentral ...").
 --
--- Solución:
---   Quitar únicamente el prefijo con regexp_replace(col, '^l_', '').
+--   Solución: quitar únicamente el prefijo con regexp_replace(col, '^l_', '').
+--
+-- Problema 2:
+--   El total_registros (COUNT(*) OVER()) contaba TODAS las columnas
+--   con dato, incluyendo los medidores marcados noRead en el JSON.
+--   El frontend los ocultaba de las filas pero no del total, por lo
+--   que el encabezado ("N medidores") y la paginación quedaban
+--   inflados respecto a lo realmente renderizado.
+--
+--   Solución: recibir la lista de slugs a excluir en p_exclude y
+--   filtrarla ANTES del COUNT, para que total_registros sea el total
+--   ya filtrado.
 --
 -- Ejecutar en el SQL Editor de Supabase.
 -- ============================================================
+
+DROP FUNCTION IF EXISTS fn_obtener_consumos_anualizados_paginados(text, text, text, integer, integer);
 
 CREATE OR REPLACE FUNCTION fn_obtener_consumos_anualizados_paginados(
   p_search text DEFAULT '',
   p_sort_by text DEFAULT 'consumo_total',
   p_sort_dir text DEFAULT 'desc',
   p_limit integer DEFAULT 10,
-  p_offset integer DEFAULT 0
+  p_offset integer DEFAULT 0,
+  p_exclude text[] DEFAULT '{}'
 )
 RETURNS TABLE (
   medidor text,
@@ -61,7 +74,9 @@ BEGIN
   filtrado AS (
     SELECT * FROM agrupado
     -- Filtro de búsqueda (ILIKE no distingue mayúsculas/minúsculas)
-    WHERE p_search = '' OR REPLACE(medidor_nombre, '_', ' ') ILIKE '%' || p_search || '%'
+    WHERE (p_search = '' OR REPLACE(medidor_nombre, '_', ' ') ILIKE '%' || p_search || '%')
+    -- Excluir medidores noRead para que total_registros sea el total filtrado
+    AND NOT (medidor_nombre = ANY(p_exclude))
   )
   SELECT
     f.medidor_nombre,
