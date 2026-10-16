@@ -1,7 +1,7 @@
 # Documentación Completa de Bluemetrics
 
-> **Versión:** 2.0  
-> **Última actualización:** Septiembre 2026  
+> **Versión:** 2.1  
+> **Última actualización:** Octubre 2026  
 > **Stack:** React 19 + Supabase + Vite 7 + TailwindCSS 4  
 > **Propósito:** Plataforma de monitoreo de consumo de agua, gas y PTAR para campus universitario
 
@@ -281,8 +281,8 @@ Bluemetrics/
 │   │   ├── dashboard-summary.jsx       # Tarjetas resumen dashboard
 │   │   ├── Route guards (6 archivos)   # Protección de rutas
 │   │   ├── Charts                       # Gráficas comparativas (Chart.js, Recharts)
-│   │   │   ├── WeeklyComparisonChart.jsx      # Comparación semanal multiaño
-│   │   │   ├── WeeklyComparisonTable.jsx      # Tabla comparativa semanal
+│   │   │   ├── WeeklyComparisonChart.jsx      # Comparación semanal multiaño + comentarios semanales
+│   │   │   ├── WeeklyComparisonTable.jsx      # Tabla comparativa semanal (comentarios por año)
 │   │   │   ├── MonthlyComparisonChart.jsx     # Comparación mensual multiaño
 │   │   │   ├── AdvancedConsumptionChart.jsx   # Consumo avanzado
 │   │   │   ├── DailyConsumptionChartJS.jsx    # Consumo diario (Chart.js)
@@ -296,6 +296,8 @@ Bluemetrics/
 │   │   ├── ExcelToSqlConverter.jsx     # Convertidor Excel a SQL
 │   │   ├── ConsumptionTable.jsx        # Tabla de consumo reutilizable (agua/gas)
 │   │   ├── MetricCard.jsx              # Tarjeta de métrica
+│   │   ├── YearConsumptionTable.jsx    # ⬅ NUEVO (v2.1): Consumo anualizado por medidor (RPC paginado)
+│   │   ├── WellsAnnualTargets.jsx      # ⬅ NUEVO (v2.1): Metas anuales de consumo de pozos
 │   │   ├── water-balance-flow.jsx      # Balance hídrico
 │   │   ├── BrevoForm.jsx               # Formulario de contacto (Brevo)
 │   │   ├── PointsOrderModal.jsx        # Modal orden de puntos
@@ -319,10 +321,16 @@ Bluemetrics/
 │   │   ├── usePermissions.js          # Hook de permisos por rol
 │   │   ├── usePersistedState.js       # Estado persistido en localStorage
 │   │   ├── usePredictions.js          # Hook de predicciones (API ML)
-│   │   └── useUserRole.js             # Obtener rol desde profiles
+│   │   ├── useUserRole.js             # Obtener rol desde profiles
+│   │   ├── useDashboardTopBottom.js   # ⬅ NUEVO (v2.1): Top/bottom diferencia de consumo (agua/gas)
+│   │   ├── useYearConsumption.js      # ⬅ NUEVO (v2.1): Filtro/orden/paginación de consumo anualizado
+│   │   └── useWellsAnnualTargets.js   # ⬅ NUEVO (v2.1): Cálculo de metas anuales de pozos
 │   │
 │   ├── services/                       # ⬅ NUEVO en v2.0
-│   │   └── predictionService.js        # Cliente HTTP de la API de ML
+│   │   ├── predictionService.js        # Cliente HTTP de la API de ML
+│   │   ├── dashboardConsumption.js     # ⬅ NUEVO (v2.1): Consumo semanal agua/gas para dashboard y top/bottom
+│   │   ├── yearConsumption.js          # ⬅ NUEVO (v2.1): RPC de consumo anualizado paginado
+│   │   └── wellsConsumption.js         # ⬅ NUEVO (v2.1): Totalizado de pozos por año y metas
 │   │
 │   ├── config/
 │   │   ├── excelToSqlConfigs.js       # 15+ configuraciones Excel-to-SQL
@@ -382,14 +390,15 @@ Bluemetrics/
 │       ├── wellAlertEvaluator.js      # Evaluador de anomalías de sobreconsumo
 │       ├── wellAlertSync.js           # Sincronización de alertas con Supabase
 │       ├── chartColors.js             # Colores fijos por año para gráficas
-│       ├── consumptionHelpers.js      # Helpers puros de cálculo de consumo
+│       ├── consumptionHelpers.js      # Helpers puros de cálculo de consumo (incl. getTopAndBottomConsumersByPair)
+│       ├── formatMX.js                # ⬅ NUEVO (v2.1): Formato numérico/porcentaje es-MX (formatMX, formatMXInt, formatMXPercent)
 │       ├── yearOverYear.js            # Utilidades comparativas año a año
 │       ├── tableHelpers.js            # Helpers de tablas por año/gas
 │       ├── clearAuthCache.js          # Debug: limpiar caché de auth
 │       └── testSupabaseConnection.js  # Debug: probar conexión Supabase
 │
-├── 48 archivos SQL de migración        # Migraciones en la raíz
-└── 20+ archivos de documentación .md   # Documentación dispersa
+├── 57 archivos SQL de migración        # Migraciones en la raíz
+└── 30+ archivos de documentación .md   # Documentación dispersa
 ```
 
 ### 2.2 Patrón Arquitectónico
@@ -452,9 +461,9 @@ El proyecto sigue una **arquitectura SPA (Single Page Application)** con los sig
 
 ## 3. Migraciones de Datos
 
-### 3.1 Inventario Completo (51+ archivos SQL)
+### 3.1 Inventario Completo (57 archivos SQL)
 
-Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). Se organizan en 7 categorías:
+Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). Se organizan en 9 categorías:
 
 #### Categoría 1: Tablas de Agua (Lecturas Semanales)
 
@@ -521,17 +530,33 @@ Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). 
 | `supabase_correos.sql` / `supabase_correos_table.sql` | `correos` | Bandeja de entrada de formulario de contacto |
 | `supabase_factores_agua.sql` | `factores_agua` | Factores de conversión de agua |
 | `supabase_weekly_comments.sql` | `weekly_comments` | **NUEVO (v2.0):** Comentarios semanales por recurso (agua/gas), únicos por (week_number, source_type), autor referencia a profiles.id |
-| Varios archivos de columnas | Migraciones de columnas | `add_caffenio_migration.sql`, `add_agua_columns_2023_2026.sql`, `migration_fix_gas_unique.sql`, `migracion_ptar_columnas.sql` |
+| `supabase_weekly_comments_add_year.sql` | Columna `year` en `weekly_comments` | **NUEVO (v2.1):** Añade `year` (NOT NULL) y cambia el constraint único a `(year, week_number, source_type)`, con índice `(year, week_number, source_type)` |
 
 #### Categoría 8: Alertas Unificadas (NUEVO en v2.0)
 
 | Archivo | Descripción |
 |---------|-------------|
 | `supabase_unifica_alertas_anomalia.sql` (1027 líneas) | Reemplaza los 3 tipos automáticos anteriores (`alerta_consumo`, `sobreconsumo`, `posible_fuga`) por **un único tipo `anomalia_sobreconsumo`**. Evalúa cada lectura con 3 reglas AND simultáneas y deduplica por periodo mediante índices únicos. Limpia los triggers pg_cron antiguos. |
-| `add_l_lago_aulas_7_llenado_column.sql` | Añade columna `l_lago_aulas_7_llenado` a tablas de agua |
-| `add_l_sedes_site_boma_column.sql` | Añade columna `l_sedes_site_boma` a tablas de agua |
 
 > **Nota v2.0:** El archivo `supabase_unifica_alertas_anomalia.sql` es la migración más relevante del periodo. Unifica todo el sistema de alertas automáticas bajo un solo tipo de evento con la misma lógica de evaluación (3 reglas simultáneas) para lecturas diarias, semanales y mensuales.
+
+#### Categoría 9: Migraciones de Columnas / Constraints (add column)
+
+Migraciones idempotentes (`ADD COLUMN IF NOT EXISTS` / `ALTER ... CONSTRAINT`) que amplían el esquema. Se ejecutan manualmente en el SQL Editor de Supabase.
+
+| Archivo | Columnas / Cambio | Tablas Afectadas |
+|---------|-------------------|------------------|
+| `add_caffenio_migration.sql` | `l_caffenio` | `lecturas_semana_agua_2026`, `lecturas_semana_agua_consumo_2026` |
+| `add_agua_columns_2023_2026.sql` | `l_san_huevito`, `l_aulas_4_centro`, `l_cdi_1`, `l_cdi_2` | `lecturas_semana_agua_{2023-2026}` y sus `_consumo_` |
+| `add_l_lago_aulas_7_llenado_column.sql` | `l_lago_aulas_7_llenado` | tablas semanales y mensuales de agua (lecturas y consumo) |
+| `add_l_sedes_site_boma_column.sql` | `l_sedes_site_boma` | tablas semanales y mensuales de agua (lecturas y consumo) |
+| `add_l_nucleo_entrada_cisterna_column.sql` | `l_nucleo_entrada_cisterna` | tablas semanales y mensuales de agua (lecturas y consumo) |
+| `add_agua_columns_rancho_cidep.sql` | `l_rancho_tec`, `l_cidep` | tablas semanales (2023-2026) y mensuales de agua (lecturas y consumo) |
+| `add_escuela_medicina_agua_columns.sql` | `l_escuela_medicina` | tablas semanales (2023-2026) y mensuales de agua (lecturas y consumo) |
+| `add_escuela_medicina_gas_columns.sql` | `escuela_medicina` | tablas semanales (2023-2026) y mensuales de gas (lecturas y consumo) |
+| `migration_fix_gas_unique.sql` | Cambia `UNIQUE(anio)` → `UNIQUE(anio, mes)` | `lecturas_mensuales_gas`, `lecturas_mensuales_gas_consumo` |
+
+> **Nota v2.1:** Todas las columnas de puntos de medición se declaran como `NUMERIC(15,3)` y se añaden tanto a las tablas de lecturas como a las de consumo, para el mismo periodo. En el frontend se registran además en `src/lib/consumption-points.json` (agua) y `src/lib/gas-consumption-points.json` (gas).
 
 ### 3.2 Resumen de Tablas Creadas (38 tablas)
 
@@ -571,7 +596,7 @@ Las migraciones están en la raíz del proyecto (no en `supabase/migrations/`). 
 | `well_config` | Única | Configuración de pozos |
 | `alert_scan_state` | Única | Estado de escaneo de alertas |
 | `bienvenida` | Única | Eventos de bienvenida |
-| `weekly_comments` | Única | **NUEVO (v2.0):** Comentarios semanales por recurso |
+| `weekly_comments` | Única | **NUEVO (v2.0):** Comentarios semanales por recurso (v2.1: único por año+semana+recurso) |
 | `_prisma_migrations` | Única | Migraciones de Prisma (legacy) |
 
 ### 3.3 Convención de Nombres
@@ -745,6 +770,7 @@ export const usePermissions = () => {
 | `@tailwindcss/vite` | ^4.1.12 | Plugin Vite para TailwindCSS 4 |
 | `eslint` | ^9.33.0 | Linter |
 | `supabase` | ^2.81.3 | CLI de Supabase |
+| `@playwright/test` | ^1.62.1 | ⬅ NUEVO (v2.1): Pruebas end-to-end (`playwright.config.js`, `tests/`) |
 
 ### 5.3 Configuración de Vite (`vite.config.js`)
 
@@ -785,6 +811,7 @@ VITE_ML_API_URL=...                    # ⬅ NUEVO (v2.0): URL base de la API de
 | `build` | `vite build` | Compila para producción |
 | `preview` | `vite preview` | Vista previa del build |
 | `lint` | `eslint .` | Ejecuta linter |
+| `test:e2e` | `playwright test` | ⬅ NUEVO (v2.1): Pruebas end-to-end |
 
 ---
 
@@ -1090,31 +1117,39 @@ CREATE TABLE "correos" (
 ```sql
 CREATE TABLE public.weekly_comments (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    year INTEGER NOT NULL,                      -- ⬅ NUEVO (v2.1): año del consumo
     week_number INTEGER NOT NULL,
     source_type TEXT NOT NULL DEFAULT 'agua',   -- agua | gas
     comment TEXT NOT NULL,
     author UUID REFERENCES public.profiles(id),  -- FK al UUID de la sesión autenticada
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    CONSTRAINT unique_weekly_comment UNIQUE (week_number, source_type)
+    CONSTRAINT unique_weekly_comment UNIQUE (year, week_number, source_type)
 );
 ```
 
-- Un solo comentario por (semana, recurso)
-- Índices en `week_number`, `source_type`, `created_at`
+- Un solo comentario por (año, semana, recurso)
+- Índices en `week_number`, `source_type`, `created_at` y `(year, week_number, source_type)`
+- La columna `year` se añadió en v2.1 con `supabase_weekly_comments_add_year.sql` (los comentarios previos se asignan a 2026)
 - RLS: CRUD permitido a todos los usuarios autenticados
 - Trigger para actualizar `updated_at`
 
-### 6.9c Columnas Nuevas de Agua (v2.0)
+### 6.9c Columnas Nuevas de Puntos de Medición (v2.0 / v2.1)
 
-Se añadieron dos nuevas columnas a las tablas de agua (semanales y mensuales, lecturas y consumo):
+Se añadieron nuevas columnas de puntos de medición a las tablas de agua y gas (semanales y mensuales, lecturas y consumo). Todas son `NUMERIC(15,3)`:
 
-| Columna | Tipo | Tablas |
-|---------|------|--------|
-| `l_lago_aulas_7_llenado` | `NUMERIC(15,3)` | `lecturas_semana_agua_{año}`, `lecturas_semana_agua_consumo_{año}` (2023-2026), `lecturas_mensuales_agua`, `lecturas_mensuales_agua_consumo` |
-| `l_sedes_site_boma` | `NUMERIC(15,3)` | Mismas tablas |
+| Columna | Recurso | Migración | Tablas |
+|---------|---------|-----------|--------|
+| `l_lago_aulas_7_llenado` | Agua | `add_l_lago_aulas_7_llenado_column.sql` | `lecturas_semana_agua_{año}` / `_consumo_` (2023-2026), `lecturas_mensuales_agua` / `_consumo` |
+| `l_sedes_site_boma` | Agua | `add_l_sedes_site_boma_column.sql` | Mismas tablas |
+| `l_nucleo_entrada_cisterna` | Agua | `add_l_nucleo_entrada_cisterna_column.sql` | Mismas tablas |
+| `l_rancho_tec`, `l_cidep` | Agua | `add_agua_columns_rancho_cidep.sql` | Mismas tablas |
+| `l_escuela_medicina` | Agua | `add_escuela_medicina_agua_columns.sql` | Mismas tablas |
+| `escuela_medicina` | Gas | `add_escuela_medicina_gas_columns.sql` | `lecturas_semanales_gas_{año}` / `_consumo_` (2023-2026), `lecturas_mensuales_gas` / `_consumo` |
+| `l_san_huevito`, `l_aulas_4_centro`, `l_cdi_1`, `l_cdi_2` | Agua | `add_agua_columns_2023_2026.sql` | `lecturas_semana_agua_{año}` / `_consumo_` (2023-2026) |
+| `l_caffenio` | Agua | `add_caffenio_migration.sql` | `lecturas_semana_agua_2026` / `_consumo_2026` |
 
-Estas columnas se agregan vía `add_l_lago_aulas_7_llenado_column.sql` y `add_l_sedes_site_boma_column.sql` y se incluyen en los flujos de alta/edición de lecturas (`AddWeeklyReadingsPage`, `EditWeeklyReadingsPage`, `AddMonthlyWaterReadingsPage`, `EditMonthlyWaterReadingsPage`).
+Estas columnas se incluyen en los flujos de alta/edición de lecturas (`AddWeeklyReadingsPage`, `EditWeeklyReadingsPage`, `AddMonthlyWaterReadingsPage`, `EditMonthlyWaterReadingsPage`, y los equivalentes de gas) y se registran como puntos de medición en `src/lib/consumption-points.json` (agua) y `src/lib/gas-consumption-points.json` (gas).
 
 ### 6.10 Políticas RLS (Row Level Security)
 
@@ -1137,6 +1172,7 @@ Existen aproximadamente 35 triggers y 30 funciones en la base de datos. Los más
 - **Triggers de timestamp**: Actualizan `updated_at` automáticamente en cada tabla
 - **Funciones de alerta**: Escanean patrones de sobreconsumo (sistema unificado desde v2.0)
 - **Función `insert_bulk_data`**: Permite inserciones masivas con `SECURITY DEFINER` para bypass RLS
+- **Función `fn_obtener_consumos_anualizados_paginados(p_search, p_sort_by, p_sort_dir, p_limit, p_offset)`**: RPC que "despivota" el consumo semanal de agua de 2023-2026, agrupa por medidor y devuelve `consumo_2023..2026` + `consumo_total` paginado. Consumida por `YearConsumptionTable` vía `yearConsumptionService` (v2.1)
 - **Jobs de pg_cron**: Los 4 jobs de alertas antiguos fueron **desprogramados** por la migración `supabase_unifica_alertas_anomalia.sql` (el nuevo sistema usa triggers sobre las tablas de consumo)
 
 > **Nota (v2.0):** La migración `supabase_unifica_alertas_anomalia.sql` limpia de forma idempotente todos los jobs pg_cron y triggers/event triggers anteriores, unificando el sistema de alertas bajo `anomalia_sobreconsumo`.
@@ -1360,20 +1396,24 @@ Todas las páginas siguen un patrón consistente:
 [Render condicional: loading ? <Spinner /> : error ? <ErrorMsg /> : empty ? <EmptyState /> : <DataView />]
 ```
 
-#### Ejemplo: DashboardPage.jsx (refactorizado v2.0)
+#### Ejemplo: DashboardPage.jsx (refactorizado v2.1)
 
-Antes consultaba 4 tablas en paralelo (`Promise.all`). Ahora carga **una única tabla** (`lecturas_semana_agua_consumo_2026`) y deriva top/bottom consumidores de la semana seleccionada:
+El dashboard dejó de listar tarjetas de métricas y ahora presenta, para **agua y gas**, el **Top 5 de mayor y menor diferencia de consumo** entre el par de semanas `(n-1, n)` de la semana seleccionada, más una **tabla de consumo anualizado por medidor**. Toda la carga y el cálculo se delegan en `useDashboardTopBottom` y `dashboardConsumptionService`:
 
 ```javascript
-const CONSUMPTION_TABLE = 'lecturas_semana_agua_consumo_2026'
-const { data, error: fetchError } = await supabase
-  .from(CONSUMPTION_TABLE)
-  .select('*')
-  .order('l_numero_semana', { ascending: true })
+// Fuentes de datos (una tabla por recurso, año en curso)
+const WATER_CONSUMPTION_TABLE = 'lecturas_semana_agua_consumo_2026'
+const GAS_CONSUMPTION_TABLE  = 'lecturas_semanales_gas_consumo_2026'
 
-// Top/bottom consumidores con helpers extraídos
-const { top5, bottom5 } = getTopAndBottomConsumers(points, weekNumber, 5)
+// El hook carga las filas semanales y arma el top/bottom por diferencia (n-1, n)
+const { globalTopBottom, gasTopBottom, selectedWeek, availableWeeks } = useDashboardTopBottom()
+
+// consumo agua: columnas con prefijo l_ | gas: sin prefijo
+buildPointsWithData(points, rows, { columnPrefix: 'l_', weekKey: 'l_numero_semana' })
+getTopAndBottomConsumersByPair(pointsWithData, selectedWeek, 5)
 ```
+
+> **Nota (v2.1):** El Top/Bottom ya no se ordena por consumo absoluto de la semana, sino por la **diferencia** respecto a la semana anterior (`getTopAndBottomConsumersByPair`). `DashboardPage` redirige a los usuarios con rol `datos` a `/agregar-lecturas`.
 
 #### Tablas dinámicas por año (ConsumptionPage)
 
@@ -1582,9 +1622,11 @@ Se introdujeron **componentes reutilizables de comparación multiaño** con colo
 
 | Componente | Descripción |
 |------------|-------------|
-| `WeeklyComparisonChart.jsx` | Gráfica de líneas/barras comparando consumo semanal entre múltiples años. Controles: filtro pozos (todos/riego/servicios), tipo de gráfico, selector de años. Colores de puntos indican aumento >5% (rojo), estable (azul), disminución <0% (verde). Tooltip muestra mes de la semana y % vs semana anterior y YoY. |
-| `WeeklyComparisonTable.jsx` | Tabla comparativa semanal lado a lado por año. |
+| `WeeklyComparisonChart.jsx` | Gráfica de líneas/barras comparando consumo semanal entre múltiples años. Controles: filtro pozos (todos/riego/servicios), tipo de gráfico, selector de años. Colores de puntos indican aumento >5% (rojo), estable (azul), disminución <0% (verde). Tooltip muestra mes de la semana y % vs semana anterior y YoY. **v2.1:** renderiza y permite editar los **comentarios semanales** (`weekly_comments`) por recurso. |
+| `WeeklyComparisonTable.jsx` | Tabla comparativa semanal lado a lado por año. **v2.1:** incluye los comentarios semanales por año. |
 | `MonthlyComparisonChart.jsx` | Gráfica mensual equivalente (12 meses) con formato mexicano (`es-MX`). Usa `MultiYearData` de `{ year, month, monthName, consumption, reading }`. |
+| `YearConsumptionTable.jsx` | **NUEVO (v2.1):** Tabla de consumo anualizado por medidor (2023-2026) con búsqueda por nombre/número, orden y paginación; consume el RPC `fn_obtener_consumos_anualizados_paginados`. |
+| `WellsAnnualTargets.jsx` | **NUEVO (v2.1):** Tarjetas de metas anuales de consumo total de pozos (2025 = −20% vs 2024; 2026 = −10% vs 2025). |
 
 Estos componentes se usan en `ConsumptionPage`, `GasConsumptionPage`, `MonthlyWaterConsumptionPage` y `GasComsuptionMontlyPage`.
 
@@ -1624,7 +1666,9 @@ Estos componentes se usan en `ConsumptionPage`, `GasConsumptionPage`, `MonthlyWa
 
 | Componente | Loading | Error | Empty | Patrón |
 |-----------|---------|-------|-------|--------|
-| `DashboardPage` | Spinner global | `setError(msg)` | "No hay datos" | Página (refactorizado v2.0) |
+| `DashboardPage` | Spinner agua/gas independientes | `error` / `gasError` | "No hay semanas disponibles" | Página (refactorizado v2.1: Top/Bottom + tabla anualizada) |
+| `WellsAnnualTargets` | Skeleton de tarjetas | Card con reintento | "Sin datos suficientes" | vía `useWellsAnnualTargets` |
+| `YearConsumptionTable` | Spinner inicial | Card con error | "Sin resultados" | Paginación + RPC |
 | `ConsumptionPage` | Spinner en selector | `setError(msg)` + mock fallback | "No hay datos" | Página |
 | `PTARPage` | Página completa | Card con AlertCircle | "No hay datos" | Página |
 | `WellsPage` | Por fila de tabla | Por fila | "No hay datos disponibles" | Por tabla |
@@ -1649,7 +1693,38 @@ Estos componentes se usan en `ConsumptionPage`, `GasConsumptionPage`, `MonthlyWa
 | **Dinamic table names** | Nombre de tabla construido con año | ConsumptionPage, WellsPage |
 | **Multi-year comparison** | Comparar un mismo periodo contra múltiples años con colores fijos | WeeklyComparisonChart, MonthlyComparisonChart, WeeklyComparisonTable |
 | **External ML API** | Fetch a API externa de predicción (VITE_ML_API_URL) | PredictionsPage vía usePredictions + predictionService |
-| **Pure helpers** | Lógica de cálculo extraída a funciones puras reutilizables | consumptionHelpers, yearOverYear, chartColors |
+| **Pure helpers** | Lógica de cálculo extraída a funciones puras reutilizables | consumptionHelpers, yearOverYear, chartColors, formatMX |
+| **Top/Bottom por diferencia** | Ranking por la diferencia de consumo entre semana n-1 y n | useDashboardTopBottom (agua y gas) |
+| **Paged RPC** | Agregación anual por medidor en el servidor con paginación | YearConsumptionTable vía `fn_obtener_consumos_anualizados_paginados` |
+| **Annual targets** | Cálculo de metas de reducción sobre años cerrados/en curso | useWellsAnnualTargets (WellsPage) |
+
+### 8.10 Metas Anuales y Consumo Anualizado (NUEVO en v2.1)
+
+#### Metas Anuales de Consumo (`WellsAnnualTargets` + `useWellsAnnualTargets`)
+
+Se muestran dos tarjetas en `WellsPage` calculadas sobre el totalizado de todos los pozos:
+
+| Tarjeta | Año | Regla | Base |
+|---------|-----|-------|------|
+| 2026 (año en curso) | 2026 | −10% vs 2025 | Meta equivalente a la semana actual vs 2025 misma semana |
+| 2025 (año cerrado) | 2025 | −20% vs 2024 | Total últimas 52 semanas vs total 2024 |
+
+- Constantes en `src/services/wellsConsumption.js`: `REDUCTION_2025 = 0.2`, `REDUCTION_2026 = 0.1`.
+- Los grupos de columnas de pozos son `WELL_COLUMNS_SERVICIOS` (`l_pozo_11/12/3/7/14`) y `WELL_COLUMNS_RIEGO` (`l_pozo_4/8/15_riego`).
+- `CHART_YEARS = [2023..2026]`, `TARGET_YEARS = [2024, 2025, 2026]`.
+- Cada tarjeta muestra consumo real, meta, % de cumplimiento y monto restante/excedido (helpers `formatMX`/`formatMXPercent`).
+
+#### Consumo Anualizado por Medidor (`YearConsumptionTable` + `useYearConsumption`)
+
+- Tabla comparativa 2023-2026 por medidor; búsqueda por nombre o número, orden y paginación (10 por página con debounce de 300 ms).
+- Obtiene los datos vía `supabase.rpc('fn_obtener_consumos_anualizados_paginados', ...)` (`src/services/yearConsumption.js`).
+- Los medidores con `noRead` y los nombres se resuelven contra `src/lib/consumption-points.json` (con `prettifySlug` como fallback).
+
+#### Top/Bottom del Dashboard (`useDashboardTopBottom` + `dashboardConsumption`)
+
+- Carga `lecturas_semana_agua_consumo_2026` y `lecturas_semanales_gas_consumo_2026`.
+- Selecciona desde `WATER_SELECTED_POINT_IDS` / `GAS_SELECTED_POINT_IDS` (listas exactas de medidores) cruzadas con los catálogos de puntos.
+- `getTopAndBottomConsumersByPair(points, week)` ordena por la diferencia `consumo(semana n) − consumo(semana n-1)` y devuelve el top 5 mayor y menor.
 
 ---
 
@@ -1697,6 +1772,7 @@ La tabla `lecturas_semana_agua_{año}` contiene aproximadamente 170 columnas que
 - **Zonas**: wellness_*, centrales_*, ciap_*, residencias_*, biblioteca_*, caffenio, cedes_*, aulas_*, rectoria_*, estadio_*
 - **Áreas deportivas**: arena_borrego, estadio_borrego_*
 - **Otros**: planta_fisica, megacentral, a7_cc, a_y_d
+- **Agregados v2.1**: rancho_tec, cidep, escuela_medicina, nucleo_entrada_cisterna, lago_aulas_7_llenado, sedes_site_boma, san_huevito, aulas_4_centro, cdi_1, cdi_2, caffenio
 
 ### Gas (~60 puntos)
 
@@ -1709,6 +1785,7 @@ La tabla `lecturas_semanales_gas_{año}` contiene aproximadamente 60 columnas qu
 - **Residencias**: residencias_1..8
 - **Zonas**: wellness_*, estadio_borrego_*
 - **Otros**: expedition, bread_expedition
+- **Agregados v2.1**: escuela_medicina
 
 ### PTAR (8 métricas)
 
@@ -1719,4 +1796,4 @@ La tabla `lecturas_semanales_gas_{año}` contiene aproximadamente 60 columnas qu
 
 ---
 
-*Documentación generada en Junio 2026. Para preguntas o actualizaciones, contactar al equipo de desarrollo.*
+*Documentación generada en Junio 2026. Actualizada a v2.1 en Octubre 2026. Para preguntas o actualizaciones, contactar al equipo de desarrollo.*
