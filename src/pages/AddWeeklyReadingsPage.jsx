@@ -129,18 +129,23 @@ export default function AddWeeklyReadingsPage() {
     'circuito_8_campus': 10,
     'medidor_general_pozos': 10,
     'campo_soft_bol': 10,
+    'residencias_13_2_ciudad': 10,
+    'wellness_te_rebosadero': 0.38,
     'cedes_cisterna': 1
   }
 
   // Fórmulas ajustadas: consumo final = consumo_base - consumo(factores)
   const adjustmentMap = {
-    'estadio_banorte': ['estadio_azul'],
-    'estadio_banorte_purgas': ['wellnes_te_purga'],
-    'aulas_4_sur': ['cdi_1'],
-    'aulas_4_maestros': ['cdi_2'],
+    'auditorio_luis_elizondo': ['cdb2'],
+    'cedes_cisterna': ['caffenio', 'san_huevito', 'cedes_e2'],
     'nucleo': ['expedition', 'hub'],
     'aulas_3': ['basanti', 'aulas_3_sr_latino'],
-    'cedes_cisterna': ['caffenio', 'san_huevito', 'cedes_e2']
+    'aulas_4_sur': ['cdi_1'],
+    'aulas_4_maestros': ['cdi_2'],
+    'estadio_banorte': ['estadio_azul'],
+    'guarderia': ['naranjos'],
+    'estadio_banorte_purgas': ['wellness_te_purga'],
+    'residencias_10_15': ['caffenio']
   }
 
   // Estados principales con persistencia

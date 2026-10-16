@@ -302,25 +302,30 @@ export default function EditMonthlyWaterReadingsPage() {
             console.warn(`⚠️ No se encontró mes anterior ${prevMonth}/${prevYear} para calcular consumo`)
           }
 
-          // Casos especiales con factor 10 (mismos que semanales y AddMonthly)
+          // Casos especiales con factor multiplicador
           const specialCases = {
             'circuito_6_residencias': 10,
             'circuito_8_campus': 10,
             'medidor_general_pozos': 10,
-            'campo_soft_bol': 10
+            'campo_soft_bol': 10,
+            'residencias_13_2_ciudad': 10,
+            'wellness_te_rebosadero': 0.38,
+            'cedes_cisterna': 1
           }
 
           // Fórmulas ajustadas: consumo final = consumo_base - consumo(factores)
-          const newFormulas1 = ['residencias_10_15', 'estadio_banorte', 'estadio_banorte_purgas','aulas_4_sur', 'aulas_4_maestros']
-          const newFormulas2 = ['nucleo', 'aulas_3']
-          const factorConsumption1 = ['caffenio', 'estadio_azul', 'wellnes_te_purga','cdi_1', 'cdi_2']
-          const factorConsumption2 = ['expedition', 'hub', 'basanti', 'aulas_3_sr_latino']
-          const adjustmentMap = {}
-          newFormulas1.forEach((id, i) => { adjustmentMap[id] = [factorConsumption1[i]] })
-          const chunkSize = factorConsumption2.length / newFormulas2.length
-          newFormulas2.forEach((id, i) => {
-            adjustmentMap[id] = factorConsumption2.slice(i * chunkSize, (i + 1) * chunkSize)
-          })
+          const adjustmentMap = {
+            'auditorio_luis_elizondo': ['cdb2'],
+            'cedes_cisterna': ['caffenio', 'san_huevito', 'cedes_e2'],
+            'nucleo': ['expedition', 'hub'],
+            'aulas_3': ['basanti', 'aulas_3_sr_latino'],
+            'aulas_4_sur': ['cdi_1'],
+            'aulas_4_maestros': ['cdi_2'],
+            'estadio_banorte': ['estadio_azul'],
+            'guarderia': ['naranjos'],
+            'estadio_banorte_purgas': ['wellness_te_purga'],
+            'residencias_10_15': ['caffenio']
+          }
 
           // Calcular consumo para cada punto
           const consumoData = {
@@ -349,10 +354,10 @@ export default function EditMonthlyWaterReadingsPage() {
 
           // Segunda pasada: aplicar ajustes (restar consumos de factores)
           Object.entries(adjustmentMap).forEach(([formulaId, factorIds]) => {
-            const formulaField = `l_${formulaId}`
+            const formulaField = getMonthlyDbFieldName(formulaId)
             if (consumoData[formulaField] !== undefined) {
               factorIds.forEach(factorId => {
-                const factorField = `l_${factorId}`
+                const factorField = getMonthlyDbFieldName(factorId)
                 const factorVal = consumoData[factorField]
                 if (factorVal !== undefined && !isNaN(factorVal)) {
                   consumoData[formulaField] -= factorVal
