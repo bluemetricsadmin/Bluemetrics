@@ -408,7 +408,8 @@ const checkIfMonthExists = async () => {
         'estudiantes_11': 1,
         'estudiantes_12': 1,
         'estudiantes_13': 1,
-        'estudiantes_15_y_10': 1
+        'estudiantes_15_y_10': 1,
+        'escuela_medicina': 1.32
       }
 
       // Calcular consumo
@@ -679,7 +680,8 @@ const checkIfMonthExists = async () => {
           'estudiantes_11': 1,
           'estudiantes_12': 1,
           'estudiantes_13': 1,
-          'estudiantes_15_y_10': 1
+          'estudiantes_15_y_10': 1,
+          'escuela_medicina': 1.32
         }
         const factor = gasFactors[pointId] || 1
         const consumoValue = (currentValue - previousValue) * factor

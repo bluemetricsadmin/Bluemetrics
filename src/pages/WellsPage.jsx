@@ -653,8 +653,11 @@ export default function WellsPage() {
               <WellsGeneralCharts />
             )}
 
-            {/* Metas anuales de consumo total de pozos */}
-            <WellsAnnualTargets />
+            {/* Metas anuales de consumo total de pozos 
+            
+             <WellsAnnualTargets />
+            */}
+            
 
 {/* Lista de pozos */}
             <Card>
