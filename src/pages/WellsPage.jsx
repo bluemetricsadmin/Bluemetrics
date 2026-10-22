@@ -655,8 +655,9 @@ export default function WellsPage() {
 
             {/* Metas anuales de consumo total de pozos 
             
-             <WellsAnnualTargets />
+           
             */}
+              <WellsAnnualTargets />
             
 
 {/* Lista de pozos */}

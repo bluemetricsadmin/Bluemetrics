@@ -31,7 +31,18 @@ const STATUS_BADGE = {
   bad: 'text-red-700 border-red-300 bg-red-50 dark:text-red-300 dark:border-red-800 dark:bg-red-900/20',
 }
 
-function TargetCard({ status, year, rule, color, subtitle, comparison, metaLabel = 'Meta' }) {
+function TargetCard({
+  status,
+  year,
+  rule,
+  color,
+  subtitle,
+  comparison,
+  metaLabel = 'Meta',
+  progressLabel = 'de la meta',
+  goalPhrase = 'la meta',
+  exceededBadge = 'Meta excedida',
+}) {
   const styles = COLOR_STYLES[color] || COLOR_STYLES.blue
   const { actual, meta, delta, pct, cumple } = status
   const barWidth = Math.min(Math.max(pct, 0), 100)
@@ -103,7 +114,7 @@ function TargetCard({ status, year, rule, color, subtitle, comparison, metaLabel
         <div className="mt-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-muted-foreground">
-              {formatMXPercent(pct)} de la meta
+              {formatMXPercent(pct)} {progressLabel}
             </span>
             <Badge variant="outline" className={cumple ? STATUS_BADGE.ok : STATUS_BADGE.bad}>
               {cumple ? (
@@ -114,7 +125,7 @@ function TargetCard({ status, year, rule, color, subtitle, comparison, metaLabel
               ) : (
                 <>
                   <AlertTriangleIcon className="h-3 w-3 mr-1" />
-                  Meta excedida
+                  {exceededBadge}
                 </>
               )}
             </Badge>
@@ -129,8 +140,8 @@ function TargetCard({ status, year, rule, color, subtitle, comparison, metaLabel
 
         <p className={`mt-3 text-sm ${cumple ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
           {cumple
-            ? `Te quedan ${formatMX(Math.max(delta, 0))} m³ para mantenerte dentro de la meta`
-            : `Excediste la meta por ${formatMX(Math.abs(delta))} m³`}
+            ? `Te quedan ${formatMX(Math.max(delta, 0))} m³ para mantenerte dentro de ${goalPhrase}`
+            : `Excediste ${goalPhrase} por ${formatMX(Math.abs(delta))} m³`}
         </p>
       </CardContent>
     </Card>
@@ -190,7 +201,10 @@ export default function WellsAnnualTargets() {
               year={current.year}
               rule="Meta: -10% vs 2025"
               color="blue"
-              metaLabel="Meta equivalente"
+              metaLabel={`Meta acumulada (sem. 1–${currentWeek})`}
+              progressLabel={`de la meta acumulada (sem. 1–${currentWeek})`}
+              goalPhrase="la meta acumulada"
+              exceededBadge="Meta acumulada excedida"
               subtitle={`Año en curso · Semana 1 – ${currentWeek}`}
               comparison={{
                 referenceLabel: '2025 misma semana',
