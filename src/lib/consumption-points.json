@@ -2743,7 +2743,7 @@
       "points": [
         {
           "id": "cidep",
-          "name": "AGUA PARQUE CISTERNA",
+          "name": "CIDEP-AGUA",
           "type": "medidor_principal",
           "unit": "m³",
           "excludeFromTemplate": true,
