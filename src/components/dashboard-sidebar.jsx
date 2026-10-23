@@ -11,7 +11,7 @@ import { useAuth } from "../contexts/AuthContextNew"
 export function DashboardSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, loading } = useAuth()
+  const { user } = useAuth()
   const [userRole, setUserRole] = useState(null)
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export function DashboardSidebar() {
     {
       id: 'general',
       label: 'General',
-      allowedRoles: ['admin', 'datos', 'ejecutivo', 'gas', 'ptar', 'user'],
+      allowedRoles: ['admin', 'datos', 'ejecutivo', 'water', 'gas', 'ptar', 'user'],
       items: [
         { id: "dashboard", label: "Dashboard Principal", path: "/dashboard", icon: LayoutDashboard, allowedRoles: ['admin', 'datos', 'ejecutivo', 'water', 'gas', 'ptar', 'user'] }
       ]

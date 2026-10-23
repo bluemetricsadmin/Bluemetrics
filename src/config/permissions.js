@@ -68,7 +68,7 @@ export const PERMISSIONS = {
     addData: false,     // No puede agregar datos
     correos: false,
     excelToSql: false,
-    dashboard: false,   // NO puede ver dashboard
+    dashboard: true,    // Puede ver dashboard
   },
   
   // Gas solo gestión de gas

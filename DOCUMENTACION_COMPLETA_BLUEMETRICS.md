@@ -209,14 +209,14 @@ El sidebar (`dashboard-sidebar.jsx`) es un panel lateral fijo (`w-64`) con **6 s
 
 | Sección | Roles Permitidos | Items |
 |---------|-----------------|-------|
-| **General** | admin, datos, ejecutivo, gas, ptar, user | Dashboard Principal |
+| **General** | admin, datos, ejecutivo, water, gas, ptar, user | Dashboard Principal |
 | **Administración de Datos** | admin, datos | 12 items (lecturas semanales/mensuales/diarias/PTAR agua y gas + ediciones) |
 | **Importación Excel/SQL** | admin, datos | 8 items (agua 2023-2025, gas 2023-2025, agua mensual) |
 | **Gestión Hídrica** | admin, ejecutivo, water, user | Pozos, Consumo Semanal Agua, Consumo Mensual Agua, Lecturas Diarias |
 | **Gestión de Gas** | admin, ejecutivo, **water**, gas, user | Consumo Semanal de Gas, Consumo Mensual de Gas |
 | **Análisis** | admin, ejecutivo, gas, ptar, user, **water** | **Solo Alertas** (Centro de Análisis y Predicciones están comentados) |
 
-> **Nota (v2.0):** El rol `water` fue **añadido** a las secciones "Gestión de Gas" y "Análisis" del sidebar. Los ítems "Centro de Análisis" y "Predicciones" del menú Análisis están **comentados** en el código, dejando únicamente "Alertas" visible. El ítem "Consumo Mensual de Gas" está limitado a roles `admin`, `ejecutivo`, `water` y `gas` (sin `user`).
+> **Nota (v2.0):** El rol `water` fue **añadido** a las secciones "General", "Gestión de Gas" y "Análisis" del sidebar. Los ítems "Centro de Análisis" y "Predicciones" del menú Análisis están **comentados** en el código, dejando únicamente "Alertas" visible. El ítem "Consumo Mensual de Gas" está limitado a roles `admin`, `ejecutivo`, `water` y `gas` (sin `user`).
 
 > **Nota (v2.0):** Aunque `PTARPage` existe y está enrutada en `App.jsx`, el ítem "PTAR" y "Balance Hídrico" están **comentados** en el sidebar; el acceso a `/ptar` solo es posible vía URL directa.
 
@@ -625,7 +625,7 @@ Migraciones idempotentes (`ADD COLUMN IF NOT EXISTS` / `ALTER ... CONSTRAINT`) q
 | `admin` | Acceso total al sistema |
 | `ejecutivo` | Acceso de solo lectura a todos los módulos |
 | `datos` | Captura y edición de datos únicamente |
-| `water` | Gestión de agua (lectura de datos) |
+| `water` | Gestión de agua (lectura de datos) + acceso al dashboard |
 | `gas` | Gestión de gas + alertas + análisis |
 | `ptar` | Gestión de PTAR + alertas + análisis |
 | `user` | Acceso de solo lectura básico |
@@ -638,7 +638,7 @@ La matriz real del código (`src/config/permissions.js`) incluye **6 roles defin
 
 | Permiso | admin | ejecutivo | datos | water | gas | ptar |
 |---------|-------|-----------|-------|-------|-----|------|
-| dashboard | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ |
+| dashboard | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | water | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | gas | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | ptar | ✓ | ✓ | ✗ | ✓ | ✗ | ✓ |
@@ -682,7 +682,7 @@ export const PERMISSIONS = {
   water: {
     water: true, gas: true, ptar: true,
     alerts: false, predictions: false, analysis: false, contact: false,
-    addData: false, correos: false, excelToSql: false, dashboard: false,
+    addData: false, correos: false, excelToSql: false, dashboard: true,
   },
   gas: {
     water: true, gas: true, ptar: false,
@@ -724,14 +724,15 @@ export const usePermissions = () => {
 
 ### 4.5 Redirección post-login por rol
 
-| Rol | Ruta de redirección |
+| Condición / rol | Ruta de redirección |
 |-----|-------------------|
 | `datos` | `/agregar-lecturas` |
-| Tiene permiso `dashboard` | `/dashboard` |
-| Tiene permiso `water` | `/consumo` |
-| Tiene permiso `gas` | `/consumo-gas` |
+| Tiene permiso `water` (admin, ejecutivo, water, gas) | `/consumo` |
+| Tiene permiso `gas` y no `water` | `/consumo-gas` |
 | Tiene permiso `ptar` | `/ptar` |
-| Fallback | `/` |
+| Fallback (`user`) | `/` |
+
+> **Nota:** La comprobación `can('dashboard') → /dashboard` está comentada en `LoginPageNew.jsx`, por lo que el permiso `dashboard` no altera la redirección inicial tras el login.
 
 ---
 
