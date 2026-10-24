@@ -36,11 +36,6 @@ const DataRoute = ({ children }) => {
     
   }
 
-  // El rol 'ejecutivo' tiene acceso a administración de datos e importación
-  if (user.role === 'ejecutivo') {
-    return children;
-  }
-
   // Para otros roles, denegar acceso
   return <Navigate to="/dashboard" replace />;
 };

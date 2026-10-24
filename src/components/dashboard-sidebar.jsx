@@ -94,35 +94,35 @@ export function DashboardSidebar() {
     {
       id: 'data',
       label: 'Administración de Datos',
-      allowedRoles: ['admin', 'datos', 'ejecutivo'],
+      allowedRoles: ['admin', 'datos'],
       items: [
-       { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "edit-readings", label: "Editar Lecturas Semanales", path: "/editar-lecturas", icon: Edit, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "add-monthly-readings", label: "Lecturas Mensuales Agua", path: "/agregar-lecturas-mensuales-agua", icon: Calendar, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "edit-monthly-readings", label: "Editar Lecturas Mensuales Agua", path: "/editar-lecturas-mensuales-agua", icon: Edit, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "add-readings-gas", label: "Lecturas Semanales Gas", path: "/agregar-lecturas-gas", icon: FileInput, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "edit-readings-gas", label: "Editar Lecturas Semanales de Gas", path: "/editar-lecturas-gas", icon: Edit, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-         { id: "add-monthly-gas-readings", label: "Lecturas Mensuales Gas", path: "/agregar-lecturas-mensuales-gas", icon: Calendar, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "edit-monthly-gas-readings", label: "Editar Lecturas Mensuales Gas", path: "/editar-lecturas-mensuales-gas", icon: Edit, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "edit-daily-readings", label: "Editar Lecturas Diarias", path: "/editar-lecturas-diarias", icon: Edit, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "edit-ptar-readings", label: "Editar Lecturas PTAR", path: "/editar-lecturas-ptar", icon: Edit, allowedRoles: ['admin', 'datos', 'ejecutivo'] }
+       { id: "add-readings", label: "Lecturas Semanales Agua", path: "/agregar-lecturas", icon: FileInput, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-readings", label: "Editar Lecturas Semanales", path: "/editar-lecturas", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "add-monthly-readings", label: "Lecturas Mensuales Agua", path: "/agregar-lecturas-mensuales-agua", icon: Calendar, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-monthly-readings", label: "Editar Lecturas Mensuales Agua", path: "/editar-lecturas-mensuales-agua", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "add-readings-gas", label: "Lecturas Semanales Gas", path: "/agregar-lecturas-gas", icon: FileInput, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-readings-gas", label: "Editar Lecturas Semanales de Gas", path: "/editar-lecturas-gas", icon: Edit, allowedRoles: ['admin', 'datos'] },
+         { id: "add-monthly-gas-readings", label: "Lecturas Mensuales Gas", path: "/agregar-lecturas-mensuales-gas", icon: Calendar, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-monthly-gas-readings", label: "Editar Lecturas Mensuales Gas", path: "/editar-lecturas-mensuales-gas", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "add-daily-readings", label: "Lecturas Diarias Agua", path: "/agregar-lecturas-diarias", icon: Calendar, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-daily-readings", label: "Editar Lecturas Diarias", path: "/editar-lecturas-diarias", icon: Edit, allowedRoles: ['admin', 'datos'] },
+        { id: "add-ptar-readings", label: "Lecturas PTAR", path: "/agregar-lecturas-ptar", icon: Recycle, allowedRoles: ['admin', 'datos'] },
+        { id: "edit-ptar-readings", label: "Editar Lecturas PTAR", path: "/editar-lecturas-ptar", icon: Edit, allowedRoles: ['admin', 'datos'] }
       ]
     },
     {
       id: 'imports',
       label: 'Importación Excel/SQL',
-      allowedRoles: ['admin', 'datos', 'ejecutivo'],
+      allowedRoles: ['admin', 'datos'],
       items: [
-        { id: "excel-to-sql", label: "Importar Datos", path: "/excel-to-sql", icon: Upload, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "excel-agua-2023", label: "Agua 2023", path: "/excel-to-sql/agua/2023", icon: Droplets, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "excel-agua-2024", label: "Agua 2024", path: "/excel-to-sql/agua/2024", icon: Droplets, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "excel-agua-2025", label: "Agua 2025", path: "/excel-to-sql/agua/2025", icon: Droplets, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "excel-gas-2023", label: "Gas 2023", path: "/excel-to-sql/gas/2023", icon: Flame, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "excel-gas-2024", label: "Gas 2024", path: "/excel-to-sql/gas/2024", icon: Flame, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "excel-gas-2025", label: "Gas 2025", path: "/excel-to-sql/gas/2025", icon: Flame, allowedRoles: ['admin', 'datos', 'ejecutivo'] },
-        { id: "excel-agua-mensual", label: "Agua Mensual", path: "/excel-to-sql/agua-mensual", icon: Calendar, allowedRoles: ['admin', 'datos', 'ejecutivo'] }
+        { id: "excel-to-sql", label: "Importar Datos", path: "/excel-to-sql", icon: Upload, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-agua-2023", label: "Agua 2023", path: "/excel-to-sql/agua/2023", icon: Droplets, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-agua-2024", label: "Agua 2024", path: "/excel-to-sql/agua/2024", icon: Droplets, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-agua-2025", label: "Agua 2025", path: "/excel-to-sql/agua/2025", icon: Droplets, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-gas-2023", label: "Gas 2023", path: "/excel-to-sql/gas/2023", icon: Flame, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-gas-2024", label: "Gas 2024", path: "/excel-to-sql/gas/2024", icon: Flame, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-gas-2025", label: "Gas 2025", path: "/excel-to-sql/gas/2025", icon: Flame, allowedRoles: ['admin', 'datos'] },
+        { id: "excel-agua-mensual", label: "Agua Mensual", path: "/excel-to-sql/agua-mensual", icon: Calendar, allowedRoles: ['admin', 'datos'] }
       ]
     },
     {
