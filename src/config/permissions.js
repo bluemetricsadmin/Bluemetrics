@@ -26,18 +26,18 @@ export const PERMISSIONS = {
     dashboard: true,
   },
   
-  // Ejecutivo - puede ver todo menos ingreso de datos y correos
+  // Ejecutivo - acceso a administración de datos e importación, sin análisis/alertas
   ejecutivo: {
     water: true,        // Puede ver gestión hídrica completa
     gas: true,          // Puede ver gestión de gas
     ptar: true,         // Puede ver PTAR
     alerts: false,      // NO puede ver alertas
-    predictions: true,  // Puede ver predicciones
-    analysis: true,     // Puede ver análisis
+    predictions: false, // NO puede ver predicciones
+    analysis: false,    // NO puede ver análisis
     contact: true,      // Puede ver contacto
-    addData: false,     // NO puede agregar datos
+    addData: true,      // Puede agregar datos
     correos: false,     // NO puede ver correos
-    excelToSql: false,  // NO puede importar Excel/SQL
+    excelToSql: true,   // Puede importar Excel/SQL
     dashboard: true,    // Puede ver dashboard
   },
 

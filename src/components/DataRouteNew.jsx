@@ -30,10 +30,15 @@ const DataRoute = ({ children }) => {
   if (user.role === 'datos') {
     return children;
   }
-  // Si el usuario tiene rol 'datos', permitir acceso solo a secciones de datos
+  // Si el usuario tiene rol 'water', permitir acceso a secciones de datos
   if (user.role === 'water') {
     return children;
     
+  }
+
+  // El rol 'ejecutivo' tiene acceso a administración de datos e importación
+  if (user.role === 'ejecutivo') {
+    return children;
   }
 
   // Para otros roles, denegar acceso

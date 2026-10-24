@@ -67,7 +67,10 @@ export function DashboardHeader() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
+  const canViewAlerts = ['admin', 'water', 'gas', 'ptar', 'user'].includes(user?.role)
+
   const handleAlert = () => {
+    if (!canViewAlerts) return
     navigate('/alertas')
   }
   // Cerrar sesión
@@ -102,7 +105,7 @@ export function DashboardHeader() {
           </div>
           
           {/* Alertas activas en tiempo real */}
-          {user.role !== 'ejecutivo' && (
+          {canViewAlerts && (
             <button
               onClick={handleAlert}
               className="relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-muted/60 cursor-pointer"
