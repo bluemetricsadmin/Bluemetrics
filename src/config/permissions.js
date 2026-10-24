@@ -31,7 +31,7 @@ export const PERMISSIONS = {
     water: true,        // Puede ver gestión hídrica completa
     gas: true,          // Puede ver gestión de gas
     ptar: true,         // Puede ver PTAR
-    alerts: true,       // Puede ver alertas
+    alerts: false,      // NO puede ver alertas
     predictions: true,  // Puede ver predicciones
     analysis: true,     // Puede ver análisis
     contact: true,      // Puede ver contacto
@@ -68,7 +68,7 @@ export const PERMISSIONS = {
     addData: false,     // No puede agregar datos
     correos: false,
     excelToSql: false,
-    dashboard: false,   // NO puede ver dashboard
+    dashboard: true,    // Puede ver dashboard
   },
   
   // Gas solo gestión de gas

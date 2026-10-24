@@ -2,7 +2,7 @@ import { Navigate, useNavigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContextNew';
 import { usePermissions } from '../hooks/usePermissions';
 
-const PermissionRoute = ({ children, permission }) => {
+const PermissionRoute = ({ children, permission, deniedRoles = [] }) => {
   const { user, loading } = useAuth();
   const { can } = usePermissions();
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const PermissionRoute = ({ children, permission }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!can(permission)) {
+  if (deniedRoles.includes(user.role) || (permission && !can(permission))) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
