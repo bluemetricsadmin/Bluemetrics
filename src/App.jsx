@@ -93,7 +93,7 @@ function App() {
         <Route path="/ptar" element={<PermissionRoute permission="ptar"><PTARPage /></PermissionRoute>} />
         
         {/* Rutas generales - todos los autenticados */}
-        <Route path="/alertas" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
+        <Route path="/alertas" element={<PermissionRoute allowedRoles={['admin', 'water', 'gas', 'ptar', 'user']}><AlertsPage /></PermissionRoute>} />
         <Route path="/predicciones" element={<ProtectedRoute><PredictionsPage /></ProtectedRoute>} />
         <Route path="/analisis" element={<ProtectedRoute><AnalysisSectionPage /></ProtectedRoute>} />
 

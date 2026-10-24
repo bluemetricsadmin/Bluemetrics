@@ -67,7 +67,10 @@ export function DashboardHeader() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
+  const canViewAlerts = ['admin', 'water', 'gas', 'ptar', 'user'].includes(user?.role)
+
   const handleAlert = () => {
+    if (!canViewAlerts) return
     navigate('/alertas')
   }
   // Cerrar sesión
@@ -102,20 +105,22 @@ export function DashboardHeader() {
           </div>
           
           {/* Alertas activas en tiempo real */}
-          <button
-            onClick={handleAlert}
-            className="relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-muted/60 cursor-pointer"
-          >
-            <Bell className="w-5 h-5 text-muted-foreground" />
-            {activeAlertCount > 0 && (
-              <>
-                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
-                  {activeAlertCount}
-                </span>
-                <span className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full bg-red-500 animate-ping opacity-30"></span>
-              </>
-            )}
-          </button>
+          {canViewAlerts && (
+            <button
+              onClick={handleAlert}
+              className="relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-muted/60 cursor-pointer"
+            >
+              <Bell className="w-5 h-5 text-muted-foreground" />
+              {activeAlertCount > 0 && (
+                <>
+                  <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
+                    {activeAlertCount}
+                  </span>
+                  <span className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full bg-red-500 animate-ping opacity-30"></span>
+                </>
+              )}
+            </button>
+          )}
         </div>
         
         {/* Estado del sistema y eficiencia */}
