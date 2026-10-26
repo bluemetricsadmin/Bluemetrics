@@ -51,6 +51,88 @@ export const getPointWeekComparison = (item, week) => {
   return { previous, current, difference, percent }
 }
 
+const CONSUMPTION_METADATA_KEYS = new Set([
+  'l_id',
+  'l_numero_semana',
+  'l_fecha_inicio',
+  'l_fecha_fin',
+  'l_created_at',
+  'l_updated_at'
+])
+
+const SPECIAL_CONSUMPTION_FACTORS = {
+  circuito_6_residencias: 10,
+  circuito_8_campus: 10,
+  medidor_general_pozos: 10,
+  campo_soft_bol: 10,
+  residencias_13_2_ciudad: 10,
+  wellness_te_rebosadero: 0.38,
+  cedes_cisterna: 1
+}
+
+const CONSUMPTION_ADJUSTMENTS = {
+  auditorio_luis_elizondo: ['cdb2'],
+  cedes_cisterna: ['caffenio', 'san_huevito', 'cedes_e2'],
+  nucleo: ['expedition', 'hub'],
+  aulas_3: ['basanti', 'aulas_3_sr_latino'],
+  aulas_4_sur: ['cdi_1'],
+  aulas_4_maestros: ['cdi_2'],
+  estadio_banorte: ['estadio_azul'],
+  guarderia: ['naranjos'],
+  estadio_banorte_purgas: ['wellness_te_purga'],
+  residencias_10_15: ['caffenio']
+}
+
+export const deriveWeeklyConsumptionFromReadings = (readingsData = []) => {
+  const ordered = [...readingsData].sort(
+    (a, b) => (a.l_numero_semana || 0) - (b.l_numero_semana || 0)
+  )
+
+  const rows = ordered.map((reading, index) => {
+    const previous = index > 0 ? ordered[index - 1] : null
+    const row = {
+      l_numero_semana: reading.l_numero_semana,
+      l_fecha_inicio: reading.l_fecha_inicio,
+      l_fecha_fin: reading.l_fecha_fin
+    }
+
+    Object.keys(reading).forEach(key => {
+      if (!key.startsWith('l_') || CONSUMPTION_METADATA_KEYS.has(key)) return
+
+      const currentValue = parseFloat(reading[key])
+      if (!Number.isFinite(currentValue)) return
+
+      const previousValue = parseFloat(previous?.[key])
+      if (!Number.isFinite(previousValue)) {
+        row[key] = 0
+        return
+      }
+
+      const pointId = key.replace(/^l_/, '')
+      const factor = SPECIAL_CONSUMPTION_FACTORS[pointId] || 1
+      row[key] = Math.max(0, currentValue - previousValue) * factor
+    })
+
+    return row
+  })
+
+  rows.forEach(row => {
+    Object.entries(CONSUMPTION_ADJUSTMENTS).forEach(([formulaId, factorIds]) => {
+      const formulaKey = `l_${formulaId}`
+      if (row[formulaKey] === undefined) return
+
+      factorIds.forEach(factorId => {
+        const factorValue = row[`l_${factorId}`]
+        if (Number.isFinite(factorValue)) {
+          row[formulaKey] -= factorValue
+        }
+      })
+    })
+  })
+
+  return rows
+}
+
 // Extrae el top/bottom a partir de la diferencia de consumo del último par de semanas (n-1, n).
 export const getTopAndBottomConsumersByPair = (points, week, count = 5) => {
   const withComparison = (points || [])

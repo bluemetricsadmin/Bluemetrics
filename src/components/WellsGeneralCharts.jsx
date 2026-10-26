@@ -2,7 +2,7 @@ import { formatMX, formatMXInt } from '../utils/formatMX'
 import { useState, useEffect } from 'react'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
-import { supabase } from '../supabaseClient'
+import { wellsConsumptionService, CHART_YEARS } from '../services/wellsConsumption'
 import { 
   BarChart, 
   Bar, 
@@ -86,7 +86,7 @@ export default function WellsGeneralCharts() {
       setLoading(true)
       setError(null)
 
-      const years = [2023, 2024, 2025, 2026]
+      const years = CHART_YEARS
       const allData = {
         riego: [],
         servicios: [],
@@ -95,12 +95,7 @@ export default function WellsGeneralCharts() {
 
       // Obtener datos de cada año
       for (const year of years) {
-        const tableName = `lecturas_semana_agua_consumo_${year}`
-        
-        const { data, error: fetchError } = await supabase
-          .from(tableName)
-          .select('*')
-          .order('l_numero_semana', { ascending: true })
+        const { data, error: fetchError } = await wellsConsumptionService.fetchYearRows(year)
 
         if (fetchError) {
           console.warn(`⚠️ No se pudieron cargar datos de ${year}:`, fetchError)
@@ -378,11 +373,11 @@ export default function WellsGeneralCharts() {
   const getChartDescription = () => {
     switch (selectedChart) {
       case 'riego':
-        return 'Sumatoria de consumo de los 3 pozos de riego (Pozo 4, 8 y 15) en los años 2023, 2024, 2025 y 2026'
+        return 'Sumatoria de consumo de los 3 pozos de riego (Pozo 4, 8 y 15) en los años 2022, 2023, 2024, 2025 y 2026'
       case 'servicios':
-        return 'Sumatoria de consumo de los 5 pozos de servicios (Pozo 3, 7, 11, 12 y 14) en los años 2023, 2024, 2025 y 2026'
+        return 'Sumatoria de consumo de los 5 pozos de servicios (Pozo 3, 7, 11, 12 y 14) en los años 2022, 2023, 2024, 2025 y 2026'
       case 'total':
-        return 'Sumatoria de consumo de todos los pozos (8 pozos: riego + servicios) en los años 2023, 2024, 2025 y 2026'
+        return 'Sumatoria de consumo de todos los pozos (8 pozos: riego + servicios) en los años 2022, 2023, 2024, 2025 y 2026'
       default:
         return ''
     }

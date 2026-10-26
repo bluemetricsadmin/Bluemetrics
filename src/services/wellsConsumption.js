@@ -1,8 +1,10 @@
 import { supabase } from '../supabaseClient'
+import { deriveWeeklyConsumptionFromReadings } from '../utils/consumptionHelpers'
 
 // Las tablas de consumo semanal tienen el año en el nombre y las semanas en
 // la columna l_numero_semana (no existe columna de año).
 export const WELL_CONSUMPTION_TABLE_PREFIX = 'lecturas_semana_agua_consumo_'
+export const WELL_READINGS_TABLE_PREFIX = 'lecturas_semana_agua_'
 
 // Grupos de columnas de pozos dentro de cada tabla de consumo.
 export const WELL_COLUMNS_SERVICIOS = ['l_pozo_11', 'l_pozo_12', 'l_pozo_3', 'l_pozo_7', 'l_pozo_14']
@@ -10,7 +12,7 @@ export const WELL_COLUMNS_RIEGO = ['l_pozo_4_riego', 'l_pozo_8_riego', 'l_pozo_1
 export const WELL_COLUMNS_ALL = [...WELL_COLUMNS_SERVICIOS, ...WELL_COLUMNS_RIEGO]
 
 // Años usados por las gráficas comparativas y por las metas anuales.
-export const CHART_YEARS = [2023, 2024, 2025, 2026]
+export const CHART_YEARS = [2022, 2023, 2024, 2025, 2026]
 export const TARGET_YEARS = [2024, 2025, 2026]
 
 // Metas de reducción respecto al año anterior.
@@ -18,6 +20,7 @@ export const REDUCTION_2025 = 0.2 // 2025 = 20% menos que 2024
 export const REDUCTION_2026 = 0.1 // 2026 = 10% menos que 2025
 
 export const getWellTableName = (year) => `${WELL_CONSUMPTION_TABLE_PREFIX}${year}`
+export const getWellReadingsTableName = (year) => `${WELL_READINGS_TABLE_PREFIX}${year}`
 
 // Suma recursiva de las columnas de un pozo en una fila.
 export const sumWellsForWeek = (row, columns) =>
@@ -92,7 +95,23 @@ export const wellsConsumptionService = {
       .select('*')
       .order('l_numero_semana', { ascending: true })
 
-    return { data: data || [], error }
+    if (!error && data && data.length > 0) {
+      return { data, error: null }
+    }
+
+    const { data: readingsData, error: readingsError } = await supabase
+      .from(getWellReadingsTableName(year))
+      .select('*')
+      .order('l_numero_semana', { ascending: true })
+
+    if (readingsError || !readingsData || readingsData.length === 0) {
+      return { data: data || [], error: error || readingsError || null }
+    }
+
+    return {
+      data: deriveWeeklyConsumptionFromReadings(readingsData),
+      error: null,
+    }
   },
 
   /**

@@ -31,6 +31,7 @@ import {
 
 import { RedirectIfNotAuth } from '../components/RedirectIfNotAuth';
 import { AVAILABLE_YEARS, DEFAULT_YEAR } from '../utils/tableHelpers';
+import { deriveWeeklyConsumptionFromReadings } from '../utils/consumptionHelpers';
 
 export default function ConsumptionPage() {
   const [timeFrame, setTimeFrame] = useState('monthly')
@@ -49,6 +50,7 @@ export default function ConsumptionPage() {
 
   // Estados para comparativas semanales
   const [selectedPoint, setSelectedPoint] = useState('medidor_general_pozos')
+  const [weeklyReadings2022, setWeeklyReadings2022] = useState([])
   const [weeklyReadings2023, setWeeklyReadings2023] = useState([])
   const [weeklyReadings2024, setWeeklyReadings2024] = useState([])
   const [weeklyReadings2025, setWeeklyReadings2025] = useState([])
@@ -58,7 +60,7 @@ export default function ConsumptionPage() {
   const [comparisonChartType, setComparisonChartType] = useState('line') // 'line' o 'bar'
   const [comparisonYearsToShow, setComparisonYearsToShow] = useState(['2026']) // Array de años para comparar
   const [tableCompareYears, setTableCompareYears] = useState(['2025', '2026']) // Años para la tabla comparativa (desacoplado del gráfico)
-  const [availableYears] = useState(['2023', '2024', '2025', '2026']) // Años disponibles para comparación
+  const [availableYears] = useState(['2022', '2023', '2024', '2025', '2026']) // Años disponibles para comparación
 
   // Estados para el combobox de búsqueda de punto de medición
   const [searchTerm, setSearchTerm] = useState('')
@@ -162,16 +164,19 @@ export default function ConsumptionPage() {
         .order('l_numero_semana', { ascending: true })
       
       if (consumptionError) {
-        console.error('❌ Error cargando consumo:', consumptionError)
-        throw consumptionError
+        console.warn('⚠️ No se pudo cargar la tabla de consumo, se calculará desde las lecturas:', consumptionError)
       }
+
+      const effectiveConsumptionData = consumptionData && consumptionData.length > 0
+        ? consumptionData
+        : deriveWeeklyConsumptionFromReadings(readingsData || [])
       
       console.log('✅ Lecturas obtenidas:', readingsData?.length, 'semanas')
-      console.log('✅ Consumo obtenido:', consumptionData?.length, 'semanas')
+      console.log('✅ Consumo obtenido:', effectiveConsumptionData?.length, 'semanas')
       
       // Combinar lecturas y consumo por semana
       const mergedData = (readingsData || []).map(reading => {
-        const consumption = (consumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
+        const consumption = (effectiveConsumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
         return {
           ...reading,
           consumption: consumption || {} // Agregar datos de consumo
@@ -195,7 +200,7 @@ export default function ConsumptionPage() {
       }
 
       // Convertir datos combinados al formato de puntos de consumo
-      processConsumptionPoints(mergedData, consumptionData)
+      processConsumptionPoints(mergedData)
       
     } catch (err) {
       console.error('❌ Error al cargar datos:', err)
@@ -210,7 +215,7 @@ export default function ConsumptionPage() {
   }
 
   // Procesar datos de Supabase para convertirlos en formato de puntos de consumo
-  const processConsumptionPoints = (mergedData, consumptionData) => {
+  const processConsumptionPoints = (mergedData) => {
     // Mapeo de IDs del JSON a columnas de la nueva tabla con prefijo l_ (minúsculas)
     const columnMapping = {
       'medidor_general_pozos': 'l_medidor_general_pozos',
@@ -307,9 +312,7 @@ export default function ConsumptionPage() {
         .order('l_numero_semana', { ascending: true })
       
       if (consumptionError) {
-        console.error(`❌ Error cargando consumo de ${year}:`, consumptionError)
-        setStateFunction([])
-        return
+        console.warn(`⚠️ No se pudo cargar la tabla de consumo de ${year}, se calculará desde las lecturas:`, consumptionError)
       }
 
       if (!readingsData || readingsData.length === 0) {
@@ -318,13 +321,17 @@ export default function ConsumptionPage() {
         return
       }
 
+      const effectiveConsumptionData = consumptionData && consumptionData.length > 0
+        ? consumptionData
+        : deriveWeeklyConsumptionFromReadings(readingsData)
+
       console.log(`📊 Lecturas de ${year}:`, readingsData.length, 'semanas')
-      console.log(`📊 Consumo de ${year}:`, consumptionData?.length || 0, 'semanas')
+      console.log(`📊 Consumo de ${year}:`, effectiveConsumptionData?.length || 0, 'semanas')
 
       let formattedData
       if (shouldSumAll) {
         // Sumar todo el consumo de cada semana desde la tabla de CONSUMO
-        formattedData = (consumptionData || []).map(week => {
+        formattedData = (effectiveConsumptionData || []).map(week => {
           let totalConsumption = 0
           // Sumar todos los campos numéricos (consumo) con prefijo l_ excepto metadatos
           Object.keys(week).forEach(key => {
@@ -356,7 +363,7 @@ export default function ConsumptionPage() {
         
         // Combinar lecturas y consumo para el punto específico
         formattedData = readingsData.map(reading => {
-          const consumption = (consumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
+          const consumption = (effectiveConsumptionData || []).find(c => c.l_numero_semana === reading.l_numero_semana)
           return {
             week: reading.l_numero_semana,
             reading: parseFloat(reading[columnName]) || 0,  // Lectura acumulada
@@ -376,6 +383,7 @@ export default function ConsumptionPage() {
   // Función para cargar datos de todos los años para comparación
   const fetchBothYearsData = async () => {
     await Promise.all([
+      fetchYearData('2022', 'lecturas_semana_agua_consumo_2022', setWeeklyReadings2022),
       fetchYearData('2023', 'lecturas_semana_agua_consumo_2023', setWeeklyReadings2023),
       fetchYearData('2024', 'lecturas_semana_agua_consumo_2024', setWeeklyReadings2024),
       fetchYearData('2025', 'lecturas_semana_agua_consumo_2025', setWeeklyReadings2025),
@@ -606,6 +614,7 @@ export default function ConsumptionPage() {
   // Preparar datos para WeeklyComparisonChart basado en años seleccionados
   const getMultiYearChartData = () => {
     const yearDataMap = {
+      '2022': weeklyReadings2022,
       '2023': weeklyReadings2023,
       '2024': weeklyReadings2024,
       '2025': weeklyReadings2025,

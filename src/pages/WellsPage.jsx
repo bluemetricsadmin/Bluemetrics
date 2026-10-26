@@ -55,10 +55,11 @@ export default function WellsPage() {
     total2025: 0,
     total2024: 0,
     total2023: 0,
+    total2022: 0,
     cambioAnual: 0,
     vsSemanaAnterior: 0,
     maxYear: { year: '2026', total: 0 },
-    minYear: { year: '2023', total: 0 }
+    minYear: { year: '2022', total: 0 }
   })
   const [weeklyData, setWeeklyData] = useState({
     multiYearData: [],
@@ -426,16 +427,17 @@ export default function WellsPage() {
       } = await wellsConsumptionService.fetchMultiYearData(CHART_YEARS)
 
       // Calcular KPIs
+      const years2022 = yearTotals[2022] || 0
       const years2023 = yearTotals[2023] || 0
       const years2024 = yearTotals[2024] || 0
       const years2025 = yearTotals[2025] || 0
       const years2026 = yearTotals[2026] || 0
-      const totalGeneral = years2023 + years2024 + years2025 + years2026
-      const promedioAnual = totalGeneral / 4
+      const totalGeneral = years2022 + years2023 + years2024 + years2025 + years2026
+      const promedioAnual = totalGeneral / CHART_YEARS.length
 
       const yearEntries = Object.entries(yearTotals).map(([year, total]) => ({ year, total }))
       const maxYear = yearEntries.reduce((max, item) => item.total > max.total ? item : max, { year: '2026', total: 0 })
-      const minYear = yearEntries.reduce((min, item) => item.total < min.total ? item : min, { year: '2023', total: 0 })
+      const minYear = yearEntries.reduce((min, item) => item.total < min.total ? item : min, { year: '2022', total: 0 })
 
       const cambioAnual = years2025 > 0 ? ((years2026 - years2025) / years2025 * 100) : 0
 
@@ -458,6 +460,7 @@ export default function WellsPage() {
         total2025: years2025,
         total2024: years2024,
         total2023: years2023,
+        total2022: years2022,
         cambioAnual,
         vsSemanaAnterior,
         maxYear,

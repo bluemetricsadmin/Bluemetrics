@@ -663,6 +663,14 @@ export default function WeeklyComparisonChart({
             {/* Selector de años */}
             <div className="flex gap-1 border rounded-lg p-1">
               <Button
+                variant={selectedYears.includes('2022') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleYear('2022')}
+                className="h-8"
+              >
+                2022
+              </Button>
+              <Button
                 variant={selectedYears.includes('2023') ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => toggleYear('2023')}
