@@ -1,38 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../contexts/AuthContextNew'
+import { wellsConsumptionService } from '../services/wellsConsumption'
+import { wellsAnnualTargetsService } from '../services/wellsAnnualTargets'
 import {
-  wellsConsumptionService,
-  TARGET_YEARS,
-  REDUCTION_2025,
-  REDUCTION_2026,
-} from '../services/wellsConsumption'
+  buildTargetRows,
+  getDefaultTargetSettings,
+  groupVersionsByYear,
+  normalizeYear,
+  pickActiveConfig,
+} from '../utils/wellsTargets'
 
-const CURRENT_YEAR = 2026
-const PREVIOUS_YEAR = 2025
-const BASE_YEAR = 2024
-
-// Suma el consumo de las semanas 1..cutoff de una serie anual.
-const sumUpToWeek = (series, cutoff) => {
-  if (!series || cutoff <= 0) return 0
-  return series.weeks.reduce(
-    (acc, item) => (item.week <= cutoff ? acc + item.consumption : acc),
-    0
-  )
-}
-
-const buildStatus = (year, actual, meta) => {
-  const delta = meta - actual // positivo: aún hay margen; negativo: meta excedida
-  const pct = meta > 0 ? (actual / meta) * 100 : 0
-  return { year, actual, meta, delta, pct, cumple: actual <= meta }
-}
-
-/**
- * Maneja el estado del totalizado de consumo de todos los pozos y calcula las
- * metas anuales:
- *   - 2025 (año cerrado): total de la última semana registrada vs 2024 (-20%).
- *   - 2026 (año en curso): meta anual = -10% sobre el total 2025, comparando
- *     el avance de 2026 contra 2025 en la misma semana actual.
- */
 export function useWellsAnnualTargets() {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
@@ -42,65 +21,89 @@ export function useWellsAnnualTargets() {
       setLoading(true)
       setError(null)
 
+      const fallbackSettings = getDefaultTargetSettings()
+      const settingsResult = await wellsAnnualTargetsService.fetchTargetSettings()
+
+      if (settingsResult.error) {
+        console.warn('⚠️ No se pudo cargar la configuración de metas:', settingsResult.error)
+      }
+
+      const settings = settingsResult.data || fallbackSettings
+      const currentYear = normalizeYear(settings.currentYear) || fallbackSettings.currentYear
+      const configuredYears = (settings.availableYears || [])
+        .map(normalizeYear)
+        .filter(Boolean)
+
+      const years = [...new Set([...configuredYears, currentYear])].sort((a, b) => a - b)
+
+      const consumptionYears = [
+        ...new Set([
+          ...years,
+          ...years.map((year) => year - 1),
+          currentYear,
+        ]),
+      ]
+        .filter((year) => year <= currentYear)
+        .sort((a, b) => a - b)
+
+      const versionsResult = await wellsAnnualTargetsService.fetchTargetVersions(years)
+
+      if (versionsResult.error) {
+        console.warn('⚠️ No se pudieron cargar las versiones de metas:', versionsResult.error)
+      }
+
+      const versions = versionsResult.data || []
+      const versionsByYear = groupVersionsByYear(versions)
+      const configsByYear = years.reduce((acc, year) => {
+        const config = pickActiveConfig(versionsByYear[year])
+        if (config) acc[year] = config
+        return acc
+      }, {})
+
       const {
         totalsByYear,
         lastWeekByYear,
         seriesByYear,
-        error: fetchError,
-      } = await wellsConsumptionService.fetchAnnualTotals(TARGET_YEARS)
+        error: consumptionError,
+      } = await wellsConsumptionService.fetchAnnualTotals(consumptionYears)
 
-      if (fetchError && Object.keys(seriesByYear || {}).length === 0) {
-        console.error('❌ Error cargando totalizado de pozos:', fetchError)
-        setError(fetchError.message)
+      if (consumptionError && Object.keys(seriesByYear || {}).length === 0) {
+        console.error('❌ Error cargando totalizado de pozos:', consumptionError)
+        setError(consumptionError.message)
         setData(null)
         return
       }
 
-      const currentWeek = lastWeekByYear?.[CURRENT_YEAR] || 0
+      const currentWeek = lastWeekByYear?.[currentYear] || 0
 
-      // Totales de año cerrado / acumulados a la última semana registrada.
-      const total2024 = totalsByYear?.[BASE_YEAR] || 0
-      const total2025 = totalsByYear?.[PREVIOUS_YEAR] || 0
-      const total2026 = totalsByYear?.[CURRENT_YEAR] || 0
+      const rows = buildTargetRows({
+        years,
+        configsByYear,
+        actualTotals: totalsByYear || {},
+        seriesByYear: seriesByYear || {},
+        currentYear,
+        currentWeek,
+      })
 
-      // Equivalente de 2025 a la misma semana del año en curso.
-      const total2025SameWeek = sumUpToWeek(seriesByYear?.[PREVIOUS_YEAR], currentWeek)
-
-      // Metas: 2025 = -20% vs 2024 | 2026 = -10% vs 2025.
-      const meta2025 = total2024 * (1 - REDUCTION_2025)
-      const meta2026 = total2025 * (1 - REDUCTION_2026)
-
-      // Meta 2026 equivalente al avance de la semana actual (misma ventana que 2025).
-      const meta2026ToWeek = total2025SameWeek * (1 - REDUCTION_2026)
-
-      const vsPreviousPct =
-        total2025SameWeek > 0
-          ? ((total2026 - total2025SameWeek) / total2025SameWeek) * 100
-          : 0
+      const current = rows.find((row) => row.year === currentYear) || null
+      const previous =
+        rows.find((row) => row.year === currentYear - 1) ||
+        [...rows].reverse().find((row) => row.year < currentYear && row.hasRecords) ||
+        null
 
       setData({
+        settings: {
+          ...settings,
+          currentYear,
+          availableYears: years,
+        },
+        years,
+        rows,
+        versionsByYear,
         currentWeek,
-        totals: {
-          [BASE_YEAR]: total2024,
-          [PREVIOUS_YEAR]: total2025,
-          [CURRENT_YEAR]: total2026,
-        },
-        meta2025,
-        meta2026,
-        current: {
-          ...buildStatus(CURRENT_YEAR, total2026, meta2026ToWeek),
-          annualMeta: meta2026,
-          toWeekMeta: meta2026ToWeek,
-          previousSameWeek: total2025SameWeek,
-          vsPreviousPct,
-        },
-        previous: {
-          ...buildStatus(PREVIOUS_YEAR, total2025, meta2025),
-          base2024: total2024,
-          vsBasePct:
-            total2024 > 0 ? ((total2025 - total2024) / total2024) * 100 : 0,
-        },
-        hasData: currentWeek > 0 && Object.keys(seriesByYear || {}).length > 0,
+        current,
+        previous,
+        hasData: rows.length > 0,
       })
     } catch (err) {
       console.error('❌ Error al calcular metas de consumo:', err)
@@ -115,5 +118,61 @@ export function useWellsAnnualTargets() {
     fetchData()
   }, [fetchData])
 
-  return { loading, error, refetch: fetchData, ...(data || {}) }
+  const saveDraft = useCallback(
+    async (payload) => {
+      const { data: saved, error: saveError } =
+        await wellsAnnualTargetsService.saveDraftTarget({
+          ...payload,
+          userId: user?.id || null,
+        })
+
+      if (saveError) throw saveError
+
+      await fetchData()
+      return saved
+    },
+    [fetchData, user?.id]
+  )
+
+  const approve = useCallback(
+    async (id) => {
+      const { data: approved, error: approveError } =
+        await wellsAnnualTargetsService.approveTarget(id, user?.id || null)
+
+      if (approveError) throw approveError
+
+      await fetchData()
+      return approved
+    },
+    [fetchData, user?.id]
+  )
+
+  const saveSettings = useCallback(
+    async (payload) => {
+      const { data: saved, error: saveError } =
+        await wellsAnnualTargetsService.saveTargetSettings({
+          ...payload,
+          userId: user?.id || null,
+        })
+
+      if (saveError) throw saveError
+
+      await fetchData()
+      return saved
+    },
+    [fetchData, user?.id]
+  )
+
+  return useMemo(
+    () => ({
+      loading,
+      error,
+      refetch: fetchData,
+      saveDraft,
+      approve,
+      saveSettings,
+      ...(data || {}),
+    }),
+    [loading, error, fetchData, saveDraft, approve, saveSettings, data]
+  )
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -9,9 +10,14 @@ import {
   CalendarIcon,
   TrendingDownIcon,
   TrendingUpIcon,
+  Settings2Icon,
+  CalculatorIcon,
 } from 'lucide-react'
 import { formatMX, formatMXPercent } from '../utils/formatMX'
 import { useWellsAnnualTargets } from '../hooks/useWellsAnnualTargets'
+import { toPercent } from '../utils/wellsTargets'
+import WellsTargetsConfigDialog from './WellsTargetsConfigDialog'
+import WellsTargetsSimulator from './WellsTargetsSimulator'
 
 const COLOR_STYLES = {
   blue: {
@@ -23,6 +29,11 @@ const COLOR_STYLES = {
     icon: 'text-green-500',
     iconBg: 'bg-green-500/10',
     badge: 'text-green-700 border-green-300 bg-green-50 dark:text-green-300 dark:border-green-800 dark:bg-green-900/20',
+  },
+  purple: {
+    icon: 'text-purple-500',
+    iconBg: 'bg-purple-500/10',
+    badge: 'text-purple-700 border-purple-300 bg-purple-50 dark:text-purple-300 dark:border-purple-800 dark:bg-purple-900/20',
   },
 }
 
@@ -42,6 +53,7 @@ function TargetCard({
   progressLabel = 'de la meta',
   goalPhrase = 'la meta',
   exceededBadge = 'Meta excedida',
+  projected = false,
 }) {
   const styles = COLOR_STYLES[color] || COLOR_STYLES.blue
   const { actual, meta, delta, pct, cumple } = status
@@ -57,6 +69,11 @@ function TargetCard({
               <Badge variant="outline" className={`text-xs ${styles.badge}`}>
                 {rule}
               </Badge>
+              {projected && (
+                <Badge variant="outline" className="text-xs border-purple-300 bg-purple-50 text-purple-700">
+                  Proyección
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
           </div>
@@ -68,7 +85,9 @@ function TargetCard({
         <div className="mt-4 flex items-end justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Consumo real</p>
-            <p className="text-2xl font-bold text-foreground">{formatMX(actual)} m³</p>
+            <p className="text-2xl font-bold text-foreground">
+              {projected ? 'Sin registros' : `${formatMX(actual)} m³`}
+            </p>
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">{metaLabel}</p>
@@ -111,50 +130,148 @@ function TargetCard({
           </div>
         )}
 
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-muted-foreground">
-              {formatMXPercent(pct)} {progressLabel}
-            </span>
-            <Badge variant="outline" className={cumple ? STATUS_BADGE.ok : STATUS_BADGE.bad}>
-              {cumple ? (
-                <>
-                  <CheckCircle2Icon className="h-3 w-3 mr-1" />
-                  {actual <= 0 ? 'Sin datos' : 'Cumpliendo'}
-                </>
-              ) : (
-                <>
-                  <AlertTriangleIcon className="h-3 w-3 mr-1" />
-                  {exceededBadge}
-                </>
-              )}
-            </Badge>
+        {projected ? (
+          <div className="mt-4 rounded-md border border-purple-200 bg-purple-50/60 px-3 py-2 text-sm text-purple-700">
+            Año sin registros: la meta se calcula con la base configurada.
           </div>
-          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-            <div
-              className={`h-full rounded-full ${cumple ? 'bg-green-500' : 'bg-red-500'}`}
-              style={{ width: `${barWidth}%` }}
-            />
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-muted-foreground">
+                  {formatMXPercent(pct)} {progressLabel}
+                </span>
+                <Badge variant="outline" className={cumple ? STATUS_BADGE.ok : STATUS_BADGE.bad}>
+                  {cumple ? (
+                    <>
+                      <CheckCircle2Icon className="h-3 w-3 mr-1" />
+                      {actual <= 0 ? 'Sin datos' : 'Cumpliendo'}
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangleIcon className="h-3 w-3 mr-1" />
+                      {exceededBadge}
+                    </>
+                  )}
+                </Badge>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${cumple ? 'bg-green-500' : 'bg-red-500'}`}
+                  style={{ width: `${barWidth}%` }}
+                />
+              </div>
+            </div>
 
-        <p className={`mt-3 text-sm ${cumple ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-          {cumple
-            ? `Te quedan ${formatMX(Math.max(delta, 0))} m³ para mantenerte dentro de ${goalPhrase}`
-            : `Excediste ${goalPhrase} por ${formatMX(Math.abs(delta))} m³`}
-        </p>
+            <p className={`mt-3 text-sm ${cumple ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              {cumple
+                ? `Te quedan ${formatMX(Math.max(delta, 0))} m³ para mantenerte dentro de ${goalPhrase}`
+                : `Excediste ${goalPhrase} por ${formatMX(Math.abs(delta))} m³`}
+            </p>
+          </>
+        )}
       </CardContent>
     </Card>
   )
 }
 
+const buildRuleLabel = (row) => {
+  const pct = toPercent(row.reductionPct)
+  const sign = pct > 0 ? '-' : pct < 0 ? '+' : ''
+  const baseLabel =
+    row.baseMode === 'manual'
+      ? 'base manual'
+      : row.baseMode === 'target'
+        ? `meta ${row.year - 1}`
+        : `${row.year - 1}`
+  return `Meta: ${sign}${formatMXPercent(Math.abs(pct))} vs ${baseLabel}`
+}
+
+const buildComparison = (row) => {
+  if (row.isCurrent) {
+    return {
+      referenceLabel: `${row.year - 1} misma semana`,
+      referenceValue: row.previousSameWeek,
+      changeLabel: `${row.year} vs ${row.year - 1}`,
+      changePct: row.vsPreviousPct,
+      footerLabel: `Meta anual ${row.year}`,
+      footerValue: row.annualMeta,
+    }
+  }
+
+  if (row.isFuture) {
+    return {
+      referenceLabel:
+        row.baseMode === 'manual'
+          ? 'Base manual'
+          : row.baseMode === 'target'
+            ? `Meta ${row.year - 1}`
+            : `Consumo real ${row.year - 1}`,
+      referenceValue: row.baseValue,
+      changeLabel: `Meta ${row.year} vs base`,
+      changePct: row.vsPreviousPct,
+    }
+  }
+
+  return {
+    referenceLabel: `Total ${row.year - 1} (referencia)`,
+    referenceValue: row.previousYearActual || 0,
+    changeLabel: `${row.year} vs ${row.year - 1}`,
+    changePct: row.vsPreviousPct,
+    footerLabel: `Meta anual ${row.year}`,
+    footerValue: row.annualMeta,
+  }
+}
+
 export default function WellsAnnualTargets() {
-  const { loading, error, refetch, currentWeek, current, previous, hasData } =
-    useWellsAnnualTargets()
+  const [configOpen, setConfigOpen] = useState(false)
+  const [simulatorOpen, setSimulatorOpen] = useState(false)
+
+  const {
+    loading,
+    error,
+    refetch,
+    currentWeek,
+    rows = [],
+    settings,
+    versionsByYear = {},
+    hasData,
+    saveDraft,
+    approve,
+    saveSettings,
+  } = useWellsAnnualTargets()
+
+  const orderedRows = [
+    ...rows.filter((row) => row.isCurrent),
+    ...rows.filter((row) => row.isFuture).sort((a, b) => a.year - b.year),
+    ...rows
+      .filter((row) => !row.isCurrent && !row.isFuture)
+      .sort((a, b) => b.year - a.year),
+  ]
+
+  const cardStatus = (row) => ({
+    actual: row.actual,
+    meta: row.meta,
+    delta: row.delta,
+    pct: row.pct,
+    cumple: row.cumple,
+  })
+
+  const cardMetaLabel = (row) => {
+    if (row.isCurrent) return `Meta acumulada (sem. 1–${currentWeek})`
+    if (row.isFuture) return 'Meta anual proyectada'
+    return 'Meta anual'
+  }
+
+  const cardSubtitle = (row) => {
+    if (row.isCurrent) return `Año en curso · Semana 1 – ${currentWeek}`
+    if (row.isFuture) return 'Año futuro · Sin registros'
+    return 'Año cerrado · Total registrado'
+  }
 
   return (
     <div>
-      <div className="flex items-center gap-3 pb-3 border-b">
+      <div className="flex flex-wrap items-center gap-3 pb-3 border-b">
         <Target className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold text-foreground">Metas Anuales de Consumo</h2>
         {hasData && (
@@ -163,6 +280,25 @@ export default function WellsAnnualTargets() {
             Semana 1 – {currentWeek}
           </Badge>
         )}
+        <div className="ml-auto flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setConfigOpen(true)}
+            disabled={loading || Boolean(error)}
+          >
+            <Settings2Icon className="h-4 w-4 mr-1" />
+            Configurar metas
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setSimulatorOpen(true)}
+            disabled={loading || Boolean(error)}
+          >
+            <CalculatorIcon className="h-4 w-4 mr-1" />
+            Simulador
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -195,44 +331,46 @@ export default function WellsAnnualTargets() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          {current && (
+          {orderedRows.map((row) => (
             <TargetCard
-              status={current}
-              year={current.year}
-              rule="Meta: -10% vs 2025"
-              color="blue"
-              metaLabel={`Meta acumulada (sem. 1–${currentWeek})`}
-              progressLabel={`de la meta acumulada (sem. 1–${currentWeek})`}
-              goalPhrase="la meta acumulada"
-              exceededBadge="Meta acumulada excedida"
-              subtitle={`Año en curso · Semana 1 – ${currentWeek}`}
-              comparison={{
-                referenceLabel: '2025 misma semana',
-                referenceValue: current.previousSameWeek,
-                changeLabel: '2026 vs 2025',
-                changePct: current.vsPreviousPct,
-                footerLabel: 'Meta anual 2026',
-                footerValue: current.annualMeta,
-              }}
+              key={row.year}
+              status={cardStatus(row)}
+              year={row.year}
+              rule={buildRuleLabel(row)}
+              color={row.isCurrent ? 'blue' : row.isFuture ? 'purple' : 'green'}
+              metaLabel={cardMetaLabel(row)}
+              progressLabel={
+                row.isCurrent ? `de la meta acumulada (sem. 1–${currentWeek})` : 'de la meta'
+              }
+              goalPhrase={row.isCurrent ? 'la meta acumulada' : 'la meta'}
+              exceededBadge={row.isCurrent ? 'Meta acumulada excedida' : 'Meta excedida'}
+              subtitle={cardSubtitle(row)}
+              comparison={buildComparison(row)}
+              projected={row.isFuture}
             />
-          )}
-          {previous && (
-            <TargetCard
-              status={previous}
-              year={previous.year}
-              rule="Meta: -20% vs 2024"
-              color="green"
-              subtitle="Año cerrado · Total últimas 52 semanas"
-              comparison={{
-                referenceLabel: 'Total 2024 (referencia)',
-                referenceValue: previous.base2024,
-                changeLabel: '2025 vs 2024',
-                changePct: previous.vsBasePct,
-              }}
-            />
-          )}
+          ))}
         </div>
       )}
+
+      <WellsTargetsConfigDialog
+        open={configOpen}
+        onOpenChange={setConfigOpen}
+        rows={rows}
+        settings={settings}
+        versionsByYear={versionsByYear}
+        onSaveDraft={saveDraft}
+        onApprove={approve}
+        onSaveSettings={saveSettings}
+      />
+
+      <WellsTargetsSimulator
+        open={simulatorOpen}
+        onOpenChange={setSimulatorOpen}
+        rows={rows}
+        settings={settings}
+        onSaveDraft={saveDraft}
+        onApprove={approve}
+      />
     </div>
   )
 }
