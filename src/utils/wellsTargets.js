@@ -25,7 +25,72 @@ export const toPercent = (fraction) => {
   return Number.isFinite(value) ? value * 100 : 0
 }
 
-export const clampReduction = (fraction) => Math.min(Math.max(Number(fraction) || 0, -0.99), 0.99)
+export const formatPctInput = (fraction) => {
+  const pct = toPercent(fraction)
+  return String(Number(Math.min(Math.max(pct, 1), 99).toFixed(4)))
+}
+
+export const formatPctPoints = (value, decimals = 1) => {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return '0.0 pp'
+  return `${number.toLocaleString('es-MX', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })} pp`
+}
+
+const META_STATE_LABELS = {
+  approved: 'Vigente',
+  draft: 'Borrador',
+  superseded: 'Reemplazada',
+  default: 'Sin configurar',
+  projected: 'Proyección',
+}
+
+export const getMetaState = (row) => {
+  const status = row?.configStatus || row?.config?.status || 'default'
+  const hasConfig = Boolean(row?.config)
+  const hasApproved = status === 'approved'
+  const hasDraft = status === 'draft'
+
+  return {
+    status,
+    label: META_STATE_LABELS[status] || META_STATE_LABELS.default,
+    hasConfig,
+    hasApproved,
+    hasDraft,
+    hasActiveMeta: hasApproved,
+  }
+}
+
+export const resolveSimulationBase = ({
+  row,
+  previousRow,
+  baseMode = 'actual',
+  manualBase = 0,
+}) => {
+  if (baseMode === 'manual') return Number(manualBase) || 0
+
+  if (baseMode === 'target') {
+    const previousTarget = previousRow?.annualMeta
+    if (Number.isFinite(previousTarget)) return previousTarget
+    return Number(row?.baseValue) || 0
+  }
+
+  const previousActual = row?.previousYearActual
+  if (Number.isFinite(previousActual) && previousActual > 0) return previousActual
+  return Number(row?.baseValue) || 0
+}
+
+export const computeVariance = (value, reference) => {
+  const current = Number(value) || 0
+  const base = Number(reference) || 0
+  const diff = current - base
+  const pct = base > 0 ? (diff / base) * 100 : 0
+  return { diff, pct, favorable: diff <= 0 }
+}
+
+export const clampReduction = (fraction) => Math.min(Math.max(Number(fraction) || 0, 0.01), 0.99)
 
 export const computeTarget = (base, reductionFraction) => {
   const baseValue = Number(base) || 0
@@ -105,8 +170,10 @@ export const buildTargetRows = ({
   seriesByYear = {},
   currentYear = new Date().getFullYear(),
   currentWeek = 0,
+  baseYears = null,
 }) => {
   const sortedYears = [...new Set(years)].filter(Boolean).sort((a, b) => a - b)
+  const allowedBaseYears = baseYears ? new Set(baseYears) : null
   const targetByYear = {}
   const rows = []
 
@@ -114,7 +181,15 @@ export const buildTargetRows = ({
     const config = configsByYear[year] || null
     const reductionPct = clampReduction(config?.reductionPct ?? getDefaultReduction(year))
     const baseMode = config?.baseMode || (year > currentYear ? 'target' : 'actual')
-    const baseValue = resolveBaseValue({ year, config, baseMode, actualTotals, targetByYear })
+    const targetBase =
+      allowedBaseYears && !allowedBaseYears.has(year - 1) ? {} : targetByYear
+    const baseValue = resolveBaseValue({
+      year,
+      config,
+      baseMode,
+      actualTotals,
+      targetByYear: targetBase,
+    })
     const annualMeta = computeTarget(baseValue, reductionPct)
     targetByYear[year] = annualMeta
 

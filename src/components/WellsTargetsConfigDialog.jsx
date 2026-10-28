@@ -9,17 +9,23 @@ import {
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import {
+  AlertTriangleIcon,
   CheckCircle2Icon,
+  ChevronDownIcon,
   Loader2Icon,
   PlusIcon,
   SaveIcon,
   Trash2Icon,
   XIcon,
 } from 'lucide-react'
-import { formatMX } from '../utils/formatMX'
+import { formatMX, formatMXPercent } from '../utils/formatMX'
 import {
   computeTarget,
+  computeVariance,
+  formatPctInput,
+  formatPctPoints,
   getDefaultReduction,
+  getMetaState,
   normalizeYear,
   toFraction,
   toPercent,
@@ -29,7 +35,7 @@ const INPUT_CLASS =
   'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm'
 
 const STATUS_LABEL = {
-  approved: 'Aprobada',
+  approved: 'Vigente',
   draft: 'Borrador',
   superseded: 'Reemplazada',
   default: 'Sin configurar',
@@ -42,11 +48,6 @@ const STATUS_CLASS = {
   superseded: 'text-gray-600 border-gray-300 bg-gray-50',
   default: 'text-blue-700 border-blue-300 bg-blue-50',
   projected: 'text-purple-700 border-purple-300 bg-purple-50',
-}
-
-const formatPctInput = (fraction) => {
-  const pct = toPercent(fraction)
-  return String(Number(pct.toFixed(4)))
 }
 
 const formatDate = (value) => {
@@ -70,6 +71,7 @@ export default function WellsTargetsConfigDialog({
   })
   const [forms, setForms] = useState({})
   const [newYear, setNewYear] = useState('')
+  const [expandedYear, setExpandedYear] = useState(null)
   const [feedback, setFeedback] = useState(null)
   const [busyYear, setBusyYear] = useState(null)
   const [savingSettings, setSavingSettings] = useState(false)
@@ -87,9 +89,10 @@ export default function WellsTargetsConfigDialog({
     const availableYears = [...(activeSettings.availableYears || rows.map((row) => row.year))].sort(
       (a, b) => a - b
     )
+    const activeCurrentYear = normalizeYear(activeSettings.currentYear) || new Date().getFullYear()
 
     setSettingsForm({
-      currentYear: String(activeSettings.currentYear || new Date().getFullYear()),
+      currentYear: String(activeCurrentYear),
       availableYears,
     })
 
@@ -99,12 +102,13 @@ export default function WellsTargetsConfigDialog({
       const reductionPct = row?.reductionPct ?? getDefaultReduction(year)
       nextForms[year] = {
         reductionPct: formatPctInput(reductionPct),
-        baseMode: row?.baseMode || 'actual',
+        baseMode: row?.baseMode || (year > activeCurrentYear ? 'target' : 'actual'),
         baseValue: row?.baseValue === null || row?.baseValue === undefined ? '' : String(row.baseValue),
       }
     })
 
     setForms(nextForms)
+    setExpandedYear(availableYears.includes(activeCurrentYear) ? activeCurrentYear : availableYears[0] ?? null)
     setNewYear('')
     setFeedback(null)
   }, [open, settings, rows])
@@ -120,6 +124,7 @@ export default function WellsTargetsConfigDialog({
   }
 
   const getRow = (year) => rows.find((item) => item.year === year)
+  const currentYearNumber = normalizeYear(settingsForm.currentYear)
 
   const getPreviewBase = (year) => {
     const form = forms[year]
@@ -129,7 +134,8 @@ export default function WellsTargetsConfigDialog({
     if (form.baseMode === 'target') {
       return Number(getRow(year - 1)?.annualMeta ?? row?.baseValue) || 0
     }
-    return Number(row?.previousYearActual ?? row?.baseValue) || 0
+    const previousActual = row?.previousYearActual ?? getRow(year - 1)?.actual
+    return Number(previousActual ?? row?.baseValue) || 0
   }
 
   const getPreviewMeta = (year) => {
@@ -144,8 +150,8 @@ export default function WellsTargetsConfigDialog({
     if (!form) return 'No hay datos para este año'
 
     const pct = Number(form.reductionPct)
-    if (!Number.isFinite(pct) || pct <= -100 || pct >= 100) {
-      return 'El porcentaje debe estar entre -99 y 99'
+    if (!Number.isFinite(pct) || pct < 1 || pct > 99) {
+      return 'El porcentaje debe estar entre 1 y 99'
     }
 
     if (form.baseMode === 'manual') {
@@ -234,6 +240,7 @@ export default function WellsTargetsConfigDialog({
         baseValue: '',
       },
     }))
+    setExpandedYear(year)
     setNewYear('')
     setFeedback(null)
   }
@@ -253,6 +260,7 @@ export default function WellsTargetsConfigDialog({
       delete next[year]
       return next
     })
+    setExpandedYear((prev) => (prev === year ? null : prev))
   }
 
   const handleSaveSettings = async () => {
@@ -291,18 +299,34 @@ export default function WellsTargetsConfigDialog({
     }
   }
 
+  const isDirty = (year) => {
+    const row = getRow(year)
+    const form = forms[year]
+    if (!form) return false
+    const originalPct = Number(
+      toPercent(row?.reductionPct ?? getDefaultReduction(year)).toFixed(4)
+    )
+    const editedPct = Number(form.reductionPct)
+    if (editedPct !== originalPct) return true
+    const originalMode = row?.baseMode || (year > (currentYearNumber || 0) ? 'target' : 'actual')
+    if ((form.baseMode || 'actual') !== originalMode) return true
+    if (form.baseMode === 'manual') {
+      return (Number(form.baseValue) || 0) !== (Number(row?.baseValue) || 0)
+    }
+    return false
+  }
+
   const visibleYears = settingsForm.availableYears
-  const currentYearNumber = normalizeYear(settingsForm.currentYear)
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} maxWidthClass="max-w-4xl">
       <DialogContent>
         <DialogHeader className="flex items-start justify-between gap-3">
           <div>
             <DialogTitle>Configuración de metas anuales</DialogTitle>
             <DialogDescription>
-              Define el rango de años y aprueba el porcentaje de reducción. Cada aprobación conserva
-              historial.
+              Define el rango de años y administra el porcentaje de reducción vigente. Cada
+              aprobación conserva historial.
             </DialogDescription>
           </div>
           <Button
@@ -318,9 +342,16 @@ export default function WellsTargetsConfigDialog({
 
         <div className="p-6 space-y-5">
           <div className="rounded-lg border p-4 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-3 sm:items-end">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Rango de años</p>
+              <p className="text-xs text-muted-foreground">
+                El año actual se usa como referencia para separar datos reales de proyecciones.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[160px_1fr] sm:items-end">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Año actual</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">Año actual</label>
                 <input
                   type="number"
                   min="2000"
@@ -333,7 +364,7 @@ export default function WellsTargetsConfigDialog({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   Agregar año al rango
                 </label>
                 <div className="flex gap-2">
@@ -347,7 +378,7 @@ export default function WellsTargetsConfigDialog({
                     placeholder="2028"
                   />
                   <Button type="button" variant="outline" onClick={handleAddYear}>
-                    <PlusIcon className="h-4 w-4 mr-1" />
+                    <PlusIcon className="mr-1 h-4 w-4" />
                     Agregar
                   </Button>
                 </div>
@@ -365,6 +396,7 @@ export default function WellsTargetsConfigDialog({
                   }`}
                 >
                   {year}
+                  {year === currentYearNumber && <span className="text-[10px]">actual</span>}
                   <button
                     type="button"
                     onClick={() => handleRemoveYear(year)}
@@ -385,9 +417,9 @@ export default function WellsTargetsConfigDialog({
                 disabled={savingSettings}
               >
                 {savingSettings ? (
-                  <Loader2Icon className="h-4 w-4 mr-1 animate-spin" />
+                  <Loader2Icon className="mr-1 h-4 w-4 animate-spin" />
                 ) : (
-                  <SaveIcon className="h-4 w-4 mr-1" />
+                  <SaveIcon className="mr-1 h-4 w-4" />
                 )}
                 Guardar configuración de años
               </Button>
@@ -411,14 +443,30 @@ export default function WellsTargetsConfigDialog({
               const row = getRow(year)
               const form = forms[year] || {}
               const versions = versionsByYear[year] || []
-              const status = row?.configStatus || (year > (currentYearNumber || 0) ? 'projected' : 'default')
+              const metaState = getMetaState(row)
+              const status =
+                row?.configStatus || (year > (currentYearNumber || 0) ? 'projected' : 'default')
               const busy = busyYear === year
+              const expanded = expandedYear === year
+              const previewBase = getPreviewBase(year)
+              const previewMeta = getPreviewMeta(year)
+              const editedReductionPct = Number(form.reductionPct) || 0
+              const approvedReductionPct = toPercent(row?.reductionPct ?? getDefaultReduction(year))
+              const reductionDiff = editedReductionPct - approvedReductionPct
+              const approvedMeta = metaState.hasApproved ? row?.annualMeta || 0 : null
+              const metaVariance = approvedMeta !== null ? computeVariance(previewMeta, approvedMeta) : null
+              const dirty = isDirty(year)
 
               return (
-                <div key={year} className="rounded-lg border p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-semibold text-gray-900">{year}</span>
+                <div key={year} className="rounded-lg border">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedYear(expanded ? null : year)}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                    aria-expanded={expanded}
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-base font-semibold text-foreground">{year}</span>
                       <Badge
                         variant="outline"
                         className={`text-xs ${STATUS_CLASS[status] || STATUS_CLASS.default}`}
@@ -426,116 +474,217 @@ export default function WellsTargetsConfigDialog({
                         {STATUS_LABEL[status] || STATUS_LABEL.default}
                       </Badge>
                       {row?.configVersion && (
-                        <span className="text-xs text-gray-500">v{row.configVersion}</span>
+                        <span className="text-xs text-muted-foreground">v{row.configVersion}</span>
+                      )}
+                      {!metaState.hasApproved && (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                          <AlertTriangleIcon className="h-3 w-3" />
+                          Sin meta vigente
+                        </span>
+                      )}
+                      {dirty && (
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                          Cambios sin guardar
+                        </span>
                       )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">Meta calculada</p>
-                      <p className="text-sm font-semibold text-blue-600">
-                        {formatMX(getPreviewMeta(year))} m³
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Reducción (%)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="-99"
-                        max="99"
-                        value={form.reductionPct || ''}
-                        onChange={(event) =>
-                          updateForm(year, 'reductionPct', event.target.value)
-                        }
-                        className={INPUT_CLASS}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Base de cálculo
-                      </label>
-                      <select
-                        value={form.baseMode || 'actual'}
-                        onChange={(event) => updateForm(year, 'baseMode', event.target.value)}
-                        className={INPUT_CLASS}
-                      >
-                        <option value="actual">Consumo real año anterior</option>
-                        <option value="target">Meta año anterior</option>
-                        <option value="manual">Base manual</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Base manual (m³)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={form.baseValue || ''}
-                        onChange={(event) => updateForm(year, 'baseValue', event.target.value)}
-                        disabled={form.baseMode !== 'manual'}
-                        className={`${INPUT_CLASS} disabled:bg-gray-100 disabled:text-gray-400`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs text-gray-500">
-                      Base usada: {formatMX(getPreviewBase(year))} m³
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSaveDraft(year)}
-                        disabled={busy}
-                      >
-                        {busy ? (
-                          <Loader2Icon className="h-3 w-3 mr-1 animate-spin" />
-                        ) : (
-                          <SaveIcon className="h-3 w-3 mr-1" />
-                        )}
-                        Guardar borrador
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => handleApprove(year)}
-                        disabled={busy}
-                      >
-                        {busy ? (
-                          <Loader2Icon className="h-3 w-3 mr-1 animate-spin" />
-                        ) : (
-                          <CheckCircle2Icon className="h-3 w-3 mr-1" />
-                        )}
-                        Aprobar
-                      </Button>
-                    </div>
-                  </div>
-
-                  {versions.length > 0 && (
-                    <details className="text-xs text-gray-500">
-                      <summary className="cursor-pointer select-none">
-                        Historial de versiones ({versions.length})
-                      </summary>
-                      <ul className="mt-2 space-y-1">
-                        {versions.map((version) => (
-                          <li key={version.id} className="flex items-center justify-between gap-2">
-                            <span>
-                              v{version.version} · {toPercent(version.reductionPct).toFixed(2)}% ·{' '}
-                              {STATUS_LABEL[version.status] || version.status}
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">
+                          {metaState.hasApproved ? 'Reducción vigente' : 'Reducción propuesta'}
+                        </p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {formatMXPercent(approvedReductionPct)}
+                          {metaState.hasApproved && dirty && reductionDiff !== 0 && (
+                            <span
+                              className={`ml-1 text-xs ${
+                                reductionDiff < 0 ? 'text-green-600' : 'text-red-600'
+                              }`}
+                            >
+                              → {formatMXPercent(editedReductionPct)} (
+                              {reductionDiff > 0 ? '+' : ''}
+                              {formatPctPoints(reductionDiff)})
                             </span>
-                            <span>{formatDate(version.approvedAt || version.updatedAt || version.createdAt)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
+                          )}
+                        </p>
+                      </div>
+                      <div className="hidden text-right sm:block">
+                        <p className="text-xs text-muted-foreground">Meta calculada</p>
+                        <p className="text-sm font-semibold text-blue-600">
+                          {formatMX(previewMeta)} m³
+                        </p>
+                      </div>
+                      <ChevronDownIcon
+                        className={`h-4 w-4 text-muted-foreground transition-transform ${
+                          expanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </div>
+                  </button>
+
+                  {expanded && (
+                    <div className="space-y-4 border-t px-4 py-4">
+                      {!metaState.hasApproved && (
+                        <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                          <AlertTriangleIcon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                          <span>
+                            Este año no tiene meta vigente. Al aprobar se creará una nueva versión
+                            para {year}.
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            Reducción (%)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="1"
+                            max="99"
+                            value={form.reductionPct || ''}
+                            onChange={(event) =>
+                              updateForm(year, 'reductionPct', event.target.value)
+                            }
+                            className={INPUT_CLASS}
+                          />
+                          <input
+                            type="range"
+                            min="1"
+                            max="99"
+                            step="0.5"
+                            value={Math.min(Math.max(Number(form.reductionPct) || 1, 1), 99)}
+                            onChange={(event) =>
+                              updateForm(year, 'reductionPct', event.target.value)
+                            }
+                            className="mt-2 w-full accent-blue-600"
+                            aria-label={`Reducción ${year}`}
+                          />
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>1%</span>
+                            <span>50%</span>
+                            <span>99%</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            Base de cálculo
+                          </label>
+                          <select
+                            value={form.baseMode || 'actual'}
+                            onChange={(event) => updateForm(year, 'baseMode', event.target.value)}
+                            className={INPUT_CLASS}
+                          >
+                            <option value="actual">Consumo real año anterior</option>
+                            <option value="target">Meta año anterior</option>
+                            <option value="manual">Base manual</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                            Base manual (m³)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.baseValue || ''}
+                            onChange={(event) => updateForm(year, 'baseValue', event.target.value)}
+                            disabled={form.baseMode !== 'manual'}
+                            className={`${INPUT_CLASS} disabled:bg-gray-100 disabled:text-gray-400`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 rounded-md bg-muted/50 px-3 py-2 text-xs sm:grid-cols-3">
+                        <div>
+                          <span className="text-muted-foreground">Base usada: </span>
+                          <strong className="text-foreground">{formatMX(previewBase)} m³</strong>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Meta calculada: </span>
+                          <strong className="text-foreground">{formatMX(previewMeta)} m³</strong>
+                        </div>
+                        <div>
+                          {metaVariance ? (
+                            <>
+                              <span className="text-muted-foreground">vs meta vigente: </span>
+                              <strong
+                                className={
+                                  metaVariance.favorable ? 'text-green-600' : 'text-red-600'
+                                }
+                              >
+                                {metaVariance.diff > 0 ? '+' : ''}
+                                {formatMX(metaVariance.diff)} m³
+                              </strong>
+                            </>
+                          ) : (
+                            <span className="text-amber-700">Se creará una meta nueva</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSaveDraft(year)}
+                            disabled={busy}
+                          >
+                            {busy ? (
+                              <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
+                            ) : (
+                              <SaveIcon className="mr-1 h-3 w-3" />
+                            )}
+                            Guardar borrador
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleApprove(year)}
+                            disabled={busy}
+                          >
+                            {busy ? (
+                              <Loader2Icon className="mr-1 h-3 w-3 animate-spin" />
+                            ) : (
+                              <CheckCircle2Icon className="mr-1 h-3 w-3" />
+                            )}
+                            Aprobar meta
+                          </Button>
+                        </div>
+                      </div>
+
+                      {versions.length > 0 && (
+                        <details className="text-xs text-muted-foreground">
+                          <summary className="cursor-pointer select-none">
+                            Historial de versiones ({versions.length})
+                          </summary>
+                          <ul className="mt-2 space-y-1">
+                            {versions.map((version) => (
+                              <li
+                                key={version.id}
+                                className="flex items-center justify-between gap-2"
+                              >
+                                <span>
+                                  v{version.version} ·{' '}
+                                  {toPercent(version.reductionPct).toFixed(2)}% ·{' '}
+                                  {STATUS_LABEL[version.status] || version.status}
+                                </span>
+                                <span>
+                                  {formatDate(
+                                    version.approvedAt || version.updatedAt || version.createdAt
+                                  )}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
+                    </div>
                   )}
                 </div>
               )

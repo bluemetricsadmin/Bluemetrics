@@ -1,6 +1,6 @@
 import * as React from "react"
 
-const Dialog = ({ open, onOpenChange, children }) => {
+const Dialog = ({ open, onOpenChange, children, maxWidthClass = "max-w-2xl" }) => {
   if (!open) return null
 
   return (
@@ -9,7 +9,7 @@ const Dialog = ({ open, onOpenChange, children }) => {
         className="fixed inset-0 bg-black/50"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className={`relative bg-white rounded-lg shadow-lg ${maxWidthClass} w-full mx-4 max-h-[90vh] overflow-y-auto`}>
         {children}
       </div>
     </div>

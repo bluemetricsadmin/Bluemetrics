@@ -36,17 +36,21 @@ export function useWellsAnnualTargets() {
 
       const years = [...new Set([...configuredYears, currentYear])].sort((a, b) => a - b)
 
+      const rowYears = [...new Set([...years, ...years.map((year) => year - 1)])].sort(
+        (a, b) => a - b
+      )
+
       const consumptionYears = [
         ...new Set([
-          ...years,
-          ...years.map((year) => year - 1),
+          ...rowYears,
+          ...rowYears.map((year) => year - 1),
           currentYear,
         ]),
       ]
         .filter((year) => year <= currentYear)
         .sort((a, b) => a - b)
 
-      const versionsResult = await wellsAnnualTargetsService.fetchTargetVersions(years)
+      const versionsResult = await wellsAnnualTargetsService.fetchTargetVersions(rowYears)
 
       if (versionsResult.error) {
         console.warn('⚠️ No se pudieron cargar las versiones de metas:', versionsResult.error)
@@ -54,7 +58,7 @@ export function useWellsAnnualTargets() {
 
       const versions = versionsResult.data || []
       const versionsByYear = groupVersionsByYear(versions)
-      const configsByYear = years.reduce((acc, year) => {
+      const configsByYear = rowYears.reduce((acc, year) => {
         const config = pickActiveConfig(versionsByYear[year])
         if (config) acc[year] = config
         return acc
@@ -77,12 +81,13 @@ export function useWellsAnnualTargets() {
       const currentWeek = lastWeekByYear?.[currentYear] || 0
 
       const rows = buildTargetRows({
-        years,
+        years: rowYears,
         configsByYear,
         actualTotals: totalsByYear || {},
         seriesByYear: seriesByYear || {},
         currentYear,
         currentWeek,
+        baseYears: years,
       })
 
       const current = rows.find((row) => row.year === currentYear) || null
